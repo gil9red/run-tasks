@@ -117,23 +117,21 @@ class ThreadRunProcess(threading.Thread):
         self.on_finish_callback and self.on_finish_callback(self.process)
 
 
-# TODO:
-# @dataclass
 class TaskThread(threading.Thread):
     def __init__(self, name):
         super().__init__()
 
         self.name = name
 
-    def run(self) -> None:
+    def run(self):
         while True:
+            # TODO: Добавить get_by_name
             task_db: db.Task = db.Task.get_or_none(name=self.name)
             if not task_db:
                 # TODO:
                 print(f"Task {self.name} not found!")
                 return
 
-            # TODO: Проверить эту ситуацию
             if not task_db.is_enabled:
                 # TODO:
                 print(f"Task {self.name} is not enabled!")
@@ -153,8 +151,7 @@ class TaskThread(threading.Thread):
 
         def start_callback(process: psutil.Popen):
             print(f"process_id: {process.pid}", type(process))
-            task_run_db.process_id = process.pid
-            task_run_db.save()
+            task_run_db.set_process_id(process.pid)
 
         def process_stdout(text: str):
             print(f"process_stdout[run: {task_run_db.id}]:", repr(text))
@@ -275,6 +272,7 @@ class TaskManager:
             time.sleep(0.1)
 
 
+# TODO: в if __name__ == "__main__":
 task_manager = TaskManager()
 
 # TODO: Пример

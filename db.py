@@ -36,7 +36,8 @@ def shorten(text: str, length: int = 30, placeholder: str = "...") -> str:
     return text
 
 
-class NotDefinedParameterException(Exception):
+# TODO:
+class NotDefinedParameterException(ValueError):
     def __init__(self, parameter_name: str):
         self.parameter_name = parameter_name
         text = f'Parameter "{self.parameter_name}" must be defined!'
@@ -217,7 +218,7 @@ class TaskRun(BaseModel):
             return
 
         def raise_about_bad_status():
-            raise Exception(f"Нельзя изменить статус {self.status.value!r} в {value!r}")
+            raise ValueError(f"Нельзя изменить статус {self.status.value!r} в {value!r}")
 
         match value:
             case TaskStatusEnum.Pending:
@@ -241,6 +242,10 @@ class TaskRun(BaseModel):
 
         self.status = value
 
+        self.save()
+
+    def set_process_id(self, value: int):
+        self.process_id = value
         self.save()
 
     def add_log(self, text: str, kind: LogEnum) -> "TaskRunLog":
