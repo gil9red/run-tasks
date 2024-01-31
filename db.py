@@ -212,9 +212,36 @@ class TaskRun(BaseModel):
     start_date = DateTimeField(null=True)
     finish_date = DateTimeField(null=True)
 
-    # TODO: методы для изменения статуса
-    #       учитывать в них другие поля
-    #       Устанавливая Running, заполняется start_date и т.п.
+    def set_status(self, value: TaskStatusEnum):
+        if self.status == value:
+            return
+
+        def raise_about_bad_status():
+            raise Exception(f"Нельзя изменить статус {self.status.value!r} в {value!r}")
+
+        match value:
+            case TaskStatusEnum.Pending:
+                raise_about_bad_status()
+
+            case TaskStatusEnum.Running:
+                if self.status != TaskStatusEnum.Pending:
+                    raise_about_bad_status()
+
+                self.start_date = datetime.now()
+
+            case TaskStatusEnum.Stopped:
+                if self.status not in [TaskStatusEnum.Pending, TaskStatusEnum.Running]:
+                    raise_about_bad_status()
+
+            case TaskStatusEnum.Finished:
+                if self.status not in [TaskStatusEnum.Pending, TaskStatusEnum.Running]:
+                    raise_about_bad_status()
+
+                self.finish_date = datetime.now()
+
+        self.status = value
+
+        self.save()
 
     def add_log(self, text: str, kind: LogEnum) -> "TaskRunLog":
         return TaskRunLog.create(

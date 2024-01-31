@@ -149,12 +149,7 @@ class TaskThread(threading.Thread):
 
     # TODO:
     def _start_task_run(self, task_db: db.Task, task_run_db: db.TaskRun):
-        # TODO: Какой-нибудь метод
-        task_run_db.status = db.TaskStatusEnum.Running
-        from datetime import datetime
-
-        task_run_db.start_date = datetime.now()
-        task_run_db.save()
+        task_run_db.set_status(db.TaskStatusEnum.Running)
 
         def start_callback(process: psutil.Popen):
             print(f"process_id: {process.pid}", type(process))
@@ -173,20 +168,11 @@ class TaskThread(threading.Thread):
             # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
             #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
             if not db.Task.get_by_id(task_db.id).is_enabled:
-                task_run_db.status = db.TaskStatusEnum.Stopped
-                task_run_db.save()
+                task_run_db.set_status(db.TaskStatusEnum.Stopped)
 
             # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
             #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
             return db.TaskRun.get_by_id(task_run_db.id).status in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
-
-        # TODO: Сделать метод у TaskRun?
-        def stop_task():
-            # task_db.is_enabled = False
-            # task_db.save()
-
-            task_run_db.status = db.TaskStatusEnum.Stopped
-            task_run_db.save()
 
         # TODO:
         print(f"current_thread[run: {task_run_db.id}]: ", threading.current_thread())
@@ -198,7 +184,7 @@ class TaskThread(threading.Thread):
             on_start_callback=start_callback,
             stop_on=stop_on,
             # TODO: "cp866" if windows else "utf-8" ?
-            # TODO: encoding=
+            encoding="cp866",
         )
         thread.daemon = True
         thread.start()
@@ -206,19 +192,19 @@ class TaskThread(threading.Thread):
         process_return_code = thread.process_return_code
         print(f"process_return_code[run: {task_run_db.id}]: {process_return_code}")
 
-        # TODO: сделать метод завершения, что заполнит статус и время
-        # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
-        #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
-        # Статус может поменять, поэтому нужно его заново получить из базы
-        final_status = db.TaskRun.get_by_id(task_run_db.id).status
-        if final_status in (db.TaskStatusEnum.Pending, db.TaskStatusEnum.Running):
-            final_status = db.TaskStatusEnum.Finished
-        task_run_db.status = final_status
-
-        from datetime import datetime
-        task_run_db.finish_date = datetime.now()
         if process_return_code is not None:
             task_run_db.process_return_code = process_return_code
+
+        # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
+        #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
+        # Статус может поменяться, поэтому нужно его заново получить из базы
+        final_status = db.TaskRun.get_by_id(task_run_db.id).status
+
+        # Если текущий статус pending или running
+        if final_status in (db.TaskStatusEnum.Pending, db.TaskStatusEnum.Running):
+            final_status = db.TaskStatusEnum.Finished
+
+        task_run_db.set_status(final_status)
         task_run_db.save()
 
         print("Finished:", task_run_db)
