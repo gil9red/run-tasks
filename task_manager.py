@@ -6,18 +6,11 @@ __author__ = "ipetrash"
 
 import os
 import signal
-import threading
 import time
-from typing import Callable, AnyStr, IO
-
-from dataclasses import dataclass, field
-
-# from subprocess import Popen
 import subprocess
-
-# from threading import Thread
 import threading
-import queue
+
+from typing import Callable, AnyStr, IO
 
 import psutil
 
@@ -48,7 +41,6 @@ def kill_proc_tree(
 
 
 class ThreadRunProcess(threading.Thread):
-    # TODO: on_stop
     def __init__(
         self,
         command: str,
@@ -93,13 +85,6 @@ class ThreadRunProcess(threading.Thread):
             stderr=subprocess.PIPE,
             encoding=self.encoding,
         )
-        # TODO:
-        # p = subprocess.Popen(
-        #     self.command,
-        #     stdout=subprocess.PIPE,
-        #     stderr=subprocess.PIPE,
-        #     encoding=self.encoding,
-        # )
         self.on_start_callback(self.process)
 
         thread_stdout = threading.Thread(
@@ -203,30 +188,16 @@ class TaskThread(threading.Thread):
             task_run_db.status = db.TaskStatusEnum.Stopped
             task_run_db.save()
 
-        # from threading import Timer
-        # Timer(2, stop_task).start()
-
+        # TODO:
         print(f"current_thread[run: {task_run_db.id}]: ", threading.current_thread())
 
-        # # TODO: Не завершается, если вместе с этой таской была таска с GUI
-        # process_return_code, _ = command_runner(
-        #     command=task_run_db.command,
-        #     method="poller",
-        #     encoding="cp866",  # TODO: "cp866" if windows else "utf-8" ?
-        #     # shell=self.shell,
-        #     # shell=True,
-        #     stdout=process_stdout,
-        #     stderr=process_stderr,
-        #     process_callback=process_callback,
-        #     # on_exit=on_exit,
-        #     stop_on=stop_on,
-        # )
         thread = ThreadRunProcess(
             command=task_run_db.command,
             on_stdout_callback=process_stdout,
             on_stderr_callback=process_stderr,
             on_start_callback=start_callback,
             stop_on=stop_on,
+            # TODO: "cp866" if windows else "utf-8" ?
             # TODO: encoding=
         )
         thread.daemon = True
@@ -283,7 +254,6 @@ class TaskManager:
         return task_thread
 
     # TODO: название
-    # TODO: Удалять те потоки, которые были завершены?
     def _thread_wrapper_observe_tasks_on_database(self):
         while True:
             for task in db.Task.select().where(db.Task.is_enabled == True):
@@ -294,6 +264,7 @@ class TaskManager:
                 else:
                     thread = self.tasks[name]
                     if not thread.is_alive():
+                        print(f"Deleted task {name!r}")
                         self.tasks.pop(name)
 
             time.sleep(0.1)  # TODO:
@@ -312,29 +283,10 @@ class TaskManager:
         # TODO:
         self.observe_tasks_on_database()
 
-        # TODO: мб какой-нибудь флаг, который будет контролировать работу _thread_wrapper_observe_tasks_on_database?
-
-        # # while True:
-        # for thread in list(self.tasks.values()):
-        #     # print(thread.name, thread.task_run)
-        #     # TODO: поток не запущен, а у задачи нет работающих запусков
-        #     if not thread.is_alive(): # TODO: and thread.task_run.status == db.TaskStatusEnum.Pending: # TODO: and not thread.task.get_living_runs():
-        #         print(f"Started task {thread.name!r}")
-        #         thread.start()
-        #     time.sleep(0.010) # TODO: надо ли?
-        #
-        #     # time.sleep(1) # TODO: надо ли?
-
     # TODO:
     def wait_all(self):
-        # TODO: В db.py?
-        while (
-            db.Task.select().count() == 0
-            or db.Task.select().where(db.Task.is_enabled == True).exists()
-        ):
+        while True:
             time.sleep(0.1)
-        # while any(thread.is_alive() for thread in self.tasks.values()):
-        #     time.sleep(0.1)
 
 
 task_manager = TaskManager()
