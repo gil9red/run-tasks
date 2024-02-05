@@ -118,13 +118,22 @@ class ThreadRunProcess(threading.Thread):
 
 
 class TaskThread(threading.Thread):
-    def __init__(self, name):
+    def __init__(self, name: str, encoding: str = "utf-8"):
         super().__init__()
 
         self.name = name
+        self.encoding = encoding
+        self.current_task_run: db.TaskRun | None = None
+        self._is_stopped: bool = False
+
+    def stop(self):
+        if self.current_task_run and self.current_task_run.status == db.TaskStatusEnum.Running:
+            self.current_task_run.set_status(db.TaskStatusEnum.Stopped)
+
+        self._is_stopped = True
 
     def run(self):
-        while True:
+        while not self._is_stopped:
             # TODO: Добавить get_by_name
             task_db: db.Task = db.Task.get_or_none(name=self.name)
             if not task_db:
@@ -147,6 +156,8 @@ class TaskThread(threading.Thread):
 
     # TODO:
     def _start_task_run(self, task_db: db.Task, task_run_db: db.TaskRun):
+        self.current_task_run = task_run_db
+
         task_run_db.set_status(db.TaskStatusEnum.Running)
 
         def start_callback(process: psutil.Popen):
@@ -181,7 +192,7 @@ class TaskThread(threading.Thread):
             on_start_callback=start_callback,
             stop_on=stop_on,
             # TODO: "cp866" if windows else "utf-8" ?
-            encoding="cp866",
+            encoding=self.encoding,
         )
         thread.daemon = True
         thread.start()
@@ -208,11 +219,11 @@ class TaskThread(threading.Thread):
 
 
 class TaskManager:
-    # TODO:
-    tasks: dict[str, TaskThread] = dict()
+    def __init__(self, encoding: str = "utf-8"):
+        self.encoding = encoding
+        self.tasks: dict[str, TaskThread] = dict()
 
-    # TODO:
-    # encoding: str = "utf-8"
+        self._is_stopped: bool = False
 
     def add(self, name: str, command: str, description: str = None) -> TaskThread:
         if name in self.tasks:
@@ -230,7 +241,7 @@ class TaskManager:
         task.add_run()  # TODO: Это можно оставить, добавив вызов через флаг
         # TODO: <<<<
 
-        task_thread = TaskThread(name=name)
+        task_thread = TaskThread(name=name, encoding=self.encoding)
         task_thread.daemon = True  # Thread dies with the program
         self.tasks[name] = task_thread
 
@@ -238,7 +249,7 @@ class TaskManager:
 
     # TODO: название
     def _thread_wrapper_observe_tasks_on_database(self):
-        while True:
+        while not self._is_stopped:
             for task in db.Task.select().where(db.Task.is_enabled == True):
                 name = task.name
                 if name not in self.tasks:
@@ -265,6 +276,18 @@ class TaskManager:
     def start_all(self):
         # TODO:
         self.observe_tasks_on_database()
+
+    # TODO:
+    def stop_all(self):
+        # TODO:
+        print("stop_all")
+        self._is_stopped = True
+
+        for thread in list(self.tasks.values()):
+            if thread.is_alive():
+                thread.stop()
+
+        time.sleep(5)
 
     # TODO:
     def wait_all(self):
@@ -294,7 +317,12 @@ task_manager = TaskManager()
 #     name="example python pyqt gui",
 #     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
 # )
+
 task_manager.start_all()
+
+# TODO:
+import atexit
+atexit.register(task_manager.stop_all)
 
 # TODO:
 task_manager.wait_all()
