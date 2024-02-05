@@ -133,8 +133,7 @@ class TaskThread(threading.Thread):
 
     def run(self):
         while not self._is_stopped:
-            # TODO: Добавить get_by_name
-            task_db: db.Task = db.Task.get_or_none(name=self.name)
+            task_db: db.Task | None = db.Task.get_by_name(self.name)
             if not task_db:
                 # TODO:
                 print(f"Task {self.name} not found!")
@@ -172,14 +171,10 @@ class TaskThread(threading.Thread):
             task_run_db.add_log_err(text)
 
         def stop_on() -> bool:
-            # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
-            #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
-            if not db.Task.get_by_id(task_db.id).is_enabled:
+            if not task_db.get_actual_is_enabled():
                 task_run_db.set_status(db.TaskStatusEnum.Stopped)
 
-            # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
-            #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
-            return db.TaskRun.get_by_id(task_run_db.id).status in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
+            return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
 
         # TODO:
         print(f"current_thread[run: {task_run_db.id}]: ", threading.current_thread())
@@ -202,10 +197,8 @@ class TaskThread(threading.Thread):
         if process_return_code is not None:
             task_run_db.process_return_code = process_return_code
 
-        # TODO: Интересно, а есть ли какой-нибудь метод для перечитывания?
-        #       ... Если нет, то поддержать какой-нибудь статичный метод для получения поля
         # Статус может поменяться, поэтому нужно его заново получить из базы
-        final_status = db.TaskRun.get_by_id(task_run_db.id).status
+        final_status = task_run_db.get_actual_status()
 
         # Если текущий статус pending или running
         if final_status in (db.TaskStatusEnum.Pending, db.TaskStatusEnum.Running):

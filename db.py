@@ -36,7 +36,6 @@ def shorten(text: str, length: int = 30, placeholder: str = "...") -> str:
     return text
 
 
-# TODO:
 class NotDefinedParameterException(ValueError):
     def __init__(self, parameter_name: str):
         self.parameter_name = parameter_name
@@ -164,8 +163,18 @@ class Task(BaseModel):
     is_enabled = BooleanField(default=True)
 
     @classmethod
+    def get_by_name(cls, name: str) -> Self | None:
+        if not name:
+            raise NotDefinedParameterException("name")
+
+        return cls.get_or_none(name=name)
+
+    def get_actual_is_enabled(self) -> bool:
+        return Task.get_by_id(self.id).is_enabled
+
+    @classmethod
     def add(cls, name: str, command: str, description: str = None) -> Self:
-        obj = cls.get_or_none(name=name)
+        obj = cls.get_by_name(name)
         if obj:
             if command != obj.command or description != obj.description:
                 obj.command = command
@@ -184,7 +193,6 @@ class Task(BaseModel):
         self.is_enabled = value
         self.save()
 
-    # TODO: мб переименовать add_run в run?
     def add_run(self) -> "TaskRun":
         run = TaskRun.create(
             task=self,
@@ -247,6 +255,9 @@ class TaskRun(BaseModel):
     def set_process_id(self, value: int):
         self.process_id = value
         self.save()
+
+    def get_actual_status(self) -> TaskStatusEnum:
+        return TaskRun.get_by_id(self.id).status
 
     def add_log(self, text: str, kind: LogEnum) -> "TaskRunLog":
         return TaskRunLog.create(
