@@ -71,8 +71,7 @@ class ThreadRunProcess(threading.Thread):
         if self.stop_on():
             return
 
-        # TODO:
-        def enqueue_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]):
+        def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]):
             for text in iter(stream.readline, ""):
                 on_callback(text)
                 if self.stop_on():
@@ -88,14 +87,14 @@ class ThreadRunProcess(threading.Thread):
         self.on_start_callback(self.process)
 
         thread_stdout = threading.Thread(
-            target=enqueue_stream,
+            target=read_stream,
             args=(self.process.stdout, self.on_stdout_callback),
             daemon=True,
         )
         thread_stdout.start()
 
         thread_stderr = threading.Thread(
-            target=enqueue_stream,
+            target=read_stream,
             args=(self.process.stderr, self.on_stderr_callback),
             daemon=True,
         )
