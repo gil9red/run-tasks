@@ -204,7 +204,7 @@ class Task(BaseModel):
 
 
 class TaskRun(BaseModel):
-    task = ForeignKeyField(Task, backref="runs")
+    task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
     command = TextField()
     status = EnumField(choices=TaskStatusEnum, default=TaskStatusEnum.Pending)
     process_id = IntegerField(null=True)
@@ -263,7 +263,7 @@ class TaskRun(BaseModel):
 
 
 class TaskRunLog(BaseModel):
-    task_run = ForeignKeyField(TaskRun, backref="logs")
+    task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="logs")
     text = TextField()
     kind = EnumField(choices=LogEnum)
     date = DateTimeField(default=datetime.now)
