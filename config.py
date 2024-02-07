@@ -4,6 +4,9 @@
 __author__ = "ipetrash"
 
 
+import os
+import sys
+
 from pathlib import Path
 
 
@@ -16,3 +19,5 @@ DB_DIR_NAME = DIR / "database"
 DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
 
 DB_FILE_NAME = DB_DIR_NAME / "db.sqlite"
+
+ENCODING: str = os.environ.get("ENCODING", sys.getdefaultencoding())

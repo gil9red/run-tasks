@@ -15,6 +15,7 @@ from typing import Callable, AnyStr, IO
 import psutil
 
 import db
+from config import ENCODING
 
 
 # SOURCE: https://psutil.readthedocs.io/en/latest/index.html#kill-process-tree
@@ -49,7 +50,7 @@ class ThreadRunProcess(threading.Thread):
         on_start_callback: Callable[[psutil.Popen], None],
         on_finish_callback: Callable[[psutil.Popen], None] = None,
         stop_on: Callable[[], bool] = lambda: False,
-        encoding: str = "utf-8",
+        encoding: str = ENCODING,
     ):
         super().__init__()
 
@@ -117,7 +118,7 @@ class ThreadRunProcess(threading.Thread):
 
 
 class TaskThread(threading.Thread):
-    def __init__(self, name: str, encoding: str = "utf-8"):
+    def __init__(self, name: str, encoding: str = ENCODING):
         super().__init__()
 
         self.name = name
@@ -211,9 +212,15 @@ class TaskThread(threading.Thread):
 
 
 class TaskManager:
-    def __init__(self, encoding: str = "utf-8"):
+    def __init__(self, encoding: str = ENCODING):
         self.encoding = encoding
         self.tasks: dict[str, TaskThread] = dict()
+
+        # TODO: Название
+        self._thread_observe_tasks_on_database = threading.Thread(
+            target=self._thread_wrapper_observe_tasks_on_database,
+            daemon=True,  # Thread dies with the program
+        )
 
         self._is_stopped: bool = False
 
@@ -257,11 +264,6 @@ class TaskManager:
 
     # TODO: название
     def observe_tasks_on_database(self):
-        # TODO: в конструктор
-        self._thread_observe_tasks_on_database = threading.Thread(
-            target=self._thread_wrapper_observe_tasks_on_database,
-            daemon=True,  # Thread dies with the program
-        )
         self._thread_observe_tasks_on_database.start()
 
     # TODO: Какой-нибудь аргумент о запуске в потоке?
