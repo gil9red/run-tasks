@@ -15,6 +15,7 @@ from typing import Callable, AnyStr, IO
 import psutil
 
 import db
+from common import log
 from config import ENCODING
 
 
@@ -104,8 +105,7 @@ class ThreadRunProcess(threading.Thread):
         while True:
             try:
                 if self.stop_on():
-                    # TODO:
-                    print("Нужно остановить процесс:", self.process.pid)
+                    log.info(f"Нужно остановить процесс: {self.process.pid}")
                     kill_proc_tree(self.process.pid)
 
                 self.process_return_code = self.process.wait(timeout=0)
@@ -119,9 +119,8 @@ class ThreadRunProcess(threading.Thread):
 
 class TaskThread(threading.Thread):
     def __init__(self, name: str, encoding: str = ENCODING):
-        super().__init__()
+        super().__init__(name=name)
 
-        self.name = name
         self.encoding = encoding
         self.current_task_run: db.TaskRun | None = None
         self._is_stopped: bool = False
@@ -136,39 +135,38 @@ class TaskThread(threading.Thread):
         while not self._is_stopped:
             task_db: db.Task | None = db.Task.get_by_name(self.name)
             if not task_db:
-                # TODO:
-                print(f"Task {self.name} not found!")
+                log.warn(f"Задача {self.name!r} не найдена!")
                 return
 
             if not task_db.is_enabled:
-                # TODO:
-                print(f"Task {self.name} is not enabled!")
+                log.info(f"Задача {self.name!r} не активна!")
                 return
 
             task_runs = task_db.get_runs_by([db.TaskStatusEnum.Pending])
             if task_runs:
                 task_run = task_runs[0]
-                print("Start task run:", task_run)  # TODO:
+                log.info(f"[Задача #{task_db.id}] Старт запуска задачи: #{task_run.id}")
                 self._start_task_run(task_db, task_run)
 
             time.sleep(1)  # TODO:
 
-    # TODO:
     def _start_task_run(self, task_db: db.Task, task_run_db: db.TaskRun):
+        log_prefix = f"[Задача #{task_db.id}, запуск #{task_run_db.id}]"
+
         self.current_task_run = task_run_db
 
         task_run_db.set_status(db.TaskStatusEnum.Running)
 
         def start_callback(process: psutil.Popen):
-            print(f"process_id: {process.pid}", type(process))
+            log.debug(f"{log_prefix} process_id: {process.pid}")
             task_run_db.set_process_id(process.pid)
 
         def process_stdout(text: str):
-            print(f"process_stdout[run: {task_run_db.id}]:", repr(text))
+            log.debug(f"{log_prefix} stdout: {text!r}")
             task_run_db.add_log_out(text)
 
         def process_stderr(text: str):
-            print(f"process_stderr[run: {task_run_db.id}]:", repr(text))
+            log.debug(f"{log_prefix} stderr: {text!r}")
             task_run_db.add_log_err(text)
 
         def stop_on() -> bool:
@@ -176,9 +174,6 @@ class TaskThread(threading.Thread):
                 task_run_db.set_status(db.TaskStatusEnum.Stopped)
 
             return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
-
-        # TODO:
-        print(f"current_thread[run: {task_run_db.id}]: ", threading.current_thread())
 
         thread = ThreadRunProcess(
             command=task_run_db.command,
@@ -193,7 +188,7 @@ class TaskThread(threading.Thread):
         thread.start()
         thread.join()
         process_return_code = thread.process_return_code
-        print(f"process_return_code[run: {task_run_db.id}]: {process_return_code}")
+        log.debug(f"{log_prefix} process_return_code: {process_return_code}")
 
         if process_return_code is not None:
             task_run_db.process_return_code = process_return_code
@@ -208,7 +203,7 @@ class TaskThread(threading.Thread):
         task_run_db.set_status(final_status)
         task_run_db.save()
 
-        print("Finished:", task_run_db)
+        log.debug(f"{log_prefix} Завершение с статусом {task_run_db.status.value}")
 
 
 class TaskManager:
@@ -252,12 +247,12 @@ class TaskManager:
             for task in db.Task.select().where(db.Task.is_enabled == True):
                 name = task.name
                 if name not in self.tasks:
-                    print(f"Started task {name!r}")
+                    log.info(f"Запуск задачи #{task.id} {name!r}")
                     self.add(name=name, command=task.command).start()
                 else:
                     thread = self.tasks[name]
                     if not thread.is_alive():
-                        print(f"Deleted task {name!r}")
+                        log.info(f"Удаление потока задачи #{task.id} {name!r}")
                         self.tasks.pop(name)
 
             time.sleep(0.1)  # TODO:
@@ -266,15 +261,16 @@ class TaskManager:
     def observe_tasks_on_database(self):
         self._thread_observe_tasks_on_database.start()
 
-    # TODO: Какой-нибудь аргумент о запуске в потоке?
     def start_all(self):
+        log.info("Запуск всех задач из базы")
+
         # TODO:
         self.observe_tasks_on_database()
 
     # TODO:
     def stop_all(self):
         # TODO:
-        print("stop_all")
+        log.info("Остановка всех задач")
         self._is_stopped = True
 
         for thread in list(self.tasks.values()):
