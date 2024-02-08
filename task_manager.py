@@ -211,6 +211,7 @@ class TaskManager:
     def __init__(self, encoding: str = ENCODING):
         self.encoding = encoding
         self.tasks: dict[str, TaskThread] = dict()
+        self.timeout_on_stopping_secs: int = 5
 
         # TODO: Название
         self._thread_observe_tasks_on_database = threading.Thread(
@@ -264,9 +265,7 @@ class TaskManager:
             atexit.register(self.stop_all)
             self._has_atexit_callback = True
 
-    # TODO:
     def stop_all(self):
-        # TODO:
         log.info("Остановка всех задач")
         self._is_stopped = True
 
@@ -274,7 +273,8 @@ class TaskManager:
             if thread.is_alive():
                 thread.stop()
 
-        time.sleep(5)
+        log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд")
+        time.sleep(self.timeout_on_stopping_secs)
 
     # TODO:
     def wait_all(self):
