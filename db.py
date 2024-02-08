@@ -6,7 +6,6 @@ __author__ = "ipetrash"
 
 import enum
 import time
-
 from datetime import datetime
 from typing import Any, Type, Iterable, Self
 

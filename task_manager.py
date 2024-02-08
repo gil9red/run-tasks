@@ -7,12 +7,11 @@ __author__ = "ipetrash"
 import atexit
 import os
 import signal
-import sys
-import traceback
-import time
 import subprocess
+import sys
 import threading
-
+import time
+import traceback
 from typing import Callable, AnyStr, IO
 
 import psutil
