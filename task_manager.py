@@ -219,21 +219,10 @@ class TaskManager:
 
         self._is_stopped: bool = False
 
-    def add(self, name: str, command: str, description: str = None) -> TaskThread:
+    def _add(self, name: str) -> TaskThread:
         if name in self.tasks:
             # TODO: Другой тип исключения?
             raise Exception(f"Task {name!r} already added!")
-
-        # TODO: >>>>
-        # NOTE: Создание/обновление задачи
-        task = db.Task.add(
-            name=name,
-            command=command,
-            description=description,
-        )
-        # Создание запуска
-        task.add_run()  # TODO: Это можно оставить, добавив вызов через флаг
-        # TODO: <<<<
 
         task_thread = TaskThread(name=name, encoding=self.encoding)
         task_thread.daemon = True  # Thread dies with the program
@@ -248,7 +237,7 @@ class TaskManager:
                 name = task.name
                 if name not in self.tasks:
                     log.info(f"Запуск задачи #{task.id} {name!r}")
-                    self.add(name=name, command=task.command).start()
+                    self._add(name=name).start()
                 else:
                     thread = self.tasks[name]
                     if not thread.is_alive():
@@ -285,34 +274,38 @@ class TaskManager:
             time.sleep(0.1)
 
 
-# TODO: в if __name__ == "__main__":
-task_manager = TaskManager()
+if __name__ == "__main__":
+    task_manager = TaskManager()
 
-# TODO: Пример
-# TODO: Эти задачи он сам добавляет в базу
-# TODO: ... убрать автосоздание запуска из потока?
-# task_manager.add(
-#     name="example run.bat",
-#     command="run.bat",
-# )
-# task_manager.add(
-#     name="example python",
-#     command='python -c "import uuid;print(uuid.uuid4())"',
-# )
-# task_manager.add(
-#     name="example python for",
-#     command='python -c "import time;[(print(i), time.sleep(1)) for i in range(10)]"',
-# )
-# task_manager.add(
-#     name="example python pyqt gui",
-#     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
-# )
+    # TODO: Пример
+    # TODO: Эти задачи он сам добавляет в базу
+    # TODO: ... убрать автосоздание запуска из потока?
+    # task_manager.add(
+    #     name="example run.bat",
+    #     command="run.bat",
+    # )
+    # task_manager.add(
+    #     name="example python",
+    #     command='python -c "import uuid;print(uuid.uuid4())"',
+    # )
+    # task_manager.add(
+    #     name="example python for",
+    #     command='python -c "import time;[(print(i), time.sleep(1)) for i in range(10)]"',
+    # )
+    # task_manager.add(
+    #     name="example python pyqt gui",
+    #     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
+    # )
 
-task_manager.start_all()
+    task_manager.start_all()
 
-# TODO:
-import atexit
-atexit.register(task_manager.stop_all)
+    # TODO: Запуск всех задач из базы
+    for task in db.Task.select().where(db.Task.is_enabled == True):
+        task.add_run()
 
-# TODO:
-task_manager.wait_all()
+    # TODO: перенести в start_all
+    import atexit
+    atexit.register(task_manager.stop_all)
+
+    # TODO:
+    task_manager.wait_all()
