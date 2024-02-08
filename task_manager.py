@@ -4,6 +4,7 @@
 __author__ = "ipetrash"
 
 
+import atexit
 import os
 import signal
 import time
@@ -217,6 +218,8 @@ class TaskManager:
             daemon=True,  # Thread dies with the program
         )
 
+        self._has_atexit_callback: bool = False
+
         self._is_stopped: bool = False
 
     def _add(self, name: str) -> TaskThread:
@@ -248,13 +251,18 @@ class TaskManager:
 
     # TODO: название
     def observe_tasks_on_database(self):
-        self._thread_observe_tasks_on_database.start()
+        if not self._thread_observe_tasks_on_database.is_alive():
+            self._thread_observe_tasks_on_database.start()
 
     def start_all(self):
         log.info("Запуск всех задач из базы")
 
         # TODO:
         self.observe_tasks_on_database()
+
+        if not self._has_atexit_callback:
+            atexit.register(self.stop_all)
+            self._has_atexit_callback = True
 
     # TODO:
     def stop_all(self):
@@ -302,10 +310,6 @@ if __name__ == "__main__":
     # TODO: Запуск всех задач из базы
     for task in db.Task.select().where(db.Task.is_enabled == True):
         task.add_run()
-
-    # TODO: перенести в start_all
-    import atexit
-    atexit.register(task_manager.stop_all)
 
     # TODO:
     task_manager.wait_all()
