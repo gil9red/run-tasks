@@ -7,6 +7,8 @@ __author__ = "ipetrash"
 import atexit
 import os
 import signal
+import sys
+import traceback
 import time
 import subprocess
 import threading
@@ -18,6 +20,22 @@ import psutil
 import db
 from common import log
 from config import ENCODING
+
+
+def log_uncaught_exceptions(ex_cls, ex, tb):
+    # Если было запрошено прерывание
+    if isinstance(ex, KeyboardInterrupt):
+        sys.exit()
+
+    text = f"{ex_cls.__name__}: {ex}:\n"
+    text += "".join(traceback.format_tb(tb))
+
+    log.error(text)
+
+    sys.exit(1)
+
+
+sys.excepthook = log_uncaught_exceptions
 
 
 # SOURCE: https://psutil.readthedocs.io/en/latest/index.html#kill-process-tree
