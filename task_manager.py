@@ -274,6 +274,10 @@ class TaskManager:
             self._thread_observe_tasks_on_database.start()
 
     def start_all(self):
+        if self._is_stopped:
+            log.warn("Нельзя запустить задачи, когда было вызвана остановка")
+            return
+
         log.info("Запуск всех задач из базы")
 
         # TODO:
@@ -293,6 +297,8 @@ class TaskManager:
 
         log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд")
         time.sleep(self.timeout_on_stopping_secs)
+
+        self._is_stopped = False
 
     # TODO:
     def wait_all(self):
