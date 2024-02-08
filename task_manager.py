@@ -309,22 +309,20 @@ class TaskManager:
 if __name__ == "__main__":
     task_manager = TaskManager()
 
-    # TODO: Пример
-    # TODO: Эти задачи он сам добавляет в базу
-    # TODO: ... убрать автосоздание запуска из потока?
-    # task_manager.add(
+    # TODO: Пример создания/обновления задач
+    # db.Task.add(
     #     name="example run.bat",
     #     command="run.bat",
     # )
-    # task_manager.add(
+    # db.Task.add(
     #     name="example python",
     #     command='python -c "import uuid;print(uuid.uuid4())"',
     # )
-    # task_manager.add(
+    # db.Task.add(
     #     name="example python for",
     #     command='python -c "import time;[(print(i), time.sleep(1)) for i in range(10)]"',
     # )
-    # task_manager.add(
+    # db.Task.add(
     #     name="example python pyqt gui",
     #     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
     # )
