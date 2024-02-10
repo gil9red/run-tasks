@@ -9,13 +9,13 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from config import DIR_LOG
+from config import DIR_LOGS
 
 
 def get_logger(
     logger_name: str,
     file_name: str = "log.log",
-    dir_name: Path = DIR_LOG,
+    dir_name: Path = DIR_LOGS,
     log_stdout: bool = True,
     log_file: bool = True,
     encoding: str = "utf-8",
@@ -52,6 +52,6 @@ def get_logger(
 
 
 log_manager = get_logger(
-    "task_manager",
-    "task_manager.log",
+    logger_name="task_manager",
+    file_name="task_manager.log",
 )
