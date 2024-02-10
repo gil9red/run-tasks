@@ -12,7 +12,7 @@ from pathlib import Path
 
 DIR = Path(__file__).resolve().parent
 
-DIR_LOG = DIR / "logs"
+DIR_LOGS = DIR / "logs"
 
 DB_DIR_NAME = DIR / "database"
 DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
