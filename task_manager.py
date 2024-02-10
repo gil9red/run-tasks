@@ -12,13 +12,14 @@ import sys
 import threading
 import time
 import traceback
+from tempfile import NamedTemporaryFile
 from typing import Callable, AnyStr, IO
 
 import psutil
 
 import db
 from common import get_logger
-from config import ENCODING, DIR, PATTERN_FILE_JOB_COMMAND, DIR_TEMP
+from config import ENCODING, SCRIPT_NAME, PATTERN_FILE_JOB_COMMAND
 
 
 log = get_logger("task_manager")
@@ -66,7 +67,7 @@ def kill_proc_tree(
 class ThreadRunProcess(threading.Thread):
     def __init__(
         self,
-        command: str,
+        command: str | list[str],
         on_stdout_callback: Callable[[str], None],
         on_stderr_callback: Callable[[str], None],
         on_start_callback: Callable[[psutil.Popen], None],
@@ -101,6 +102,7 @@ class ThreadRunProcess(threading.Thread):
                     break
             stream.close()
 
+        log.info(f"Запуск: {self.command}")
         self.process = psutil.Popen(
             self.command,
             stdout=subprocess.PIPE,
@@ -196,8 +198,35 @@ class TaskThread(threading.Thread):
 
             return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
 
+        is_win = sys.platform == 'win32'
+        file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
+            script_name=SCRIPT_NAME,
+            job_id=task_db.id,
+            job_run_id=task_run_db.id,
+        )
+
+        # NOTE: Пример имени "run-tasks_job4_run163__cx6w_2zk.bat"
+        temp_file = NamedTemporaryFile(
+            mode="w",
+            prefix=f"{file_name_command}__",
+            suffix=".bat" if is_win else ".sh",
+            encoding="UTF-8",
+            delete_on_close=False,
+        )
+        temp_file.write(task_run_db.command)
+        temp_file.close()
+
+        full_file_name_command = temp_file.name
+
+        command: list[str] = []
+        if is_win:
+            command += ["cmd", "/c", "call"]
+        else:
+            command += ["/bin/bash", "-xe"]
+        command.append(full_file_name_command)
+
         thread = ThreadRunProcess(
-            command=task_run_db.command,
+            command=command,
             on_stdout_callback=process_stdout,
             on_stderr_callback=process_stderr,
             on_start_callback=start_callback,
