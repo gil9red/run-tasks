@@ -14,6 +14,7 @@ from config import DIR_LOG
 
 def get_logger(
     logger_name: str,
+    file_name: str = "log.log",
     dir_name: Path = DIR_LOG,
     log_stdout: bool = True,
     log_file: bool = True,
@@ -33,7 +34,7 @@ def get_logger(
 
     if log_file:
         dir_name.mkdir(parents=True, exist_ok=True)
-        file_name = dir_name / f"{Path(logger_name).name}.log"
+        file_name = dir_name / file_name
 
         fh = RotatingFileHandler(
             file_name, maxBytes=10_000_000, backupCount=5, encoding=encoding
@@ -48,3 +49,9 @@ def get_logger(
         log.addHandler(ch)
 
     return log
+
+
+log_manager = get_logger(
+    "task_manager",
+    "task_manager.log",
+)
