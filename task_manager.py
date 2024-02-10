@@ -17,8 +17,11 @@ from typing import Callable, AnyStr, IO
 import psutil
 
 import db
-from common import log
-from config import ENCODING
+from common import get_logger
+from config import ENCODING, DIR, PATTERN_FILE_JOB_COMMAND, DIR_TEMP
+
+
+log = get_logger("task_manager")
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
