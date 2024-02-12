@@ -86,6 +86,7 @@ class TaskStatusEnum(enum.StrEnum):
     Running = enum.auto()
     Finished = enum.auto()
     Stopped = enum.auto()
+    Unknown = enum.auto()
 
 
 @enum.unique
@@ -248,6 +249,10 @@ class TaskRun(BaseModel):
                     raise_about_bad_status()
 
                 self.finish_date = datetime.now()
+
+            case TaskStatusEnum.Unknown:
+                if self.status != TaskStatusEnum.Running:
+                    raise_about_bad_status()
 
         self.status = value
 
