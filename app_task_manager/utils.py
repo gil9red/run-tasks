@@ -21,6 +21,9 @@ from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND, SCRIPT_N
 from app_task_manager.common import log_manager as log
 
 
+IS_WIN: bool = sys.platform == "win32"
+
+
 # SOURCE: https://psutil.readthedocs.io/en/latest/index.html#kill-process-tree
 def kill_proc_tree(
     pid, sig=signal.SIGTERM, include_parent=True, timeout=None, on_terminate=None
@@ -42,6 +45,39 @@ def kill_proc_tree(
             pass
     gone, alive = psutil.wait_procs(children, timeout=timeout, callback=on_terminate)
     return gone, alive
+
+
+def get_shell_command(file_name_command: str) -> list[str]:
+    command: list[str] = []
+    if IS_WIN:
+        command += ["cmd", "/c", "call"]
+    else:
+        command += ["/bin/bash", "-xe"]
+
+    command.append(file_name_command)
+
+    return command
+
+
+def create_temp_file(task_db: db.Task, task_run_db: db.TaskRun) -> IO:
+    file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
+        script_name=SCRIPT_NAME,
+        job_id=task_db.id,
+        job_run_id=task_run_db.id,
+    )
+
+    # NOTE: Пример названия файла "run-tasks_job4_run163__cx6w_2zk.bat"
+    temp_file = NamedTemporaryFile(
+        mode="w",
+        prefix=f"{file_name_command}__",
+        suffix=".bat" if IS_WIN else ".sh",
+        encoding="UTF-8",
+        delete_on_close=False,
+    )
+    temp_file.write(task_run_db.command)
+    temp_file.flush()
+
+    return temp_file
 
 
 class ThreadRunProcess(threading.Thread):
@@ -183,35 +219,10 @@ class TaskThread(threading.Thread):
 
             return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
 
-        is_win = sys.platform == "win32"
-        file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
-            script_name=SCRIPT_NAME,
-            job_id=task_db.id,
-            job_run_id=task_run_db.id,
-        )
-
-        # NOTE: Пример имени "run-tasks_job4_run163__cx6w_2zk.bat"
-        temp_file = NamedTemporaryFile(
-            mode="w",
-            prefix=f"{file_name_command}__",
-            suffix=".bat" if is_win else ".sh",
-            encoding="UTF-8",
-            delete_on_close=False,
-        )
-        temp_file.write(task_run_db.command)
-        temp_file.close()
-
-        full_file_name_command = temp_file.name
-
-        command: list[str] = []
-        if is_win:
-            command += ["cmd", "/c", "call"]
-        else:
-            command += ["/bin/bash", "-xe"]
-        command.append(full_file_name_command)
+        temp_file = create_temp_file(task_db, task_run_db)
 
         thread = ThreadRunProcess(
-            command=command,
+            command=get_shell_command(temp_file.name),
             on_stdout_callback=process_stdout,
             on_stderr_callback=process_stderr,
             on_start_callback=start_callback,
@@ -221,6 +232,9 @@ class TaskThread(threading.Thread):
         )
         thread.start()
         thread.join()
+
+        temp_file.close()
+
         process_return_code = thread.process_return_code
         log.debug(f"{log_prefix} process_return_code: {process_return_code}")
 

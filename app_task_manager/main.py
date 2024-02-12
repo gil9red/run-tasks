@@ -103,6 +103,7 @@ class TaskManager:
             if thread.is_alive():
                 thread.stop()
 
+        # TODO: Не нужно ожидание, если нет активных потоков
         log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд")
         time.sleep(self.timeout_on_stopping_secs)
 
