@@ -11,9 +11,11 @@ import time
 import traceback
 
 import db
-from common import log_manager as log
-from config import ENCODING
-from utils import TaskThread
+
+from app_task_manager.common import log_manager as log
+from app_task_manager.config import ENCODING
+
+from app_task_manager.utils import TaskThread
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
@@ -115,29 +117,10 @@ class TaskManager:
 if __name__ == "__main__":
     task_manager = TaskManager()
 
-    # TODO: Пример создания/обновления задач
-    # db.Task.add(
-    #     name="example run.bat",
-    #     command="run.bat",
-    # )
-    # db.Task.add(
-    #     name="example python",
-    #     command='python -c "import uuid;print(uuid.uuid4())"',
-    # )
-    # db.Task.add(
-    #     name="example python for",
-    #     command='python -c "import time;[(print(i), time.sleep(1)) for i in range(10)]"',
-    # )
-    # db.Task.add(
-    #     name="example python pyqt gui",
-    #     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
-    # )
-
     task_manager.start_all()
 
     # TODO: Запуск всех задач из базы
     for task in db.Task.select().where(db.Task.is_enabled == True):
         task.add_run()
 
-    # TODO:
     task_manager.wait_all()

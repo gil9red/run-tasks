@@ -22,7 +22,7 @@ from peewee import (
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
-from config import DB_FILE_NAME
+from root_config import DB_FILE_NAME
 
 
 # SOURCE: https://github.com/gil9red/SimplePyScripts/blob/99b0761d0a69fb410f119aae0caa9edc000ce97f/shorten.py

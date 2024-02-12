@@ -16,8 +16,9 @@ from typing import Callable, IO, AnyStr
 import psutil
 
 import db
-from config import ENCODING, PATTERN_FILE_JOB_COMMAND, SCRIPT_NAME
-from common import log_manager as log
+
+from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND, SCRIPT_NAME
+from app_task_manager.common import log_manager as log
 
 
 # SOURCE: https://psutil.readthedocs.io/en/latest/index.html#kill-process-tree

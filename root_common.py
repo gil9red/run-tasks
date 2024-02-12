@@ -9,7 +9,7 @@ import sys
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from config import DIR_LOGS
+from root_config import DIR_LOGS
 
 
 def get_logger(
@@ -49,9 +49,3 @@ def get_logger(
         log.addHandler(ch)
 
     return log
-
-
-log_manager = get_logger(
-    logger_name="task_manager",
-    file_name="task_manager.log",
-)

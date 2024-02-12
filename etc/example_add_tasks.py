@@ -8,6 +8,25 @@ import time
 import db
 
 
+# TODO: Пример создания/обновления задач
+# db.Task.add(
+#     name="example run.bat",
+#     command="run.bat",
+# )
+# db.Task.add(
+#     name="example python",
+#     command='python -c "import uuid;print(uuid.uuid4())"',
+# )
+# db.Task.add(
+#     name="example python for",
+#     command='python -c "import time;[(print(i), time.sleep(1)) for i in range(10)]"',
+# )
+# db.Task.add(
+#     name="example python pyqt gui",
+#     command=r'python "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"',
+# )
+
+
 # run = db.Task.get_by_id(1).add_run()
 # print(run)
 # time.sleep(5)
