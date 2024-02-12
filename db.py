@@ -225,7 +225,9 @@ class TaskRun(BaseModel):
             return
 
         def raise_about_bad_status():
-            raise ValueError(f"Нельзя изменить статус {self.status.value!r} в {value!r}")
+            raise ValueError(
+                f"Нельзя изменить статус {self.status.value!r} в {value!r}"
+            )
 
         match value:
             case TaskStatusEnum.Pending:

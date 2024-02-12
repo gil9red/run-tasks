@@ -183,7 +183,7 @@ class TaskThread(threading.Thread):
 
             return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
 
-        is_win = sys.platform == 'win32'
+        is_win = sys.platform == "win32"
         file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
             script_name=SCRIPT_NAME,
             job_id=task_db.id,
