@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 import traceback
+from datetime import datetime, timedelta
 
 import db
 
@@ -99,13 +100,24 @@ class TaskManager:
         log.info("Остановка всех задач")
         self._is_stopped = True
 
-        for thread in list(self.tasks.values()):
-            if thread.is_alive():
-                thread.stop()
+        for t in list(self.tasks.values()):
+            if t.is_alive():
+                t.stop()
 
-        # TODO: Не нужно ожидание, если нет активных потоков
-        log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд")
-        time.sleep(self.timeout_on_stopping_secs)
+        log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд на завершение потоков")
+
+        end_date = datetime.now() + timedelta(seconds=self.timeout_on_stopping_secs)
+        while True:
+            if not any(t.is_alive() for t in list(self.tasks.values())):
+                log.info("Все потоки завершены")
+                break
+
+            if datetime.now() > end_date:
+                log.info("Вышло время на завершение потоков")
+                # TODO: Нужно явно убивать процессы (проверить можно убрав выше t.stop())
+                break
+
+            time.sleep(0.1)
 
         self._is_stopped = False
 
