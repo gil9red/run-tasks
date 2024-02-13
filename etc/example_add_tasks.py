@@ -8,6 +8,17 @@ import time
 import db
 
 
+# # TODO: Пример создания/обновления мультистроковой задачи
+# db.Task.add(
+#     name="multiline command",
+#     command=r"""
+# set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
+# %PYTHON% -V
+# %PYTHON% -c "print(3 * 10)"
+# """,
+# ).add_run()
+
+
 # TODO: Пример создания/обновления задач
 # db.Task.add(
 #     name="example run.bat",
