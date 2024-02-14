@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }}</title>
+
+<!-- TODO: -->
+<!--    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">-->
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
+
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</head>
+
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>name</th>
+                <th>command</th>
+                <th>description</th>
+                <th>is_enabled</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in tasks %}
+            <tr>
+                <td>{{ row.id }}</td>
+                <td>{{ row.name }}</td>
+                <td>{{ row.command }}</td>
+                <td>{{ row.description }}</td>
+                <td>{{ row.is_enabled }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table>
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>task</th>
+                <th>command</th>
+                <th>status</th>
+                <th>process_id</th>
+                <th>process_return_code</th>
+                <th>create_date</th>
+                <th>start_date</th>
+                <th>finish_date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in task_runs %}
+            <tr>
+                <td>{{ row.id }}</td>
+                <td>{{ row.task.id }}</td>
+                <td>{{ row.command }}</td>
+                <td>{{ row.status }}</td>
+                <td>{{ row.process_id }}</td>
+                <td>{{ row.process_return_code }}</td>
+                <td>{{ row.create_date }}</td>
+                <td>{{ row.start_date }}</td>
+                <td>{{ row.finish_date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+        task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="logs")
+    text = TextField()
+    kind = EnumField(choices=LogEnum)
+    date = DateTimeField(default=datetime.now)
+    <table>
+        <thead>
+            <tr>
+                <th>id</th>
+                <th>task_run</th>
+                <th>text</th>
+                <th>kind</th>
+                <th>date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in task_run_logs %}
+            <tr>
+                <td>{{ row.id }}</td>
+                <td>{{ row.task_run.id }}</td>
+                <td>{{ row.text }}</td>
+                <td>{{ row.kind }}</td>
+                <td>{{ row.date }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
