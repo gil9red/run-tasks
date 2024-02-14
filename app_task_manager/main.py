@@ -11,12 +11,10 @@ import time
 import traceback
 from datetime import datetime, timedelta
 
-import db
-
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
-
 from app_task_manager.utils import TaskThread
+from db import Task, TaskRun
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
@@ -64,7 +62,7 @@ class TaskManager:
     # TODO: название
     def _thread_wrapper_observe_tasks_on_database(self):
         while not self._is_stopped:
-            for task in db.Task.select().where(db.Task.is_enabled == True):
+            for task in Task.select().where(Task.is_enabled == True):
                 name = task.name
                 if name not in self.tasks:
                     log.info(f"Запуск задачи #{task.id} {name!r}")
@@ -133,7 +131,7 @@ if __name__ == "__main__":
     task_manager.start_all()
 
     # TODO: Запуск всех задач из базы
-    for task in db.Task.select().where(db.Task.is_enabled == True):
+    for task in Task.select().where(Task.is_enabled == True):
         task.add_run()
 
     task_manager.wait_all()

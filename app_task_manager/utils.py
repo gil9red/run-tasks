@@ -15,10 +15,9 @@ from typing import Callable, IO, AnyStr
 
 import psutil
 
-import db
-
 from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND, SCRIPT_NAME
 from app_task_manager.common import log_manager as log
+from db import Task, TaskRun, TaskStatusEnum
 
 
 IS_WIN: bool = sys.platform == "win32"
@@ -59,7 +58,7 @@ def get_shell_command(file_name_command: str) -> list[str]:
     return command
 
 
-def create_temp_file(task_db: db.Task, task_run_db: db.TaskRun) -> IO:
+def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
     file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
         script_name=SCRIPT_NAME,
         job_id=task_db.id,
@@ -166,18 +165,18 @@ class TaskThread(threading.Thread):
         )
 
         self.encoding = encoding
-        self.current_task_run: db.TaskRun | None = None
+        self.current_task_run: TaskRun | None = None
         self._is_stopped: bool = False
 
     def stop(self):
-        if self.current_task_run and self.current_task_run.status == db.TaskStatusEnum.Running:
-            self.current_task_run.set_status(db.TaskStatusEnum.Stopped)
+        if self.current_task_run and self.current_task_run.status == TaskStatusEnum.Running:
+            self.current_task_run.set_status(TaskStatusEnum.Stopped)
 
         self._is_stopped = True
 
     def run(self):
         while not self._is_stopped:
-            task_db: db.Task | None = db.Task.get_by_name(self.name)
+            task_db: Task | None = Task.get_by_name(self.name)
             if not task_db:
                 log.warn(f"Задача {self.name!r} не найдена!")
                 return
@@ -186,7 +185,7 @@ class TaskThread(threading.Thread):
                 log.info(f"Задача {self.name!r} не активна!")
                 return
 
-            task_runs = task_db.get_runs_by([db.TaskStatusEnum.Pending])
+            task_runs = task_db.get_runs_by([TaskStatusEnum.Pending])
             if task_runs:
                 task_run = task_runs[0]
                 log.info(f"[Задача #{task_db.id}] Старт запуска задачи: #{task_run.id}")
@@ -194,12 +193,12 @@ class TaskThread(threading.Thread):
 
             time.sleep(1)  # TODO:
 
-    def _start_task_run(self, task_db: db.Task, task_run_db: db.TaskRun):
+    def _start_task_run(self, task_db: Task, task_run_db: TaskRun):
         log_prefix = f"[Задача #{task_db.id}, запуск #{task_run_db.id}]"
 
         self.current_task_run = task_run_db
 
-        task_run_db.set_status(db.TaskStatusEnum.Running)
+        task_run_db.set_status(TaskStatusEnum.Running)
 
         def start_callback(process: psutil.Popen):
             log.debug(f"{log_prefix} process_id: {process.pid}")
@@ -215,9 +214,9 @@ class TaskThread(threading.Thread):
 
         def stop_on() -> bool:
             if not task_db.get_actual_is_enabled():
-                task_run_db.set_status(db.TaskStatusEnum.Stopped)
+                task_run_db.set_status(TaskStatusEnum.Stopped)
 
-            return task_run_db.get_actual_status() in [db.TaskStatusEnum.Stopped, db.TaskStatusEnum.Finished]
+            return task_run_db.get_actual_status() in [TaskStatusEnum.Stopped, TaskStatusEnum.Finished]
 
         temp_file = create_temp_file(task_db, task_run_db)
 
@@ -245,8 +244,8 @@ class TaskThread(threading.Thread):
         final_status = task_run_db.get_actual_status()
 
         # Если текущий статус pending или running
-        if final_status in (db.TaskStatusEnum.Pending, db.TaskStatusEnum.Running):
-            final_status = db.TaskStatusEnum.Finished
+        if final_status in (TaskStatusEnum.Pending, TaskStatusEnum.Running):
+            final_status = TaskStatusEnum.Finished
 
         task_run_db.set_status(final_status)
         task_run_db.save()
