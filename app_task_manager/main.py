@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
 from app_task_manager.utils import TaskThread
-from db import Task, TaskRun
+from db import Task
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
