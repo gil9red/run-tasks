@@ -58,11 +58,18 @@ def get_shell_command(file_name_command: str) -> list[str]:
     return command
 
 
-def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
-    file_name_command: str = PATTERN_FILE_JOB_COMMAND.format(
+def get_file_name_command(task_db: Task, task_run_db: TaskRun) -> str:
+    return PATTERN_FILE_JOB_COMMAND.format(
         script_name=SCRIPT_NAME,
         job_id=task_db.id,
         job_run_id=task_run_db.id,
+    )
+
+
+def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
+    file_name_command: str = get_file_name_command(
+        task_db=task_db,
+        task_run_db=task_run_db,
     )
 
     # NOTE: Пример названия файла "run-tasks_job4_run163__cx6w_2zk.bat"

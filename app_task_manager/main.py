@@ -11,10 +11,12 @@ import time
 import traceback
 from datetime import datetime, timedelta
 
+from psutil import Process, NoSuchProcess, AccessDenied
+
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
-from app_task_manager.utils import TaskThread
-from db import Task
+from app_task_manager.utils import TaskThread, get_file_name_command, kill_proc_tree
+from db import Task, TaskRun, TaskStatusEnum
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
@@ -80,12 +82,47 @@ class TaskManager:
         if not self._thread_observe_tasks_on_database.is_alive():
             self._thread_observe_tasks_on_database.start()
 
+    # TODO: название
+    def _search_unknown_task_runs(self, date: datetime):
+        for run in TaskRun.select().where(
+            TaskRun.status == TaskStatusEnum.Running, TaskRun.create_date < date
+        ):
+            log_prefix = f"[Задача #{run.task.id}, запуск #{run.id}]"
+            try:
+                # Попробуем найти процесс, если задан
+                if run.process_id:
+                    p = Process(run.process_id)
+                    process_command: str = " ".join(p.cmdline())
+                    run_command = get_file_name_command(run.task, run)
+
+                    # Если процесс найден и в аргументах запуска есть часть названия батника
+                    if run_command in process_command:
+                        log.debug(f"{log_prefix} Закрытие висящего процесса с id={run.process_id}")
+                        kill_proc_tree(run.process_id)
+
+            except (NoSuchProcess, AccessDenied):
+                pass
+
+            except Exception as e:
+                log.debug(f"{log_prefix} Ошибка при работе с процессом {run.process_id}: {e}")
+
+            log.debug(
+                f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) статус {TaskStatusEnum.Unknown.value}"
+            )
+            run.set_status(TaskStatusEnum.Unknown)
+
     def start_all(self):
         if self._is_stopped:
             log.warn("Нельзя запустить задачи, когда было вызвана остановка")
             return
 
         log.info("Запуск всех задач из базы")
+
+        threading.Thread(
+            target=self._search_unknown_task_runs,
+            args=(datetime.now(),),
+            daemon=True,  # Thread dies with the program
+        ).start()
 
         # TODO:
         self.observe_tasks_on_database()
@@ -102,7 +139,9 @@ class TaskManager:
             if t.is_alive():
                 t.stop()
 
-        log.info(f"Ожидание {self.timeout_on_stopping_secs} секунд на завершение потоков")
+        log.info(
+            f"Ожидание {self.timeout_on_stopping_secs} секунд на завершение потоков"
+        )
 
         end_date = datetime.now() + timedelta(seconds=self.timeout_on_stopping_secs)
         while True:
