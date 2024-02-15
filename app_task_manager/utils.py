@@ -58,7 +58,7 @@ def get_shell_command(file_name_command: str) -> list[str]:
     return command
 
 
-def get_file_name_command(task_db: Task, task_run_db: TaskRun) -> str:
+def get_prefix_file_name_command(task_db: Task, task_run_db: TaskRun) -> str:
     return PATTERN_FILE_JOB_COMMAND.format(
         script_name=SCRIPT_NAME,
         job_id=task_db.id,
@@ -67,7 +67,7 @@ def get_file_name_command(task_db: Task, task_run_db: TaskRun) -> str:
 
 
 def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
-    file_name_command: str = get_file_name_command(
+    file_name_command: str = get_prefix_file_name_command(
         task_db=task_db,
         task_run_db=task_run_db,
     )

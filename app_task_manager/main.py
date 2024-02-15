@@ -15,7 +15,7 @@ from psutil import Process, NoSuchProcess, AccessDenied
 
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
-from app_task_manager.utils import TaskThread, get_file_name_command, kill_proc_tree
+from app_task_manager.utils import TaskThread, get_prefix_file_name_command, kill_proc_tree
 from db import Task, TaskRun, TaskStatusEnum
 
 
@@ -93,7 +93,7 @@ class TaskManager:
                 if run.process_id:
                     p = Process(run.process_id)
                     process_command: str = " ".join(p.cmdline())
-                    run_command = get_file_name_command(run.task, run)
+                    run_command = get_prefix_file_name_command(run.task, run)
 
                     # Если процесс найден и в аргументах запуска есть часть названия батника
                     if run_command in process_command:
