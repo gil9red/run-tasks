@@ -90,7 +90,7 @@ class TaskStatusEnum(enum.StrEnum):
 
 
 @enum.unique
-class LogEnum(enum.StrEnum):
+class LogKindEnum(enum.StrEnum):
     Out = enum.auto()
     Err = enum.auto()
 
@@ -270,7 +270,7 @@ class TaskRun(BaseModel):
     def get_actual_status(self) -> TaskStatusEnum:
         return TaskRun.get_by_id(self.id).status
 
-    def add_log(self, text: str, kind: LogEnum) -> "TaskRunLog":
+    def add_log(self, text: str, kind: LogKindEnum) -> "TaskRunLog":
         return TaskRunLog.create(
             task_run=self,
             text=text,
@@ -278,16 +278,16 @@ class TaskRun(BaseModel):
         )
 
     def add_log_out(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogEnum.Out)
+        return self.add_log(text=text, kind=LogKindEnum.Out)
 
     def add_log_err(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogEnum.Err)
+        return self.add_log(text=text, kind=LogKindEnum.Err)
 
 
 class TaskRunLog(BaseModel):
     task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="logs")
     text = TextField()
-    kind = EnumField(choices=LogEnum)
+    kind = EnumField(choices=LogKindEnum)
     date = DateTimeField(default=datetime.now)
 
 
