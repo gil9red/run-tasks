@@ -33,7 +33,26 @@ class TestTask(TestCase):
         self.assertEqual(task_2, Task.get_by_name(task_2.name))
 
     def test_get_actual_is_enabled(self):
-        self.fail()
+        task_1 = Task.add(name="task_1", command="*")
+        task_1_clone = Task.get_by_name(name=task_1.name)
+        self.assertEqual(task_1.is_enabled, task_1_clone.is_enabled)
+
+        # Значение is_enabled изменено и сохранено в базе
+        task_1.set_enabled(False)
+        self.assertFalse(task_1.is_enabled)
+        self.assertTrue(task_1_clone.is_enabled)  # Содержит старое значение is_enabled
+
+        self.assertEqual(task_1.is_enabled, task_1_clone.get_actual_is_enabled())
+
+    def test_set_enabled(self):
+        task_1 = Task.add(name="task_1", command="*")
+        self.assertTrue(task_1.is_enabled)
+
+        task_1.set_enabled(False)
+        self.assertFalse(task_1.is_enabled)
+
+        task_1.set_enabled(True)
+        self.assertTrue(task_1.is_enabled)
 
     def test_add(self):
         name = "task command one line"
@@ -80,9 +99,6 @@ class TestTask(TestCase):
             self.assertEqual(task_3.name, name)
             self.assertEqual(task_3.command, command_multi_line)
             self.assertEqual(task_3.description, description)
-
-    def test_set_enabled(self):
-        self.fail()
 
     def test_add_run(self):
         self.fail()
