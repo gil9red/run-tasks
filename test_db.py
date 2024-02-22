@@ -4,9 +4,19 @@
 __author__ = "ipetrash"
 
 
+import time
 from unittest import TestCase
+
 from playhouse.sqlite_ext import SqliteExtDatabase
-from db import NotDefinedParameterException, BaseModel, Task, TaskRun, TaskRunLog, TaskStatusEnum
+
+from db import (
+    NotDefinedParameterException,
+    BaseModel,
+    Task,
+    TaskRun,
+    TaskRunLog,
+    TaskStatusEnum,
+)
 
 
 class TestTask(TestCase):
@@ -60,23 +70,36 @@ class TestTask(TestCase):
         description = None
 
         with self.subTest(msg="Создание задачи с простой командой"):
-            task_1 = Task.add(name=name, command=command_one_line, description=description)
+            task_1 = Task.add(
+                name=name, command=command_one_line, description=description
+            )
             self.assertEqual(task_1.name, name)
             self.assertEqual(task_1.command, command_one_line)
             self.assertEqual(task_1.description, description)
 
-            self.assertEqual(task_1.id, Task.add(name=name, command=command_one_line, description=description).id)
+            self.assertEqual(
+                task_1.id,
+                Task.add(
+                    name=name, command=command_one_line, description=description
+                ).id,
+            )
 
         with self.subTest(msg="Обновление описания задачи"):
             description = f"description {name}"
-            task_1_copy = Task.add(name=name, command=command_one_line, description=description)
+            task_1_copy = Task.add(
+                name=name, command=command_one_line, description=description
+            )
             self.assertEqual(task_1_copy.id, task_1_copy.id)
             self.assertEqual(task_1_copy.name, name)
             self.assertEqual(task_1_copy.command, command_one_line)
             self.assertEqual(task_1_copy.description, description)
 
         with self.subTest(msg="Создание новой задачи с одинаковой командой"):
-            task_2 = Task.add(name=f"copy of {name}", command=command_one_line, description=description)
+            task_2 = Task.add(
+                name=f"copy of {name}",
+                command=command_one_line,
+                description=description,
+            )
             self.assertEqual(task_2.name, f"copy of {name}")
             self.assertEqual(task_2.command, command_one_line)
             self.assertEqual(task_2.description, description)
@@ -87,14 +110,20 @@ class TestTask(TestCase):
             self.assertEqual(task_1_copy.id, task_1_copy.id)
             self.assertEqual(task_1_copy.name, name)
             self.assertEqual(task_1_copy.command, command_one_line)
-            self.assertIsNone(task_1_copy.description)  # Описание было затерто, т.к. не передавалось
+            self.assertIsNone(
+                task_1_copy.description
+            )  # Описание было затерто, т.к. не передавалось
 
         with self.subTest(msg="Создание задачи с сложной командой"):
             name = "task command multi line"
-            command_multi_line = "SET IP=127.0.0.1\nping %IP%\nping 127.0.0.1\nping 127.0.0.1"
+            command_multi_line = (
+                "SET IP=127.0.0.1\nping %IP%\nping 127.0.0.1\nping 127.0.0.1"
+            )
             description = f"description {name}"
 
-            task_3 = Task.add(name=name, command=command_multi_line, description=description)
+            task_3 = Task.add(
+                name=name, command=command_multi_line, description=description
+            )
             self.assertEqual(task_3.name, name)
             self.assertEqual(task_3.command, command_multi_line)
             self.assertEqual(task_3.description, description)
@@ -118,7 +147,32 @@ class TestTask(TestCase):
         self.assertEqual(task_1_modified.command, task_1_run_2.command)
 
     def test_get_runs_by(self):
-        self.fail()
+        task_1 = Task.add(name="task_1", command="*")
+        self.assertEqual(task_1.get_runs_by([]), [])
+
+        task_1_run_1 = task_1.add_run()
+        time.sleep(0.001)
+
+        task_1_run_2 = task_1.add_run()
+        time.sleep(0.001)
+
+        task_1_run_3 = task_1.add_run()
+
+        self.assertEqual(
+            task_1.get_runs_by([TaskStatusEnum.Pending]),
+            [task_1_run_1, task_1_run_2, task_1_run_3],
+        )
+        self.assertEqual(task_1.get_runs_by([TaskStatusEnum.Running]), [])
+
+        task_1_run_2.set_status(TaskStatusEnum.Running)
+        self.assertEqual(task_1.get_runs_by([TaskStatusEnum.Running]), [task_1_run_2])
+
+        task_1_run_1.set_status(TaskStatusEnum.Running)
+        task_1_run_3.set_status(TaskStatusEnum.Running)
+        self.assertEqual(
+            task_1.get_runs_by([TaskStatusEnum.Running]),
+            [task_1_run_1, task_1_run_2, task_1_run_3],
+        )
 
 
 class TestTaskRun(TestCase):
