@@ -357,7 +357,16 @@ class TestTaskRun(TestCase):
         self.assertEqual(process_id, run.process_id)
 
     def test_get_actual_status(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_run()
+        run_clone = TaskRun.get_by_id(run.id)
+        self.assertEqual(run.status, run_clone.status)
+
+        # Значение status изменено и сохранено в базе
+        run.set_status(TaskStatusEnum.Running)
+        self.assertEqual(run.status, TaskStatusEnum.Running)
+        self.assertEqual(run_clone.status, TaskStatusEnum.Pending)  # Содержит старое значение
+
+        self.assertEqual(run.status, run_clone.get_actual_status())
 
     def test_add_log(self):
         self.fail()
