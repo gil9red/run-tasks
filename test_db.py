@@ -465,7 +465,28 @@ class TestTaskRun(TestCase):
 class TestTaskRunLog(TestCase):
     def setUp(self):
         self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(":memory:")
+        self.test_db = SqliteExtDatabase(
+            ":memory:",
+            pragmas={
+                "foreign_keys": 1,
+            },
+        )
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
+
+    def test_delete_cascade(self):
+        run = Task.add(name="*", command="*").add_run()
+
+        items = []
+        for i in range(5):
+            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.Out))
+            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.Err))
+
+            items.append(run.add_log_out(f"add_log_out {i + 1}"))
+            items.append(run.add_log_err(f"add_log_err {i + 1}"))
+
+        self.assertEqual(len(items), run.logs.count())
+
+        run.delete_instance()
+        self.assertEqual(0, run.logs.count())
