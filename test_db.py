@@ -14,15 +14,20 @@ from db import (
     BaseModel,
     Task,
     TaskRun,
-    TaskRunLog,
     TaskStatusEnum,
+    LogKindEnum,
 )
 
 
 class TestTask(TestCase):
     def setUp(self):
         self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(":memory:")
+        self.test_db = SqliteExtDatabase(
+            ":memory:",
+            pragmas={
+                "foreign_keys": 1,
+            },
+        )
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
@@ -178,7 +183,12 @@ class TestTask(TestCase):
 class TestTaskRun(TestCase):
     def setUp(self):
         self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(":memory:")
+        self.test_db = SqliteExtDatabase(
+            ":memory:",
+            pragmas={
+                "foreign_keys": 1,
+            },
+        )
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
@@ -231,85 +241,115 @@ class TestTaskRun(TestCase):
         with self.subTest(msg="Pending -> Running -> Pending -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Pending)
+            )
 
         with self.subTest(msg="Pending -> Running -> Finished -> Pending -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Finished)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Pending)
+            )
 
         with self.subTest(msg="Pending -> Running -> Stopped -> Pending -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Stopped)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Pending)
+            )
 
         with self.subTest(msg="Pending -> Running -> Unknown -> Pending -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Unknown)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Pending)
+            )
 
         with self.subTest(msg="Pending -> Running -> Stopped -> Running -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Stopped)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Running)
+            )
 
         with self.subTest(msg="Pending -> Running -> Finished -> Running -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Finished)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Running)
+            )
 
         with self.subTest(msg="Pending -> Running -> Unknown -> Running -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Unknown)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Running)
+            )
 
         with self.subTest(msg="Pending -> Running -> Finished -> Stopped -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Finished)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Stopped))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Stopped)
+            )
 
         with self.subTest(msg="Pending -> Running -> Unknown -> Stopped -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Unknown)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Stopped))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Stopped)
+            )
 
         with self.subTest(msg="Pending -> Finished -> <error>"):
             run = Task.add(name="*", command="*").add_run()
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Finished)
+            )
 
         with self.subTest(msg="Pending -> Stopped -> Finished -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Stopped)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Finished)
+            )
 
         with self.subTest(msg="Pending -> Running -> Unknown -> Finished -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Unknown)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Finished)
+            )
 
         with self.subTest(msg="Pending -> Unknown -> <error>"):
             run = Task.add(name="*", command="*").add_run()
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Unknown)
+            )
 
         with self.subTest(msg="Pending -> Stopped -> Unknown -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Stopped)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Unknown)
+            )
 
         with self.subTest(msg="Pending -> Running -> Finished -> Unknown -> <error>"):
             run = Task.add(name="*", command="*").add_run()
             run.set_status(TaskStatusEnum.Running)
             run.set_status(TaskStatusEnum.Finished)
-            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+            self.assertRaises(
+                ValueError, lambda: run.set_status(TaskStatusEnum.Unknown)
+            )
 
         with self.subTest(msg="Pending -> Running -> Finished -> <ok>"):
             run = Task.add(name="*", command="*").add_run()
@@ -364,18 +404,62 @@ class TestTaskRun(TestCase):
         # Значение status изменено и сохранено в базе
         run.set_status(TaskStatusEnum.Running)
         self.assertEqual(run.status, TaskStatusEnum.Running)
-        self.assertEqual(run_clone.status, TaskStatusEnum.Pending)  # Содержит старое значение
+
+        # Содержит старое значение
+        self.assertEqual(run_clone.status, TaskStatusEnum.Pending)
 
         self.assertEqual(run.status, run_clone.get_actual_status())
 
     def test_add_log(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_run()
+
+        items = []
+        for i in range(5):
+            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.Out))
+            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.Err))
+
+        self.assertEqual(len(items), run.logs.count())
+
+        run.delete_instance()
+        self.assertEqual(0, run.logs.count())
 
     def test_add_log_out(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_run()
+
+        items = []
+        for i in range(5):
+            items.append(run.add_log_out(f"add_log_out {i + 1}"))
+
+        self.assertEqual(len(items), run.logs.count())
+
+        run.delete_instance()
+        self.assertEqual(0, run.logs.count())
 
     def test_add_log_err(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_run()
+
+        items = []
+        for i in range(5):
+            items.append(run.add_log_err(f"add_log_err {i + 1}"))
+
+        self.assertEqual(len(items), run.logs.count())
+
+        run.delete_instance()
+        self.assertEqual(0, run.logs.count())
+
+    def test_delete_cascade(self):
+        task = Task.add(name="*", command="*")
+        items = [
+            task.add_run(),
+            task.add_run(),
+            task.add_run(),
+            task.add_run(),
+            task.add_run(),
+        ]
+        self.assertEqual(len(items), task.runs.count())
+
+        task.delete_instance()
+        self.assertEqual(0, task.runs.count())
 
 
 class TestTaskRunLog(TestCase):
