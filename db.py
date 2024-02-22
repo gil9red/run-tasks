@@ -222,12 +222,17 @@ class TaskRun(BaseModel):
     finish_date = DateTimeField(null=True)
 
     def set_status(self, value: TaskStatusEnum):
+        if value is None:
+            raise ValueError(
+                f"Нельзя изменить статус {self.status.value!r} в {value!r}"
+            )
+
         if self.status == value:
             return
 
         def raise_about_bad_status():
             raise ValueError(
-                f"Нельзя изменить статус {self.status.value!r} в {value!r}"
+                f"Нельзя изменить статус {self.status.value!r} в {value.value!r}"
             )
 
         match value:
@@ -245,7 +250,7 @@ class TaskRun(BaseModel):
                     raise_about_bad_status()
 
             case TaskStatusEnum.Finished:
-                if self.status not in [TaskStatusEnum.Pending, TaskStatusEnum.Running]:
+                if self.status != TaskStatusEnum.Running:
                     raise_about_bad_status()
 
                 self.finish_date = datetime.now()

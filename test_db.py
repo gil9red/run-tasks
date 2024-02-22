@@ -184,10 +184,177 @@ class TestTaskRun(TestCase):
         self.test_db.create_tables(self.models)
 
     def test_set_status(self):
-        self.fail()
+        with self.subTest(msg="Статус не меняется вместе с зависимыми полями"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            run.set_status(TaskStatusEnum.Pending)
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            self.assertIsNone(run.start_date)
+            run.set_status(TaskStatusEnum.Running)
+            self.assertEqual(run.status, TaskStatusEnum.Running)
+            self.assertIsNotNone(run.start_date)
+
+            start_date = run.start_date
+            run.set_status(TaskStatusEnum.Running)
+            self.assertEqual(run.start_date, start_date)
+
+            self.assertIsNone(run.finish_date)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertEqual(run.status, TaskStatusEnum.Finished)
+            self.assertIsNotNone(run.finish_date)
+
+            finish_date = run.finish_date
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertEqual(run.finish_date, finish_date)
+
+            run_2 = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run_2.status, TaskStatusEnum.Pending)
+            run_2.set_status(TaskStatusEnum.Stopped)
+            self.assertEqual(run_2.status, TaskStatusEnum.Stopped)
+            run_2.set_status(TaskStatusEnum.Stopped)
+            self.assertEqual(run_2.status, TaskStatusEnum.Stopped)
+
+            run_3 = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run_3.status, TaskStatusEnum.Pending)
+            run_3.set_status(TaskStatusEnum.Running)
+            run_3.set_status(TaskStatusEnum.Unknown)
+            self.assertEqual(run_3.status, TaskStatusEnum.Unknown)
+            run_3.set_status(TaskStatusEnum.Unknown)
+            self.assertEqual(run_3.status, TaskStatusEnum.Unknown)
+
+        with self.subTest(msg="Установка статуса в None -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertRaises(ValueError, lambda: run.set_status(None))
+
+        with self.subTest(msg="Pending -> Running -> Pending -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+
+        with self.subTest(msg="Pending -> Running -> Finished -> Pending -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+
+        with self.subTest(msg="Pending -> Running -> Stopped -> Pending -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+
+        with self.subTest(msg="Pending -> Running -> Unknown -> Pending -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Unknown)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Pending))
+
+        with self.subTest(msg="Pending -> Running -> Stopped -> Running -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+
+        with self.subTest(msg="Pending -> Running -> Finished -> Running -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+
+        with self.subTest(msg="Pending -> Running -> Unknown -> Running -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Unknown)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Running))
+
+        with self.subTest(msg="Pending -> Running -> Finished -> Stopped -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Stopped))
+
+        with self.subTest(msg="Pending -> Running -> Unknown -> Stopped -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Unknown)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Stopped))
+
+        with self.subTest(msg="Pending -> Finished -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+
+        with self.subTest(msg="Pending -> Stopped -> Finished -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+
+        with self.subTest(msg="Pending -> Running -> Unknown -> Finished -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Unknown)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Finished))
+
+        with self.subTest(msg="Pending -> Unknown -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+
+        with self.subTest(msg="Pending -> Stopped -> Unknown -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+
+        with self.subTest(msg="Pending -> Running -> Finished -> Unknown -> <error>"):
+            run = Task.add(name="*", command="*").add_run()
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertRaises(ValueError, lambda: run.set_status(TaskStatusEnum.Unknown))
+
+        with self.subTest(msg="Pending -> Running -> Finished -> <ok>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            self.assertIsNone(run.start_date)
+            run.set_status(TaskStatusEnum.Running)
+            self.assertEqual(run.status, TaskStatusEnum.Running)
+            self.assertIsNotNone(run.start_date)
+
+            self.assertIsNone(run.finish_date)
+            run.set_status(TaskStatusEnum.Finished)
+            self.assertEqual(run.status, TaskStatusEnum.Finished)
+            self.assertIsNotNone(run.finish_date)
+
+        with self.subTest(msg="Pending -> Stopped -> <ok>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertEqual(run.status, TaskStatusEnum.Stopped)
+
+        with self.subTest(msg="Pending -> Running -> Stopped -> <ok>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Stopped)
+            self.assertEqual(run.status, TaskStatusEnum.Stopped)
+
+        with self.subTest(msg="Pending -> Running -> Unknown -> <ok>"):
+            run = Task.add(name="*", command="*").add_run()
+            self.assertEqual(run.status, TaskStatusEnum.Pending)
+
+            run.set_status(TaskStatusEnum.Running)
+            run.set_status(TaskStatusEnum.Unknown)
+            self.assertEqual(run.status, TaskStatusEnum.Unknown)
 
     def test_set_process_id(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_run()
+        self.assertIsNone(run.process_id)
+
+        process_id = 9999
+        run.set_process_id(process_id)
+        self.assertEqual(process_id, run.process_id)
 
     def test_get_actual_status(self):
         self.fail()
