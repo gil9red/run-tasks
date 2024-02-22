@@ -59,7 +59,7 @@ class TestTask(TestCase):
         command_one_line = "ping 127.0.0.1"
         description = None
 
-        with self.subTest(msg="Create task with simple command"):
+        with self.subTest(msg="Создание задачи с простой командой"):
             task_1 = Task.add(name=name, command=command_one_line, description=description)
             self.assertEqual(task_1.name, name)
             self.assertEqual(task_1.command, command_one_line)
@@ -67,7 +67,7 @@ class TestTask(TestCase):
 
             self.assertEqual(task_1.id, Task.add(name=name, command=command_one_line, description=description).id)
 
-        with self.subTest(msg="Update description of task"):
+        with self.subTest(msg="Обновление описания задачи"):
             description = f"description {name}"
             task_1_copy = Task.add(name=name, command=command_one_line, description=description)
             self.assertEqual(task_1_copy.id, task_1_copy.id)
@@ -75,14 +75,13 @@ class TestTask(TestCase):
             self.assertEqual(task_1_copy.command, command_one_line)
             self.assertEqual(task_1_copy.description, description)
 
-        # Разрешено создание задач с одинаковыми командами
-        with self.subTest(msg="Create task with copy command"):
+        with self.subTest(msg="Создание новой задачи с одинаковой командой"):
             task_2 = Task.add(name=f"copy of {name}", command=command_one_line, description=description)
             self.assertEqual(task_2.name, f"copy of {name}")
             self.assertEqual(task_2.command, command_one_line)
             self.assertEqual(task_2.description, description)
 
-        with self.subTest(msg="Update command of task"):
+        with self.subTest(msg="Обновление команды задачи"):
             command_one_line = "ping 1.1.1.1"
             task_1_copy = Task.add(name=name, command=command_one_line)
             self.assertEqual(task_1_copy.id, task_1_copy.id)
@@ -90,7 +89,7 @@ class TestTask(TestCase):
             self.assertEqual(task_1_copy.command, command_one_line)
             self.assertIsNone(task_1_copy.description)  # Описание было затерто, т.к. не передавалось
 
-        with self.subTest(msg="Create task with complex command"):
+        with self.subTest(msg="Создание задачи с сложной командой"):
             name = "task command multi line"
             command_multi_line = "SET IP=127.0.0.1\nping %IP%\nping 127.0.0.1\nping 127.0.0.1"
             description = f"description {name}"
@@ -101,7 +100,22 @@ class TestTask(TestCase):
             self.assertEqual(task_3.description, description)
 
     def test_add_run(self):
-        self.fail()
+        task_1 = Task.add(name="task_1", command="*")
+        task_1_run_1 = task_1.add_run()
+        self.assertIsNotNone(task_1_run_1)
+        self.assertEqual(task_1.command, task_1_run_1.command)
+        self.assertEqual(task_1_run_1.status, TaskStatusEnum.Pending)
+        self.assertIsNone(task_1_run_1.process_id)
+        self.assertIsNone(task_1_run_1.process_return_code)
+        self.assertIsNotNone(task_1_run_1.create_date)
+        self.assertIsNone(task_1_run_1.start_date)
+        self.assertIsNone(task_1_run_1.finish_date)
+
+        # Update task command
+        task_1_modified = Task.add(name="task_1", command="**")
+        task_1_run_2 = task_1_modified.add_run()
+        self.assertIsNotNone(task_1_run_2)
+        self.assertEqual(task_1_modified.command, task_1_run_2.command)
 
     def test_get_runs_by(self):
         self.fail()
