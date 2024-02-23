@@ -35,7 +35,7 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(port=config.PORT)
-
-    # # Public IP
-    # app.run(host='0.0.0.0')
+    app.run(
+        host=config.HOST,
+        port=config.PORT,
+    )
