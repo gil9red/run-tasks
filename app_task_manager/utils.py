@@ -195,13 +195,14 @@ class TaskThread(threading.Thread):
             task_runs = task_db.get_runs_by([TaskStatusEnum.Pending])
             if task_runs:
                 task_run = task_runs[0]
-                log.info(f"[Задача #{task_db.id}] Старт запуска задачи: #{task_run.id}")
                 self._start_task_run(task_db, task_run)
 
             time.sleep(1)  # TODO:
 
     def _start_task_run(self, task_db: Task, task_run_db: TaskRun):
         log_prefix = f"[Задача #{task_db.id}, запуск #{task_run_db.id}]"
+
+        log.info(f"{log_prefix} Старт запуска задачи")
 
         self.current_task_run = task_run_db
 
