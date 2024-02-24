@@ -87,6 +87,7 @@ class TaskStatusEnum(enum.StrEnum):
     Finished = enum.auto()
     Stopped = enum.auto()
     Unknown = enum.auto()
+    Error = enum.auto()
 
 
 @enum.unique
@@ -259,9 +260,17 @@ class TaskRun(BaseModel):
                 if self.status != TaskStatusEnum.Running:
                     raise_about_bad_status()
 
+            case TaskStatusEnum.Error:
+                # Ignore
+                pass
+
         self.status = value
 
         self.save()
+
+    def set_error(self, error_text: str):
+        self.set_status(TaskStatusEnum.Error)
+        self.add_log_err(text=error_text)
 
     def set_process_id(self, value: int):
         self.process_id = value

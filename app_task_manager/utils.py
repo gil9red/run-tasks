@@ -9,6 +9,7 @@ import signal
 import subprocess
 import sys
 import threading
+import traceback
 import time
 from tempfile import NamedTemporaryFile
 from typing import Callable, IO, AnyStr
@@ -58,18 +59,18 @@ def get_shell_command(file_name_command: str) -> list[str]:
     return command
 
 
-def get_prefix_file_name_command(task_db: Task, task_run_db: TaskRun) -> str:
+def get_prefix_file_name_command(task: Task, task_run: TaskRun) -> str:
     return PATTERN_FILE_JOB_COMMAND.format(
         script_name=SCRIPT_NAME,
-        job_id=task_db.id,
-        job_run_id=task_run_db.id,
+        job_id=task.id,
+        job_run_id=task_run.id,
     )
 
 
-def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
+def create_temp_file(task: Task, task_run: TaskRun) -> IO:
     file_name_command: str = get_prefix_file_name_command(
-        task_db=task_db,
-        task_run_db=task_run_db,
+        task=task,
+        task_run=task_run,
     )
 
     # NOTE: Пример названия файла "run-tasks_job4_run163__cx6w_2zk.bat"
@@ -80,7 +81,7 @@ def create_temp_file(task_db: Task, task_run_db: TaskRun) -> IO:
         encoding="UTF-8",
         delete_on_close=False,
     )
-    temp_file.write(task_run_db.command)
+    temp_file.write(task_run.command)
     temp_file.flush()
 
     return temp_file
@@ -183,83 +184,90 @@ class TaskThread(threading.Thread):
 
     def run(self):
         while not self._is_stopped:
-            task_db: Task | None = Task.get_by_name(self.name)
-            if not task_db:
+            task: Task | None = Task.get_by_name(self.name)
+            if not task:
                 log.warn(f"Задача {self.name!r} не найдена!")
                 return
 
-            if not task_db.is_enabled:
+            if not task.is_enabled:
                 log.info(f"Задача {self.name!r} не активна!")
                 return
 
-            task_runs = task_db.get_runs_by([TaskStatusEnum.Pending])
+            task_runs = task.get_runs_by([TaskStatusEnum.Pending])
             if task_runs:
                 task_run = task_runs[0]
-                self._start_task_run(task_db, task_run)
+                self._start_task_run(task, task_run)
 
             time.sleep(1)  # TODO:
 
-    def _start_task_run(self, task_db: Task, task_run_db: TaskRun):
-        log_prefix = f"[Задача #{task_db.id}, запуск #{task_run_db.id}]"
-
-        log.info(f"{log_prefix} Старт запуска задачи")
-
-        self.current_task_run = task_run_db
-
-        task_run_db.set_status(TaskStatusEnum.Running)
-
+    def _start_task_run(self, task: Task, task_run: TaskRun):
         def start_callback(process: psutil.Popen):
             log.debug(f"{log_prefix} process_id: {process.pid}")
-            task_run_db.set_process_id(process.pid)
+            task_run.set_process_id(process.pid)
 
         def process_stdout(text: str):
             log.debug(f"{log_prefix} stdout: {text!r}")
-            task_run_db.add_log_out(text)
+            task_run.add_log_out(text)
 
         def process_stderr(text: str):
             log.debug(f"{log_prefix} stderr: {text!r}")
-            task_run_db.add_log_err(text)
+            task_run.add_log_err(text)
 
         def stop_on() -> bool:
-            if not task_db.get_actual_is_enabled():
-                task_run_db.set_status(TaskStatusEnum.Stopped)
+            if not task.get_actual_is_enabled():
+                task_run.set_status(TaskStatusEnum.Stopped)
 
-            status = task_run_db.get_actual_status()
+            status = task_run.get_actual_status()
             need_stop = status != TaskStatusEnum.Running
             if need_stop:
                 log.debug(f"{log_prefix} нужно остановить задачу, текущий статус {status.value}")
 
             return need_stop
 
-        temp_file = create_temp_file(task_db, task_run_db)
+        log_prefix = f"[Задача #{task.id}, запуск #{task_run.id}]"
+        try:
+            log.info(f"{log_prefix} Старт запуска задачи")
 
-        thread = ThreadRunProcess(
-            command=get_shell_command(temp_file.name),
-            on_stdout_callback=process_stdout,
-            on_stderr_callback=process_stderr,
-            on_start_callback=start_callback,
-            stop_on=stop_on,
-            encoding=self.encoding,
-        )
-        thread.start()
-        thread.join()
+            self.current_task_run = task_run
 
-        temp_file.close()
+            task_run.set_status(TaskStatusEnum.Running)
 
-        process_return_code = thread.process_return_code
-        log.debug(f"{log_prefix} process_return_code: {process_return_code}")
+            temp_file = create_temp_file(task, task_run)
 
-        if process_return_code is not None:
-            task_run_db.process_return_code = process_return_code
+            thread = ThreadRunProcess(
+                command=get_shell_command(temp_file.name),
+                on_stdout_callback=process_stdout,
+                on_stderr_callback=process_stderr,
+                on_start_callback=start_callback,
+                stop_on=stop_on,
+                encoding=self.encoding,
+            )
+            thread.start()
+            thread.join()
 
-        # Статус может поменяться, поэтому нужно его заново получить из базы
-        final_status = task_run_db.get_actual_status()
+            temp_file.close()
 
-        # Если текущий статус pending или running
-        if final_status in (TaskStatusEnum.Pending, TaskStatusEnum.Running):
-            final_status = TaskStatusEnum.Finished
+            process_return_code = thread.process_return_code
+            log.debug(f"{log_prefix} process_return_code: {process_return_code}")
 
-        task_run_db.set_status(final_status)
-        task_run_db.save()
+            if process_return_code is not None:
+                task_run.process_return_code = process_return_code
 
-        log.debug(f"{log_prefix} Завершение с статусом {task_run_db.status.value}")
+            # Статус может поменяться, поэтому нужно его заново получить из базы
+            final_status = task_run.get_actual_status()
+
+            # Если текущий статус running
+            if final_status == TaskStatusEnum.Running:
+                final_status = TaskStatusEnum.Finished
+            task_run.set_status(final_status)
+
+            task_run.save()
+
+        except Exception:
+            log.exception(f"{log_prefix} error:")
+
+            text = traceback.format_exc()
+            task_run.set_error(text)
+
+        finally:
+            log.debug(f"{log_prefix} Завершение с статусом {task_run.status.value}")
