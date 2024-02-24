@@ -107,7 +107,8 @@ class TaskManager:
                 log.debug(f"{log_prefix} Ошибка при работе с процессом {run.process_id}: {e}")
 
             log.debug(
-                f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) статус {TaskStatusEnum.Unknown.value}"
+                f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) "
+                f"статус {TaskStatusEnum.Unknown.value}"
             )
             run.set_status(TaskStatusEnum.Unknown)
 
