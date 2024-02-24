@@ -8,15 +8,27 @@ import time
 import db
 
 
-# # TODO: Пример создания/обновления мультистроковой задачи
-# db.Task.add(
-#     name="multiline command",
-#     command=r"""
-# set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
-# %PYTHON% -V
-# %PYTHON% -c "print(3 * 10)"
-# """,
-# ).add_run()
+# TODO: Пример создания/обновления мультистроковой задачи
+task = db.Task.add(
+    name="multiline command",
+    command=r"""
+set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
+%PYTHON% -V
+%PYTHON% -c "import time;sleep = 10;print(f'Start sleep {sleep} secs');time.sleep(sleep);print('Finish')"
+""",
+)
+task.set_enabled(True)
+run = task.add_run()
+
+# time.sleep(3)
+# # TODO: Вариант теста остановки запуска через отключение задачи
+# # task.set_enabled(False)
+#
+# # TODO: Вариант теста остановки запуска через выставление статуса у запуска
+# run.set_status(db.TaskStatusEnum.Stopped)
+
+quit()
+
 
 
 # TODO: Пример создания/обновления задач

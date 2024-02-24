@@ -152,7 +152,7 @@ class ThreadRunProcess(threading.Thread):
         while True:
             try:
                 if self.stop_on():
-                    log.info(f"Нужно остановить процесс: {self.process.pid}")
+                    log.info(f"Нужно остановить процесс #{self.process.pid}")
                     kill_proc_tree(self.process.pid)
 
                 self.process_return_code = self.process.wait(timeout=0)
@@ -223,7 +223,12 @@ class TaskThread(threading.Thread):
             if not task_db.get_actual_is_enabled():
                 task_run_db.set_status(TaskStatusEnum.Stopped)
 
-            return task_run_db.get_actual_status() in [TaskStatusEnum.Stopped, TaskStatusEnum.Finished]
+            status = task_run_db.get_actual_status()
+            need_stop = status != TaskStatusEnum.Running
+            if need_stop:
+                log.debug(f"{log_prefix} нужно остановить задачу, текущий статус {status.value}")
+
+            return need_stop
 
         temp_file = create_temp_file(task_db, task_run_db)
 
@@ -233,7 +238,6 @@ class TaskThread(threading.Thread):
             on_stderr_callback=process_stderr,
             on_start_callback=start_callback,
             stop_on=stop_on,
-            # TODO: "cp866" if windows else "utf-8" ?
             encoding=self.encoding,
         )
         thread.start()
