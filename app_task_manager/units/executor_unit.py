@@ -7,7 +7,6 @@ __author__ = "ipetrash"
 import time
 from datetime import datetime, timedelta
 
-from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
 from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.utils import TaskThread
@@ -37,12 +36,12 @@ class ExecutorUnit(BaseUnit):
             for task in Task.select().where(Task.is_enabled == True):
                 name = task.name
                 if name not in self.tasks:
-                    log.info(f"{self._log_prefix} Запуск задачи #{task.id} {name!r}")
+                    self.log.info(f"{self._log_prefix} Запуск задачи #{task.id} {name!r}")
                     self._add(name=name).start()
                     continue
 
                 if not self.tasks[name].is_alive():
-                    log.info(
+                    self.log.info(
                         f"{self._log_prefix} Удаление потока задачи #{task.id} {name!r}"
                     )
                     self.tasks.pop(name)
@@ -56,18 +55,18 @@ class ExecutorUnit(BaseUnit):
             if t.is_alive():
                 t.stop()
 
-        log.info(
+        self.log.info(
             f"{self._log_prefix} Ожидание {self.timeout_on_stopping_secs} секунд на завершение потоков"
         )
 
         end_date = datetime.now() + timedelta(seconds=self.timeout_on_stopping_secs)
         while True:
             if not any(t.is_alive() for t in list(self.tasks.values())):
-                log.info(f"{self._log_prefix} Все потоки завершены")
+                self.log.info(f"{self._log_prefix} Все потоки завершены")
                 break
 
             if datetime.now() > end_date:
-                log.info(f"{self._log_prefix} Вышло время на завершение потоков")
+                self.log.info(f"{self._log_prefix} Вышло время на завершение потоков")
                 # TODO: Нужно явно убивать процессы (проверить можно убрав выше t.stop())
                 break
 

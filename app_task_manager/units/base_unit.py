@@ -5,12 +5,17 @@ __author__ = "ipetrash"
 
 
 from abc import ABC, abstractmethod
+from logging import Logger
 from threading import Thread
+
+from app_task_manager.common import log_manager
 
 
 class BaseUnit(Thread, ABC):
     def __init__(self):
         super().__init__(daemon=True)
+
+        self.log: Logger = log_manager
 
         # TODO:
         self._is_stopped: bool = False
