@@ -60,6 +60,7 @@ class TaskManager:
         log.info("Остановка всех задач")
         self._is_stopped = True
 
+        self.maintenance_unit.stop()
         self.executor_unit.stop()
 
         self._is_stopped = False
