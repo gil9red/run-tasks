@@ -32,6 +32,8 @@ class ExecutorUnit(BaseUnit):
         return task_thread
 
     def process(self):
+        self.log.info(f"{self._log_prefix} Запуск всех задач из базы")
+
         while not self._is_stopped:
             for task in Task.select().where(Task.is_enabled == True):
                 name = task.name
