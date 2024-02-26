@@ -11,6 +11,7 @@ import traceback
 
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
+from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.units.executor_unit import ExecutorUnit
 from app_task_manager.units.maintenance_unit import MaintenanceUnit
 
@@ -35,8 +36,10 @@ class TaskManager:
     def __init__(self, encoding: str = ENCODING):
         self.encoding = encoding
 
-        self.executor_unit = ExecutorUnit(encoding=self.encoding)
-        self.maintenance_unit = MaintenanceUnit()
+        self.units: list[BaseUnit] = [
+            ExecutorUnit(encoding=self.encoding),
+            MaintenanceUnit(),
+        ]
 
         self._has_atexit_callback: bool = False
 
@@ -47,10 +50,8 @@ class TaskManager:
             log.warn("Нельзя запустить задачи, когда было вызвана остановка")
             return
 
-        self.maintenance_unit.start()
-
-        if not self.executor_unit.is_alive():
-            self.executor_unit.start()
+        for unit in self.units:
+            unit.start()
 
         if not self._has_atexit_callback:
             atexit.register(self.stop_all)
@@ -60,8 +61,8 @@ class TaskManager:
         log.info("Остановка всех задач")
         self._is_stopped = True
 
-        self.maintenance_unit.stop()
-        self.executor_unit.stop()
+        for unit in self.units:
+            unit.stop()
 
         self._is_stopped = False
 
@@ -77,6 +78,7 @@ if __name__ == "__main__":
 
     # TODO: Запуск всех задач из базы
     from db import Task
+
     for task in Task.select().where(Task.is_enabled == True):
         task.add_run()
 
