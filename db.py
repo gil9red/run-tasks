@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 import enum
 import time
 from datetime import datetime
-from typing import Any, Type, Iterable, Self
+from typing import Type, Iterable, Self
 
 # pip install peewee
 from peewee import (
@@ -23,16 +23,8 @@ from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
 from root_config import DB_FILE_NAME
-
-
-# SOURCE: https://github.com/gil9red/SimplePyScripts/blob/99b0761d0a69fb410f119aae0caa9edc000ce97f/shorten.py
-def shorten(text: str, length: int = 30, placeholder: str = "...") -> str:
-    if not text:
-        return text
-
-    if len(text) > length:
-        text = text[: length - len(placeholder)] + placeholder
-    return text
+from third_party.db_enum_field import EnumField
+from third_party.shorten import shorten
 
 
 class NotDefinedParameterException(ValueError):
@@ -41,27 +33,6 @@ class NotDefinedParameterException(ValueError):
         text = f'Parameter "{self.parameter_name}" must be defined!'
 
         super().__init__(text)
-
-
-# SOURCE: https://github.com/gil9red/telegram_notifications_bot/blob/5473d04dda61b0a066eb04c75e22a5e3e34c0f17/db.py#L50
-class EnumField(CharField):
-    """
-    This class enable an Enum like field for Peewee
-    """
-
-    def __init__(self, choices: Type[enum.Enum], *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
-
-        self.choices: Type[enum.Enum] = choices
-        self.max_length = 255
-
-    def db_value(self, value: Any) -> Any:
-        return value.value
-
-    def python_value(self, value: Any) -> Any:
-        type_value_enum = type(list(self.choices)[0].value)
-        value_enum = type_value_enum(value)
-        return self.choices(value_enum)
 
 
 # This working with multithreading
