@@ -263,6 +263,8 @@ class TaskThread(threading.Thread):
 
             task_run.save()
 
+            self.current_task_run = None
+
         except Exception:
             log.exception(f"{log_prefix} error:")
 
