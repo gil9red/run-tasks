@@ -13,3 +13,5 @@ ENCODING: str = os.environ.get("ENCODING", sys.getdefaultencoding())
 PATTERN_FILE_JOB_COMMAND: str = "{script_name}_job{job_id}_run{job_run_id}"
 
 SCRIPT_NAME: str = "run-tasks"
+
+STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS: int = 100
