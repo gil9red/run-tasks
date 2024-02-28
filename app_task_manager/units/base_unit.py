@@ -12,9 +12,10 @@ from app_task_manager.common import log_manager
 
 
 class BaseUnit(Thread, ABC):
-    def __init__(self):
+    def __init__(self, owner: "TaskManager"):
         super().__init__(daemon=True)
 
+        self.owner = owner
         self.log: Logger = log_manager
 
         # TODO:

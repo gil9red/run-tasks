@@ -15,6 +15,8 @@ from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.units.executor_unit import ExecutorUnit
 from app_task_manager.units.maintenance_unit import MaintenanceUnit
 
+from db import TaskRun
+
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
     # Если было запрошено прерывание
@@ -37,13 +39,24 @@ class TaskManager:
         self.encoding = encoding
 
         self.units: list[BaseUnit] = [
-            ExecutorUnit(encoding=self.encoding),
-            MaintenanceUnit(),
+            ExecutorUnit(owner=self, encoding=self.encoding),
+            MaintenanceUnit(owner=self),
         ]
 
         self._has_atexit_callback: bool = False
 
         self._is_stopped: bool = False
+
+    def get_current_task_runs(self) -> list[TaskRun]:
+        for unit in self.units:
+            if isinstance(unit, ExecutorUnit):
+                return [
+                    thread.current_task_run
+                    for thread in unit.tasks.values()
+                    if thread.current_task_run
+                ]
+
+        return []
 
     def start_all(self):
         if self._is_stopped:

@@ -14,8 +14,8 @@ from db import Task
 
 
 class ExecutorUnit(BaseUnit):
-    def __init__(self, encoding: str = ENCODING):
-        super().__init__()
+    def __init__(self, owner: "TaskManager", encoding: str = ENCODING):
+        super().__init__(owner)
 
         self.encoding = encoding
         self.timeout_on_stopping_secs: int = 5
