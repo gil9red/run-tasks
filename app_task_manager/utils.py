@@ -218,7 +218,7 @@ class TaskThread(threading.Thread):
                 task_run.set_status(TaskStatusEnum.Stopped)
 
             status = task_run.get_actual_status()
-            need_stop = status != TaskStatusEnum.Running
+            need_stop = status in [TaskStatusEnum.Stopped, TaskStatusEnum.Unknown, TaskStatusEnum.Error]
             if need_stop:
                 log.debug(f"{log_prefix} нужно остановить задачу, текущий статус {status.value}")
 
