@@ -31,4 +31,6 @@ class BaseUnit(Thread, ABC):
         pass
 
     def run(self):
+        self.log.debug(f"{self._log_prefix} Старт")
         self.process()
+        self.log.debug(f"{self._log_prefix} Финиш")
