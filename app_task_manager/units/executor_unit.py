@@ -38,7 +38,9 @@ class ExecutorUnit(BaseUnit):
             for task in Task.select().where(Task.is_enabled == True):
                 name = task.name
                 if name not in self.tasks:
-                    self.log.info(f"{self._log_prefix} Запуск задачи #{task.id} {name!r}")
+                    self.log.info(
+                        f"{self._log_prefix} Запуск задачи #{task.id} {name!r}"
+                    )
                     self._add(name=name).start()
                     continue
 

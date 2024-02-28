@@ -34,9 +34,7 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.status == TaskStatusEnum.Running,
             TaskRun.start_date < min_start_date,
         ):
-            log_prefix = (
-                f"{self._log_prefix} [Задача #{run.task.id}, запуск #{run.id}]"
-            )
+            log_prefix = f"{self._log_prefix} [Задача #{run.task.id}, запуск #{run.id}]"
             try:
                 # Попробуем найти процесс, если задан
                 if run.process_id:
@@ -66,14 +64,14 @@ class MaintenanceUnit(BaseUnit):
             run.set_status(TaskStatusEnum.Unknown)
 
     def __removing_old_runs(self):
+        date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
+
         for run in TaskRun.select().where(
             TaskRun.status.not_in([TaskStatusEnum.Pending, TaskStatusEnum.Running]),
-            TaskRun.create_date < (datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)),
+            TaskRun.create_date < date,
         ):
             try:
-                self.log.info(
-                    f"{self._log_prefix} удаление запуска {run}"
-                )
+                self.log.info(f"{self._log_prefix} удаление запуска {run}")
                 run.delete_instance()
             except Exception as e:
                 self.log.info(
