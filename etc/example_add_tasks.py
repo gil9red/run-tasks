@@ -44,6 +44,16 @@ task.set_enabled(True)
 task.set_is_infinite(True)
 
 
+task = db.Task.add(
+    name="ping this",
+    command="ping 127.0.0.1",
+    description="ping",
+    cron="@hourly",
+)
+task.set_enabled(True)
+# task.add_or_get_run()
+
+
 # time.sleep(3)
 # # TODO: Вариант теста остановки запуска через отключение задачи
 # # task.set_enabled(False)
