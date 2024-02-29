@@ -182,6 +182,22 @@ class TaskThread(threading.Thread):
 
         self._is_stopped = True
 
+    def _find_run(self, task: Task) -> TaskRun | None:
+        task_runs = task.get_runs_by([TaskStatusEnum.Pending])
+        if not task_runs:
+            return None
+
+        # Не запланированные запуски более приоритетные
+        for run in task_runs:
+            if run.scheduled_date is None:
+                return run
+
+        for run in task_runs:
+            if run.is_scheduled_date_has_arrived():
+                return run
+
+        return None
+
     def run(self):
         while not self._is_stopped:
             task: Task | None = Task.get_by_name(self.name)
@@ -193,12 +209,10 @@ class TaskThread(threading.Thread):
                 log.info(f"Задача {self.name!r} не активна!")
                 return
 
-            task_runs = task.get_runs_by([TaskStatusEnum.Pending])
-            if task_runs:
-                task_run = task_runs[0]
-                self._start_task_run(task, task_run)
+            if run := self._find_run(task):
+                self._start_task_run(task, run)
 
-            time.sleep(1)  # TODO:
+            time.sleep(2)  # TODO:
 
     def _start_task_run(self, task: Task, task_run: TaskRun):
         def start_callback(process: psutil.Popen):

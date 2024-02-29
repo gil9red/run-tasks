@@ -14,6 +14,7 @@ from app_task_manager.config import ENCODING
 from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.units.executor_unit import ExecutorUnit
 from app_task_manager.units.maintenance_unit import MaintenanceUnit
+from app_task_manager.units.scheduler_unit import SchedulerUnit
 
 from db import TaskRun
 
@@ -39,8 +40,9 @@ class TaskManager:
         self.encoding = encoding
 
         self.units: list[BaseUnit] = [
-            ExecutorUnit(owner=self, encoding=self.encoding),
             MaintenanceUnit(owner=self),
+            SchedulerUnit(owner=self),
+            ExecutorUnit(owner=self, encoding=self.encoding),
         ]
 
         self._has_atexit_callback: bool = False
@@ -86,13 +88,5 @@ class TaskManager:
 
 if __name__ == "__main__":
     task_manager = TaskManager()
-
     task_manager.start_all()
-
-    # TODO: Запуск всех задач из базы
-    from db import Task
-
-    for task in Task.select().where(Task.is_enabled == True):
-        task.add_run()
-
     task_manager.wait_all()

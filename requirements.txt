@@ -1,3 +1,4 @@
 flask==3.0.2
 peewee==3.17.1
 psutil==5.9.8
+cron-converter==1.0.2

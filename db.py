@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 import enum
 import time
 from datetime import datetime
-from typing import Type, Iterable, Self
+from typing import Type, Iterable, Self, Optional
 
 # pip install peewee
 from peewee import (
@@ -131,8 +131,10 @@ class BaseModel(Model):
 class Task(BaseModel):
     name = TextField(unique=True)
     command = TextField()
-    description = TextField(null=True, default=None)
+    description = TextField(null=True)
     is_enabled = BooleanField(default=True)
+    cron = TextField(null=True)
+    is_infinite = BooleanField(default=False)
 
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
@@ -145,41 +147,85 @@ class Task(BaseModel):
         return Task.get_by_id(self.id).is_enabled
 
     @classmethod
-    def add(cls, name: str, command: str, description: str = None) -> Self:
+    def add(
+        cls,
+        name: str,
+        command: str,
+        description: str = None,
+        cron: str = None,
+        is_infinite: bool = False,
+    ) -> Self:
         obj = cls.get_by_name(name)
         if obj:
-            if command != obj.command or description != obj.description:
-                obj.command = command
-                obj.description = description
-                obj.save()
+            return obj
 
-        else:
-            obj = cls.create(
-                name=name,
-                command=command,
-                description=description,
-            )
-        return obj
+        return cls.create(
+            name=name,
+            command=command,
+            description=description,
+            cron=cron,
+            is_infinite=is_infinite,
+        )
+
+    def set_command(self, command: str):
+        if self.command == command:
+            return
+
+        self.command = command
+        self.save()
+
+    def set_description(self, description: str):
+        if self.description == description:
+            return
+
+        self.description = description
+        self.save()
 
     def set_enabled(self, value: bool):
+        if self.is_enabled == value:
+            return
+
         self.is_enabled = value
         self.save()
 
-    def add_run(self) -> "TaskRun":
-        run = TaskRun.create(
-            task=self,
-            command=self.command,
-        )
+    # TODO: Надо ли?
+    def get_last_scheduled_run(self) -> Optional["TaskRun"]:
+        last_run: TaskRun | None = self.runs.order_by(
+            TaskRun.create_date.desc()
+        ).first()
+        if not last_run or last_run.scheduled_date is None:
+            return None
 
+        return last_run
+
+    def get_pending_run(self, scheduled_date: datetime = None) -> Optional["TaskRun"]:
+        for run in self.get_runs_by([TaskStatusEnum.Pending]):
+            if scheduled_date is None:
+                if run.scheduled_date is None:
+                    return run
+            else:
+                if run.scheduled_date is not None:
+                    return run
+
+        return None
+
+    def add_or_get_run(self, scheduled_date: datetime = None) -> "TaskRun":
+        # Ограничение количества запусков в ожидании, максимум 2: без запланированной даты и с ней
+        # Возврат уже ранее добавленного запуска
+        run = self.get_pending_run(scheduled_date)
+        if not run:
+            run = TaskRun.create(
+                task=self,
+                command=self.command,
+                scheduled_date=scheduled_date,
+            )
         return run
 
     def get_runs_by(self, statuses: list[TaskStatusEnum]) -> list["TaskRun"]:
         return list(
-            self.runs
-            .where(
+            self.runs.where(
                 TaskRun.status.in_(statuses),
-            )
-            .order_by(TaskRun.create_date)
+            ).order_by(TaskRun.create_date)
         )
 
 
@@ -192,6 +238,7 @@ class TaskRun(BaseModel):
     create_date = DateTimeField(default=datetime.now)
     start_date = DateTimeField(null=True)
     finish_date = DateTimeField(null=True)
+    scheduled_date = DateTimeField(null=True)
 
     def set_status(self, value: TaskStatusEnum):
         if value is None:
@@ -242,6 +289,13 @@ class TaskRun(BaseModel):
     def set_error(self, error_text: str):
         self.set_status(TaskStatusEnum.Error)
         self.add_log_err(text=error_text)
+
+    # TODO: в тесты
+    def is_scheduled_date_has_arrived(self) -> bool:
+        if self.scheduled_date is None:
+            return False
+
+        return self.scheduled_date <= datetime.now()
 
     def set_process_id(self, value: int):
         self.process_id = value
