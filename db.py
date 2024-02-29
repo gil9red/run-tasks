@@ -188,6 +188,13 @@ class Task(BaseModel):
         self.is_enabled = value
         self.save()
 
+    def set_is_infinite(self, value: bool):
+        if self.is_infinite == value:
+            return
+
+        self.is_infinite = value
+        self.save()
+
     # TODO: Надо ли?
     def get_last_scheduled_run(self) -> Optional["TaskRun"]:
         last_run: TaskRun | None = self.runs.order_by(

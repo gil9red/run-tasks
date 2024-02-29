@@ -61,7 +61,7 @@ class TestTask(TestCase):
 
         self.assertEqual(task.is_enabled, task_clone.get_actual_is_enabled())
 
-    def test_set_enabled(self):
+    def test_set_is_enabled(self):
         task = Task.add(name="task_1", command="*")
         self.assertTrue(task.is_enabled)
 
@@ -70,6 +70,16 @@ class TestTask(TestCase):
 
         task.set_enabled(True)
         self.assertTrue(task.is_enabled)
+
+    def test_set_is_infinite(self):
+        task = Task.add(name="task_1", command="*")
+        self.assertFalse(task.is_infinite)
+
+        task.set_is_infinite(True)
+        self.assertTrue(task.is_infinite)
+
+        task.set_is_infinite(False)
+        self.assertFalse(task.is_infinite)
 
     def test_set_command(self):
         name = "task command one line"

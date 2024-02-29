@@ -41,6 +41,7 @@ task = db.Task.add(
 )
 task.set_command(command)
 task.set_enabled(True)
+task.set_is_infinite(True)
 
 
 # time.sleep(3)
