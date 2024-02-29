@@ -34,7 +34,7 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.status == TaskStatusEnum.Running,
             TaskRun.start_date < min_start_date,
         ):
-            log_prefix = f"{self._log_prefix} [Задача #{run.task.id}, запуск #{run.id}]"
+            log_prefix = f"[Задача #{run.task.id}, запуск #{run.id}]"
             try:
                 # Попробуем найти процесс, если задан
                 if run.process_id:
@@ -44,7 +44,7 @@ class MaintenanceUnit(BaseUnit):
 
                     # Если процесс найден и в аргументах запуска есть часть названия батника
                     if run_command in process_command:
-                        self.log.info(
+                        self.log_info(
                             f"{log_prefix} Закрытие висящего процесса с id={run.process_id}"
                         )
                         kill_proc_tree(run.process_id)
@@ -53,11 +53,11 @@ class MaintenanceUnit(BaseUnit):
                 pass
 
             except Exception as e:
-                self.log.info(
+                self.log_info(
                     f"{log_prefix} Ошибка при работе с процессом {run.process_id}: {e}"
                 )
 
-            self.log.info(
+            self.log_info(
                 f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) "
                 f"статус {TaskStatusEnum.Unknown.value}"
             )
@@ -71,12 +71,10 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.create_date < date,
         ):
             try:
-                self.log.info(f"{self._log_prefix} удаление запуска {run}")
+                self.log_info(f"Удаление запуска {run}")
                 run.delete_instance()
             except Exception as e:
-                self.log.info(
-                    f"{self._log_prefix} ошибка при удалении запуска {run}: {e}"
-                )
+                self.log_info(f"Ошибка при удалении запуска {run}: {e}")
 
     def process(self):
         while True:

@@ -23,6 +23,12 @@ class BaseUnit(Thread, ABC):
 
         self._log_prefix: str = f"[{type(self).__name__}]"
 
+    def log_debug(self, text: str):
+        self.log.debug(f"{self._log_prefix} {text}")
+
+    def log_info(self, text: str):
+        self.log.info(f"{self._log_prefix} {text}")
+
     def stop(self):
         self._is_stopped = True
 
@@ -31,6 +37,6 @@ class BaseUnit(Thread, ABC):
         pass
 
     def run(self):
-        self.log.debug(f"{self._log_prefix} Старт")
+        self.log_debug("Старт")
         self.process()
-        self.log.debug(f"{self._log_prefix} Финиш")
+        self.log_debug("Финиш")
