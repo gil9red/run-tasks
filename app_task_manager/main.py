@@ -86,7 +86,19 @@ class TaskManager:
             time.sleep(0.1)
 
 
-if __name__ == "__main__":
+def main():
     task_manager = TaskManager()
     task_manager.start_all()
     task_manager.wait_all()
+
+
+if __name__ == "__main__":
+    while True:
+        try:
+            main()
+        except Exception as e:
+            if isinstance(e, KeyboardInterrupt):
+                break
+
+            log.exception("Error:")
+            time.sleep(10)
