@@ -307,6 +307,19 @@ class TestTask(TestCase):
             [task_run_1, task_run_2],
         )
 
+    def test_get_current_run(self):
+        task = Task.add(name="task_1", command="*")
+        self.assertIsNone(task.get_current_run())
+
+        run = task.add_or_get_run()
+        self.assertIsNone(task.get_current_run())
+
+        run.set_status(TaskStatusEnum.Running)
+        self.assertEqual(run, task.get_current_run())
+
+        run.set_status(TaskStatusEnum.Finished)
+        self.assertIsNone(task.get_current_run())
+
 
 class TestTaskRun(TestCase):
     def setUp(self):

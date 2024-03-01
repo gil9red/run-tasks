@@ -235,6 +235,10 @@ class Task(BaseModel):
             ).order_by(TaskRun.create_date)
         )
 
+    def get_current_run(self) -> Optional["TaskRun"]:
+        items = self.get_runs_by([TaskStatusEnum.Running])
+        return items[0] if items else None
+
 
 class TaskRun(BaseModel):
     task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
