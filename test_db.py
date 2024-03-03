@@ -16,12 +16,13 @@ from db import (
     Task,
     TaskRun,
     TaskRunLog,
+    Notification,
     TaskStatusEnum,
     LogKindEnum,
 )
 
 
-class TestTask(TestCase):
+class BaseTestCaseDb(TestCase):
     def setUp(self):
         self.models = BaseModel.get_inherited_models()
         self.test_db = SqliteExtDatabase(
@@ -34,6 +35,8 @@ class TestTask(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
+
+class TestTask(BaseTestCaseDb):
     def test_get_by_name(self):
         self.assertIsNone(Task.get_by_name("task_1"))
 
@@ -321,19 +324,7 @@ class TestTask(TestCase):
         self.assertIsNone(task.get_current_run())
 
 
-class TestTaskRun(TestCase):
-    def setUp(self):
-        self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(
-            ":memory:",
-            pragmas={
-                "foreign_keys": 1,
-            },
-        )
-        self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
-        self.test_db.connect()
-        self.test_db.create_tables(self.models)
-
+class TestTaskRun(BaseTestCaseDb):
     def test_set_status(self):
         with self.subTest(msg="Статус не меняется вместе с зависимыми полями"):
             run = Task.add(name="*", command="*").add_or_get_run()
@@ -696,19 +687,7 @@ class TestTaskRun(TestCase):
         self.assertEqual(0, task.runs.count())
 
 
-class TestTaskRunLog(TestCase):
-    def setUp(self):
-        self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(
-            ":memory:",
-            pragmas={
-                "foreign_keys": 1,
-            },
-        )
-        self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
-        self.test_db.connect()
-        self.test_db.create_tables(self.models)
-
+class TestTaskRunLog(BaseTestCaseDb):
     def test_delete_cascade(self):
         run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -724,3 +703,24 @@ class TestTaskRunLog(TestCase):
 
         run.delete_instance()
         self.assertEqual(0, run.logs.count())
+
+
+class TestNotification(BaseTestCaseDb):
+    def test_add(self):
+        # TODO:
+        # run = Task.add(name="*", command="*").add_or_get_run()
+        #
+        # task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="notifications")
+        # name = TextField()
+        # text = TextField()
+        # kind = EnumField(choices=NotificationKindEnum)
+        # append_date = DateTimeField(default=datetime.now)
+        # sending_date = DateTimeField(null=True)
+
+        self.fail()
+
+    def test_get_unsent(self):
+        self.fail()
+
+    def test_set_as_send(self):
+        self.fail()

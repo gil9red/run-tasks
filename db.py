@@ -67,6 +67,12 @@ class LogKindEnum(enum.StrEnum):
     Err = enum.auto()
 
 
+@enum.unique
+class NotificationKindEnum(enum.StrEnum):
+    Email = enum.auto()
+    Telegram = enum.auto()
+
+
 class BaseModel(Model):
     class Meta:
         database = db
@@ -334,6 +340,47 @@ class TaskRunLog(BaseModel):
     text = TextField()
     kind = EnumField(choices=LogKindEnum)
     date = DateTimeField(default=datetime.now)
+
+
+class Notification(BaseModel):
+    task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="notifications")
+    name = TextField()
+    text = TextField()
+    kind = EnumField(choices=NotificationKindEnum)
+    append_date = DateTimeField(default=datetime.now)
+    sending_date = DateTimeField(null=True)
+
+    @classmethod
+    def add(
+        cls,
+        task_run: TaskRun,
+        name: str,
+        text: str,
+        kind: NotificationKindEnum,
+    ) -> Self:
+        return cls.create(
+            task_run=task_run,
+            name=name,
+            text=text,
+            kind=kind,
+        )
+
+    @classmethod
+    def get_unsent(cls) -> list[Self]:
+        """
+        Функция, что возвращает неотправленные уведомления
+        """
+
+        return list(cls.select().where(cls.sending_date.is_null(True)))
+
+    def set_as_send(self):
+        """
+        Функция устанавливает дату отправки и сохраняет ее
+        """
+
+        if not self.sending_date:
+            self.sending_date = datetime.now()
+            self.save()
 
 
 db.connect()
