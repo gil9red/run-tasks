@@ -19,7 +19,12 @@ from db import (
     Notification,
     TaskStatusEnum,
     LogKindEnum,
+    NotificationKindEnum,
 )
+
+
+# Минимальное время задержки между вызовами datetime.now(), чтобы даты не совпали
+DATETIME_DELAY_SECS: float = 0.001
 
 
 class BaseTestCaseDb(TestCase):
@@ -194,7 +199,7 @@ class TestTask(BaseTestCaseDb):
         self.assertIsNone(task_run_1.scheduled_date)
         self.assertIsNone(task.get_last_scheduled_run())
 
-        time.sleep(0.001)
+        time.sleep(DATETIME_DELAY_SECS)
         task_run_2 = task.add_or_get_run(scheduled_date=datetime.now())
         self.assertIsNotNone(task_run_2)
         self.assertNotEqual(task_run_1, task_run_2)
@@ -206,7 +211,7 @@ class TestTask(BaseTestCaseDb):
         task_run_2.set_status(TaskStatusEnum.Finished)
         self.assertEqual(task.get_last_scheduled_run(), task_run_2)
 
-        time.sleep(0.001)
+        time.sleep(DATETIME_DELAY_SECS)
         task_run_3 = task.add_or_get_run(scheduled_date=datetime.now())
         self.assertIsNotNone(task_run_3)
         self.assertEqual(task.get_last_scheduled_run(), task_run_3)
@@ -229,7 +234,9 @@ class TestTask(BaseTestCaseDb):
         task_run_2 = task.get_pending_run(scheduled_date=scheduled_date)
         self.assertIsNone(task_run_2)
         task_run_2 = task.add_or_get_run(scheduled_date=scheduled_date)
-        self.assertEqual(task_run_2, task.get_pending_run(scheduled_date=scheduled_date))
+        self.assertEqual(
+            task_run_2, task.get_pending_run(scheduled_date=scheduled_date)
+        )
 
         # Только один запуск с scheduled_date разрешен
         self.assertEqual(
@@ -270,7 +277,9 @@ class TestTask(BaseTestCaseDb):
             # Изменение статуса из Pending, чтобы следующий тест вернул новый TaskRun
             task_run.set_status(TaskStatusEnum.Stopped)
 
-        with self.subTest(msg="Проверка ограничения количества TaskRun по scheduled_date"):
+        with self.subTest(
+            msg="Проверка ограничения количества TaskRun по scheduled_date"
+        ):
             task_run_1 = task.add_or_get_run()
             self.assertIsNotNone(task_run_1)
             self.assertEqual(task_run_1, task.add_or_get_run())
@@ -278,12 +287,16 @@ class TestTask(BaseTestCaseDb):
             scheduled_date = datetime.now()
             task_run_2 = task.add_or_get_run(scheduled_date=scheduled_date)
             self.assertIsNotNone(task_run_2)
-            self.assertEqual(task_run_2, task.add_or_get_run(scheduled_date=scheduled_date))
+            self.assertEqual(
+                task_run_2, task.add_or_get_run(scheduled_date=scheduled_date)
+            )
 
             # Только один запуск с scheduled_date разрешен
             self.assertEqual(
                 task_run_2,
-                task.add_or_get_run(scheduled_date=datetime.now() + timedelta(minutes=1)),
+                task.add_or_get_run(
+                    scheduled_date=datetime.now() + timedelta(minutes=1)
+                ),
             )
 
     def test_get_runs_by(self):
@@ -292,8 +305,10 @@ class TestTask(BaseTestCaseDb):
 
         task_run_1 = task.add_or_get_run()
 
-        time.sleep(0.001)
-        task_run_2 = task.add_or_get_run(scheduled_date=datetime.now() + timedelta(hours=1))
+        time.sleep(DATETIME_DELAY_SECS)
+        task_run_2 = task.add_or_get_run(
+            scheduled_date=datetime.now() + timedelta(hours=1)
+        )
 
         self.assertEqual(
             task.get_runs_by([TaskStatusEnum.Pending]),
@@ -598,6 +613,7 @@ class TestTaskRun(BaseTestCaseDb):
             1 / 0
         except Exception:
             import traceback
+
             text = traceback.format_exc()
             run.set_error(text)
 
@@ -605,9 +621,7 @@ class TestTaskRun(BaseTestCaseDb):
         self.assertEqual(run.status, TaskStatusEnum.Error)
 
         last_err_log: str = (
-            run
-            .logs
-            .where(TaskRunLog.kind == LogKindEnum.Err)
+            run.logs.where(TaskRunLog.kind == LogKindEnum.Err)
             .order_by(TaskRunLog.date.desc())
             .first()
         ).text
@@ -707,20 +721,116 @@ class TestTaskRunLog(BaseTestCaseDb):
 
 class TestNotification(BaseTestCaseDb):
     def test_add(self):
-        # TODO:
-        # run = Task.add(name="*", command="*").add_or_get_run()
-        #
-        # task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="notifications")
-        # name = TextField()
-        # text = TextField()
-        # kind = EnumField(choices=NotificationKindEnum)
-        # append_date = DateTimeField(default=datetime.now)
-        # sending_date = DateTimeField(null=True)
+        run = Task.add(name="*", command="*").add_or_get_run()
+        name = "test"
+        text = "Hello World!\nПривет Мир!"
 
-        self.fail()
+        notification_email = Notification.add(
+            task_run=run,
+            name=name,
+            text=text,
+            kind=NotificationKindEnum.Email,
+        )
+        self.assertIsNotNone(notification_email)
+        self.assertEqual(notification_email.task_run, run)
+        self.assertEqual(notification_email.name, name)
+        self.assertEqual(notification_email.text, text)
+        self.assertEqual(notification_email.kind, NotificationKindEnum.Email)
+        self.assertIsNotNone(notification_email.append_date)
+        self.assertIsNone(notification_email.sending_date)
+        self.assertNotEqual(
+            notification_email,
+            Notification.add(
+                task_run=run,
+                name=name,
+                text=text,
+                kind=NotificationKindEnum.Email,
+            ),
+        )
+
+        notification_tg = Notification.add(
+            task_run=run,
+            name=name,
+            text=text,
+            kind=NotificationKindEnum.Telegram,
+        )
+        self.assertIsNotNone(notification_tg)
+        self.assertEqual(notification_tg.task_run, run)
+        self.assertEqual(notification_tg.name, name)
+        self.assertEqual(notification_tg.text, text)
+        self.assertEqual(notification_tg.kind, NotificationKindEnum.Telegram)
+        self.assertIsNotNone(notification_tg.append_date)
+        self.assertIsNone(notification_tg.sending_date)
+        self.assertNotEqual(
+            notification_tg,
+            Notification.add(
+                task_run=run,
+                name=name,
+                text=text,
+                kind=NotificationKindEnum.Telegram,
+            ),
+        )
 
     def test_get_unsent(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        self.assertEqual(Notification.get_unsent(), [])
+
+        notification_email = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.Email,
+        )
+        time.sleep(DATETIME_DELAY_SECS)
+        self.assertEqual(Notification.get_unsent(), [notification_email])
+
+        notification_tg = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.Telegram,
+        )
+        time.sleep(DATETIME_DELAY_SECS)
+        self.assertEqual(
+            Notification.get_unsent(), [notification_email, notification_tg]
+        )
+
+        notification_tg_2 = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.Telegram,
+        )
+        time.sleep(DATETIME_DELAY_SECS)
+        self.assertEqual(
+            Notification.get_unsent(),
+            [notification_email, notification_tg, notification_tg_2],
+        )
+
+        notification_email.set_as_send()
+        self.assertEqual(
+            Notification.get_unsent(), [notification_tg, notification_tg_2]
+        )
+
+        notification_tg_2.set_as_send()
+        self.assertEqual(Notification.get_unsent(), [notification_tg])
 
     def test_set_as_send(self):
-        self.fail()
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        notification = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.Email,
+        )
+        self.assertIsNone(notification.sending_date)
+
+        notification.set_as_send()
+        self.assertIsNotNone(notification.sending_date)
+
+        time.sleep(DATETIME_DELAY_SECS)
+        sending_date = notification.sending_date
+        notification.set_as_send()
+        self.assertEqual(sending_date, notification.sending_date)
