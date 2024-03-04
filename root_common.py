@@ -5,11 +5,20 @@ __author__ = "ipetrash"
 
 
 import logging
+import smtplib
 import sys
+from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from root_config import DIR_LOGS
+from root_config import (
+    DIR_LOGS,
+    EMAIL_HOST,
+    EMAIL_PORT,
+    EMAIL_LOGIN,
+    EMAIL_PASSWORD,
+    EMAIL_SEND_TO,
+)
 
 
 def get_logger(
@@ -49,3 +58,23 @@ def get_logger(
         log.addHandler(ch)
 
     return log
+
+
+def send_email(
+    subject: str,
+    text: str,
+    send_to: str = EMAIL_SEND_TO,
+    host: str = EMAIL_HOST,
+    port: int = EMAIL_PORT,
+    login: str = EMAIL_LOGIN,
+    password: str = EMAIL_PASSWORD,
+):
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = send_to
+    msg["To"] = send_to
+    msg.set_content(text)
+
+    with smtplib.SMTP_SSL(host=host, port=port) as s:
+        s.login(user=login, password=password)
+        s.send_message(msg)
