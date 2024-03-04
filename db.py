@@ -307,7 +307,6 @@ class TaskRun(BaseModel):
         self.set_status(TaskStatusEnum.Error)
         self.add_log_err(text=error_text)
 
-    # TODO: в тесты
     def is_scheduled_date_has_arrived(self) -> bool:
         if self.scheduled_date is None:
             return False

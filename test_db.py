@@ -627,6 +627,18 @@ class TestTaskRun(BaseTestCaseDb):
         ).text
         self.assertEqual(last_err_log, text)
 
+    def test_is_scheduled_date_has_arrived(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertFalse(run.is_scheduled_date_has_arrived())
+
+        future = datetime.now() + timedelta(minutes=1)
+        run = Task.add(name="task_future", command="*").add_or_get_run(scheduled_date=future)
+        self.assertFalse(run.is_scheduled_date_has_arrived())
+
+        past = datetime.now() - timedelta(minutes=1)
+        run = Task.add(name="task_past", command="*").add_or_get_run(scheduled_date=past)
+        self.assertTrue(run.is_scheduled_date_has_arrived())
+
     def test_set_process_id(self):
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertIsNone(run.process_id)
