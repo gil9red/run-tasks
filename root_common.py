@@ -7,6 +7,7 @@ __author__ = "ipetrash"
 import logging
 import smtplib
 import sys
+import traceback
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -19,6 +20,10 @@ from root_config import (
     EMAIL_PASSWORD,
     EMAIL_SEND_TO,
 )
+
+
+def get_full_exception(e: BaseException) -> str:
+    return "".join(traceback.format_exception(e))
 
 
 def get_logger(

@@ -9,6 +9,7 @@ from logging import Logger
 from threading import Thread
 
 from app_task_manager.common import log_manager
+from root_common import get_full_exception
 
 
 class BaseUnit(Thread, ABC):
@@ -28,6 +29,9 @@ class BaseUnit(Thread, ABC):
 
     def log_info(self, text: str):
         self.log.info(f"{self._log_prefix} {text}")
+
+    def log_exception(self, text: str, e: BaseException):
+        self.log.error(f"{self._log_prefix} {text}:\n{get_full_exception(e)}")
 
     def stop(self):
         self._is_stopped = True

@@ -53,8 +53,8 @@ class MaintenanceUnit(BaseUnit):
                 pass
 
             except Exception as e:
-                self.log_info(
-                    f"{log_prefix} Ошибка при работе с процессом {run.process_id}: {e}"
+                self.log_exception(
+                    f"{log_prefix} Ошибка при работе с процессом {run.process_id}:", e
                 )
 
             self.log_info(
@@ -74,10 +74,10 @@ class MaintenanceUnit(BaseUnit):
                 self.log_info(f"Удаление запуска {run}")
                 run.delete_instance()
             except Exception as e:
-                self.log_info(f"Ошибка при удалении запуска {run}: {e}")
+                self.log_exception(f"Ошибка при удалении запуска {run}:", e)
 
     def process(self):
-        while True:
+        while not self._is_stopped:
             self.__processing_hanging_runs()
             self.__removing_old_runs()
 
