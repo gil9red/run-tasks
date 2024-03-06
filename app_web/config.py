@@ -4,8 +4,8 @@
 __author__ = "ipetrash"
 
 
-import os
+from root_config import CONFIG
 
 
-HOST: str = os.environ.get("HOST", "0.0.0.0")
-PORT: int = int(os.environ.get("PORT", 5510))
+HOST: str = CONFIG["web"]["host"]
+PORT: int = CONFIG["web"]["port"]

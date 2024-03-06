@@ -4,3 +4,7 @@ email:
   send_to: "ilya.petrash@inbox.ru"
   login: "ilya.petrash@inbox.ru"
   password: "<password>"
+
+web:
+  host: "0.0.0.0"
+  port: 5510
