@@ -23,7 +23,7 @@ from root_config import (
 
 
 def get_full_exception(e: BaseException) -> str:
-    return "".join(traceback.format_exception(e))
+    return "".join(traceback.format_exception(e)).strip()
 
 
 def get_logger(

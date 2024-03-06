@@ -162,3 +162,4 @@ cython_debug/
 # For current project
 database/
 logs/
+config.yaml

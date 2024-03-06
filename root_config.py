@@ -5,6 +5,10 @@ __author__ = "ipetrash"
 
 
 from pathlib import Path
+from typing import Any
+
+# pip install PyYAML
+import yaml
 
 
 DIR: Path = Path(__file__).resolve().parent
@@ -16,9 +20,16 @@ DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
 
 DB_FILE_NAME: Path = DB_DIR_NAME / "db.sqlite"
 
-# TODO:
-EMAIL_HOST: str = ...
-EMAIL_PORT: int = ...
-EMAIL_SEND_TO: str = ...
-EMAIL_LOGIN: str = ...
-EMAIL_PASSWORD: str = ...
+CONFIG_FILE_NAME: Path = DIR / "config.yaml"
+if not CONFIG_FILE_NAME.exists():
+    raise FileNotFoundError(CONFIG_FILE_NAME)
+
+CONFIG: dict[str, Any] = yaml.safe_load(
+    CONFIG_FILE_NAME.read_text("utf-8")
+)
+
+EMAIL_HOST: str = CONFIG["email"]["host"]
+EMAIL_PORT: int = CONFIG["email"]["port"]
+EMAIL_SEND_TO: str = CONFIG["email"]["send_to"]
+EMAIL_LOGIN: str = CONFIG["email"]["login"]
+EMAIL_PASSWORD: str = CONFIG["email"]["password"]

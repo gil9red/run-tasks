@@ -15,6 +15,7 @@ from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.units.executor_unit import ExecutorUnit
 from app_task_manager.units.maintenance_unit import MaintenanceUnit
 from app_task_manager.units.scheduler_unit import SchedulerUnit
+from app_task_manager.units.notification_unit import NotificationUnit
 
 from db import TaskRun
 
@@ -43,6 +44,7 @@ class TaskManager:
             MaintenanceUnit(owner=self),
             SchedulerUnit(owner=self),
             ExecutorUnit(owner=self, encoding=self.encoding),
+            NotificationUnit(owner=self),
         ]
 
         self._has_atexit_callback: bool = False

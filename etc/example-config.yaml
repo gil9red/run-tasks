@@ -1,0 +1,6 @@
+email:
+  host: "smtp.mail.ru"
+  port: 465
+  send_to: "ilya.petrash@inbox.ru"
+  login: "ilya.petrash@inbox.ru"
+  password: "<password>"
