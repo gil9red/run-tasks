@@ -15,7 +15,6 @@ from third_party.cron_converter__examples.from_jenkins import do_convert
 
 
 class SchedulerUnit(BaseUnit):
-    # TODO: сделать тесты
     @classmethod
     def _get_scheduled_date(cls, cron: str) -> datetime:
         cron = do_convert(cron)
