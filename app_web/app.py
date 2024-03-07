@@ -13,7 +13,7 @@ from flask import Flask
 from root_config import DIR_LOGS
 
 
-app = Flask("web__price_of_games")
+app = Flask(__name__)
 
 log: logging.Logger = app.logger
 log.handlers.clear()
