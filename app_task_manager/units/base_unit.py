@@ -36,11 +36,19 @@ class BaseUnit(Thread, ABC):
     def stop(self):
         self._is_stopped = True
 
+    def before_process(self):
+        pass
+
     @abstractmethod
     def process(self):
         pass
 
     def run(self):
         self.log_debug("Старт")
-        self.process()
+
+        self.before_process()
+
+        while not self._is_stopped:
+            self.process()
+
         self.log_debug("Финиш")

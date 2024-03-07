@@ -31,22 +31,24 @@ class ExecutorUnit(BaseUnit):
 
         return task_thread
 
-    def process(self):
+    def before_process(self):
+        super().before_process()
+
         self.log_info("Запуск всех задач из базы")
 
-        while not self._is_stopped:
-            for task in Task.select().where(Task.is_enabled == True):
-                name = task.name
-                if name not in self.tasks:
-                    self.log_info(f"Запуск потока задачи #{task.id} {name!r}")
-                    self._add(name=name).start()
-                    continue
+    def process(self):
+        for task in Task.select().where(Task.is_enabled == True):
+            name = task.name
+            if name not in self.tasks:
+                self.log_info(f"Запуск потока задачи #{task.id} {name!r}")
+                self._add(name=name).start()
+                continue
 
-                if not self.tasks[name].is_alive():
-                    self.log_info(f"Удаление потока задачи #{task.id} {name!r}")
-                    self.tasks.pop(name)
+            if not self.tasks[name].is_alive():
+                self.log_info(f"Удаление потока задачи #{task.id} {name!r}")
+                self.tasks.pop(name)
 
-            time.sleep(0.1)  # TODO:
+        time.sleep(0.1)  # TODO:
 
     def stop(self):
         super().stop()

@@ -30,25 +30,24 @@ class SchedulerUnit(BaseUnit):
         return scheduled_date
 
     def process(self):
-        while not self._is_stopped:
-            for task in Task.select().where(Task.is_enabled == True):
-                if task.cron:
-                    scheduled_date = self._get_scheduled_date(task.cron)
-                elif task.is_infinite and not task.get_runs_by(
-                    [TaskStatusEnum.Running]
-                ):
-                    # Без запланированного времени
-                    scheduled_date = None
-                else:
-                    continue
+        for task in Task.select().where(Task.is_enabled == True):
+            if task.cron:
+                scheduled_date = self._get_scheduled_date(task.cron)
+            elif task.is_infinite and not task.get_runs_by(
+                [TaskStatusEnum.Running]
+            ):
+                # Без запланированного времени
+                scheduled_date = None
+            else:
+                continue
 
-                run = task.get_pending_run(scheduled_date=scheduled_date)
-                if not run:
-                    run = task.add_or_get_run(scheduled_date=scheduled_date)
-                    self.log_info(
-                        f"Запланирован запуск:\n"
-                        f"    Задача: {task}\n"
-                        f"    Запуск: {run}"
-                    )
+            run = task.get_pending_run(scheduled_date=scheduled_date)
+            if not run:
+                run = task.add_or_get_run(scheduled_date=scheduled_date)
+                self.log_info(
+                    f"Запланирован запуск:\n"
+                    f"    Задача: {task}\n"
+                    f"    Запуск: {run}"
+                )
 
-            time.sleep(5)
+        time.sleep(5)

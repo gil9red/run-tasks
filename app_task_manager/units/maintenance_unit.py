@@ -77,8 +77,7 @@ class MaintenanceUnit(BaseUnit):
                 self.log_exception(f"Ошибка при удалении запуска {run}:", e)
 
     def process(self):
-        while not self._is_stopped:
-            self.__processing_hanging_runs()
-            self.__removing_old_runs()
+        self.__processing_hanging_runs()
+        self.__removing_old_runs()
 
-            time.sleep(60)
+        time.sleep(60)
