@@ -158,7 +158,10 @@ class TestTask(BaseTestCaseDb):
         with self.subTest(msg="Создание задачи с сложной командой"):
             name = "task command multi line"
             command_multi_line = (
-                "SET IP=127.0.0.1\nping %IP%\nping 127.0.0.1\nping 127.0.0.1"
+                "SET IP=127.0.0.1\n"
+                "ping %IP%\n"
+                "ping 127.0.0.1\n"
+                "ping 127.0.0.1"
             )
             description = f"description {name}"
 
