@@ -158,10 +158,7 @@ class TestTask(BaseTestCaseDb):
         with self.subTest(msg="Создание задачи с сложной командой"):
             name = "task command multi line"
             command_multi_line = (
-                "SET IP=127.0.0.1\n"
-                "ping %IP%\n"
-                "ping 127.0.0.1\n"
-                "ping 127.0.0.1"
+                "SET IP=127.0.0.1\n" "ping %IP%\n" "ping 127.0.0.1\n" "ping 127.0.0.1"
             )
             description = f"description {name}"
 
@@ -172,6 +169,19 @@ class TestTask(BaseTestCaseDb):
             )
             self.assertEqual(task.name, name)
             self.assertEqual(task.command, command_multi_line)
+            self.assertEqual(task.description, description)
+
+        with self.subTest(msg="Тест description with html"):
+            description = (
+                'Скрипт для уведомления о завершенных ранобе в '
+                '<a href="https://ranobehub.org/">https://ranobehub.org/</a>.'
+            )
+            task = Task.add(
+                name="description with html",
+                command=command_one_line,
+                description=description,
+                is_infinite=True,
+            )
             self.assertEqual(task.description, description)
 
         with self.subTest(msg="Тест cron"):
@@ -635,11 +645,15 @@ class TestTaskRun(BaseTestCaseDb):
         self.assertFalse(run.is_scheduled_date_has_arrived())
 
         future = datetime.now() + timedelta(minutes=1)
-        run = Task.add(name="task_future", command="*").add_or_get_run(scheduled_date=future)
+        run = Task.add(name="task_future", command="*").add_or_get_run(
+            scheduled_date=future
+        )
         self.assertFalse(run.is_scheduled_date_has_arrived())
 
         past = datetime.now() - timedelta(minutes=1)
-        run = Task.add(name="task_past", command="*").add_or_get_run(scheduled_date=past)
+        run = Task.add(name="task_past", command="*").add_or_get_run(
+            scheduled_date=past
+        )
         self.assertTrue(run.is_scheduled_date_has_arrived())
 
     def test_set_process_id(self):
