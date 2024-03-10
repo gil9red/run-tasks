@@ -142,6 +142,12 @@ class Task(BaseModel):
     cron = TextField(null=True)
     is_infinite = BooleanField(default=False)
 
+    # TODO:
+    from playhouse.hybrid import hybrid_property
+    @hybrid_property
+    def number_of_runs(self) -> int:
+        return self.runs.count()
+
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
         if not name:

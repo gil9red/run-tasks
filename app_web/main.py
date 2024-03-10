@@ -4,25 +4,54 @@
 __author__ = "ipetrash"
 
 
-from flask import render_template
+from flask import render_template, jsonify, Response
+from playhouse.shortcuts import model_to_dict
 
 from app_web import config
-from app_web.app import app, log
+from app_web.app import app
 from db import Task, TaskRun, TaskRunLog
 
 
 @app.route("/")
-def index():
-    log.debug("Call index")
-
+def index() -> str:
     return render_template(
         "index.html",
-
         # Parameters to template
-        title="run-tasks",
-        tasks=Task.select(),
-        task_runs=TaskRun.select(),
-        task_run_logs=TaskRunLog.select(),
+        title="run-tasks",  # TODO: из конфига
+    )
+
+
+@app.route("/api/tasks")
+def api_tasks() -> Response:
+    return jsonify(
+        [
+            model_to_dict(obj, recurse=False, extra_attrs=["number_of_runs"])  # TODO: extra_attrs
+            for obj in Task.select().order_by(Task.id)
+        ]
+    )
+
+
+@app.route("/api/task/<int:task_id>/runs")
+def api_task_runs(task_id: int) -> Response:
+    # TODO: 404, если задача не найдена
+    task: Task = Task.get_by_id(task_id)
+
+    return jsonify(
+        [model_to_dict(obj, recurse=False) for obj in task.runs.order_by(TaskRun.id)]
+    )
+
+
+@app.route("/api/task/<int:task_id>/run/<int:task_run_id>/logs")
+def api_task_run_logs(task_id: int, task_run_id: int) -> Response:
+    # TODO: 404, если не найдено
+    run: TaskRun = TaskRun.get_by_id(task_run_id)
+
+    # TODO: проверять родителя
+    # TODO: 404, если не найдено
+    # if run.task_id != task_id:
+
+    return jsonify(
+        [model_to_dict(obj, recurse=False) for obj in run.logs.order_by(TaskRunLog.id)]
     )
 
 
@@ -35,6 +64,8 @@ def index():
 
 
 if __name__ == "__main__":
+    app.debug = True
+
     app.run(
         host=config.HOST,
         port=config.PORT,
