@@ -14,6 +14,7 @@ from root_config import DIR_LOGS
 
 
 app = Flask(__name__)
+app.json.sort_keys = False
 
 log: logging.Logger = app.logger
 log.handlers.clear()
