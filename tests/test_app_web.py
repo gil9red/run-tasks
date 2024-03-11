@@ -62,7 +62,9 @@ class TestAppWeb(TestCase):
             description="description ping",
             is_infinite=True,
         )
-        self.assertEqual(self.client.get("/api/tasks").json, [task_1.to_dict(), task_2.to_dict()])
+        self.assertEqual(
+            self.client.get("/api/tasks").json, [task_1.to_dict(), task_2.to_dict()]
+        )
 
     def test_api_task_runs(self):
         # TODO:
