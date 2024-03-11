@@ -45,17 +45,24 @@ class TestAppWeb(TestCase):
         # print(self.client.get("/").text)
         self.fail()
 
-    # TODO:
     def test_api_tasks(self):
         self.assertEqual(self.client.get("/api/tasks").json, [])
 
-        task = Task.add(
+        task_1 = Task.add(
             name="1",
             command="ping 127.0.0.1",
             description="description ping",
+            cron="* * * * *",
         )
-        print(self.client.get("/api/tasks").json)
-        # self.assertEqual(self.client.get("/api/tasks").json, [])
+        self.assertEqual(self.client.get("/api/tasks").json, [task_1.to_dict()])
+
+        task_2 = Task.add(
+            name="2",
+            command="ping 127.0.0.1\nping 127.0.0.1",
+            description="description ping",
+            is_infinite=True,
+        )
+        self.assertEqual(self.client.get("/api/tasks").json, [task_1.to_dict(), task_2.to_dict()])
 
     def test_api_task_runs(self):
         # TODO:
