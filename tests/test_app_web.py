@@ -37,11 +37,30 @@ class TestAppWeb(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
-    def test_route_api_tasks(self):
-        # TODO: добавить тестовые данные в Task
-
         app.testing = True
-        client = app.test_client()
-        # TODO: проверить тестовые данные
-        print(client.get("/api/tasks").json)
-        # print(client.get("/").text)
+        self.client = app.test_client()
+
+    def test_index(self):
+        # TODO:
+        # print(self.client.get("/").text)
+        self.fail()
+
+    # TODO:
+    def test_api_tasks(self):
+        self.assertEqual(self.client.get("/api/tasks").json, [])
+
+        task = Task.add(
+            name="1",
+            command="ping 127.0.0.1",
+            description="description ping",
+        )
+        print(self.client.get("/api/tasks").json)
+        # self.assertEqual(self.client.get("/api/tasks").json, [])
+
+    def test_api_task_runs(self):
+        # TODO:
+        self.fail()
+
+    def test_api_task_run_logs(self):
+        # TODO:
+        self.fail()
