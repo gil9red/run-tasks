@@ -64,3 +64,7 @@ class TestAppWeb(TestCase):
     def test_api_task_run_logs(self):
         # TODO:
         self.fail()
+
+    # TODO:
+    # def test_favicon(self):
+    #     self.fail()

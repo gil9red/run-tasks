@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 import enum
 import time
 from datetime import datetime
-from typing import Type, Iterable, Self, Optional
+from typing import Type, Iterable, Self, Optional, Any
 
 # pip install peewee
 from peewee import (
@@ -109,8 +109,8 @@ class BaseModel(Model):
             query = query.filter(*filters)
         return query.count()
 
-    def to_dict(self) -> dict:
-        return model_to_dict(self)
+    def to_dict(self) -> dict[str, Any]:
+        return model_to_dict(self, recurse=False)
 
     def __str__(self):
         fields = []
@@ -147,6 +147,10 @@ class Task(BaseModel):
     @hybrid_property
     def number_of_runs(self) -> int:
         return self.runs.count()
+
+    def to_dict(self) -> dict[str, Any]:
+        # TODO: extra_attrs
+        return model_to_dict(self, recurse=False, extra_attrs=["number_of_runs"])
 
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
