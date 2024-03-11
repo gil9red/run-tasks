@@ -46,7 +46,11 @@ class TestAppWeb(TestCase):
         self.fail()
 
     def test_api_tasks(self):
-        self.assertEqual(self.client.get("/api/tasks").json, [])
+        uri: str = "/api/tasks"
+
+        rs = self.client.get(uri)
+        self.assertEqual(self.client.get(uri).status_code, 200)
+        self.assertEqual(rs.json, [])
 
         task_1 = Task.add(
             name="1",
@@ -54,7 +58,9 @@ class TestAppWeb(TestCase):
             description="description ping",
             cron="* * * * *",
         )
-        self.assertEqual(self.client.get("/api/tasks").json, [task_1.to_dict()])
+        rs = self.client.get(uri)
+        self.assertEqual(self.client.get(uri).status_code, 200)
+        self.assertEqual(rs.json, [task_1.to_dict()])
 
         task_2 = Task.add(
             name="2",
@@ -62,9 +68,9 @@ class TestAppWeb(TestCase):
             description="description ping",
             is_infinite=True,
         )
-        self.assertEqual(
-            self.client.get("/api/tasks").json, [task_1.to_dict(), task_2.to_dict()]
-        )
+        rs = self.client.get(uri)
+        self.assertEqual(self.client.get(uri).status_code, 200)
+        self.assertEqual(rs.json, [task_1.to_dict(), task_2.to_dict()])
 
     def test_api_task_runs(self):
         # TODO:
