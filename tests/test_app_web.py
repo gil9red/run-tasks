@@ -41,9 +41,11 @@ class TestAppWeb(TestCase):
         self.client = app.test_client()
 
     def test_index(self):
-        # TODO:
-        # print(self.client.get("/").text)
-        self.fail()
+        uri: str = "/"
+
+        rs = self.client.get(uri)
+        self.assertEqual(self.client.get(uri).status_code, 200)
+        self.assertTrue(rs.text)
 
     def test_api_tasks(self):
         uri: str = "/api/tasks"
