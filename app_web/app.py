@@ -6,14 +6,24 @@ __author__ = "ipetrash"
 
 import logging
 import sys
+from datetime import datetime, date
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask
+from flask.json.provider import DefaultJSONProvider
 
 from root_config import DIR_LOGS
 
 
+class UpdatedJSONProvider(DefaultJSONProvider):
+    def default(self, o):
+        if isinstance(o, (date, datetime)):
+            return o.isoformat()
+        return super().default(o)
+
+
 app = Flask(__name__)
+app.json = UpdatedJSONProvider(app)
 app.json.sort_keys = False
 
 log: logging.Logger = app.logger
