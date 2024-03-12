@@ -20,6 +20,16 @@ def index() -> str:
     )
 
 
+@app.route("/task/<int:task_id>")
+def task(task_id: int) -> str:
+    return render_template(
+        "task.html",
+        # Parameters to template
+        title="run-tasks",  # TODO: из конфига
+        task_id=task_id,
+    )
+
+
 @app.route("/api/tasks")
 def api_tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
