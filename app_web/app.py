@@ -16,6 +16,8 @@ from root_config import DIR_LOGS
 
 
 class UpdatedJSONProvider(DefaultJSONProvider):
+    sort_keys = False
+
     def default(self, o):
         if isinstance(o, (date, datetime)):
             return o.isoformat()
@@ -24,7 +26,6 @@ class UpdatedJSONProvider(DefaultJSONProvider):
 
 app = Flask(__name__)
 app.json = UpdatedJSONProvider(app)
-app.json.sort_keys = False
 
 log: logging.Logger = app.logger
 log.handlers.clear()
