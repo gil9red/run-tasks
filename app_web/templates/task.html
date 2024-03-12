@@ -10,6 +10,9 @@
 
 <script src="{{ url_for('static', filename='js/task.js') }}"></script>
 <script>
-    const TASK_ID = {{ task_id }};
+    const TASK_ID = {{ task.id }};
+    {# TODO:
+    const TASK = {{ task.to_dict() | safe }};
+    #}
 </script>
 {% endblock %}

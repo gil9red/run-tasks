@@ -22,11 +22,14 @@ def index() -> str:
 
 @app.route("/task/<int:task_id>")
 def task(task_id: int) -> str:
+    # TODO: 404, если задача не найдена
+    task: Task = Task.get_by_id(task_id)
+
     return render_template(
         "task.html",
         # Parameters to template
         title="run-tasks",  # TODO: из конфига
-        task_id=task_id,
+        task=task,
     )
 
 
