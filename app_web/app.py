@@ -27,6 +27,7 @@ class UpdatedJSONProvider(DefaultJSONProvider):
 
 app = Flask(__name__)
 app.debug = config.DEBUG
+app.secret_key = config.SECRET_KEY
 app.json = UpdatedJSONProvider(app)
 
 log: logging.Logger = app.logger
