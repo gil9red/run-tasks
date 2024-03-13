@@ -17,6 +17,10 @@ $(function() {
             { data: 'start_date', title: 'start_date', },
             { data: 'finish_date', title: 'finish_date', },
             { data: 'scheduled_date', title: 'scheduled_date', },
-        ]
+        ],
+        order: [
+            // Сортировка по убыванию id
+            [0, "desc"],
+        ],
     });
 });
