@@ -17,8 +17,9 @@ from typing import Callable, IO, AnyStr
 import psutil
 
 from app_task_manager.common import log_manager as log
-from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND, SCRIPT_NAME
+from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND
 from db import Task, TaskRun, TaskStatusEnum
+from root_config import PROJECT_NAME
 
 
 IS_WIN: bool = sys.platform == "win32"
@@ -61,7 +62,7 @@ def get_shell_command(file_name_command: str) -> list[str]:
 
 def get_prefix_file_name_command(task: Task, task_run: TaskRun) -> str:
     return PATTERN_FILE_JOB_COMMAND.format(
-        script_name=SCRIPT_NAME,
+        project_name=PROJECT_NAME,
         job_id=task.id,
         job_run_id=task_run.id,
     )

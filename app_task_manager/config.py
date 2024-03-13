@@ -4,14 +4,14 @@
 __author__ = "ipetrash"
 
 
-import os
 import sys
+from typing import Any
+
+from root_config import CONFIG
 
 
-ENCODING: str = os.environ.get("ENCODING", sys.getdefaultencoding())
+CONFIG_MANAGER: dict[str, Any] = CONFIG["manager"]
 
-PATTERN_FILE_JOB_COMMAND: str = "{script_name}_job{job_id}_run{job_run_id}"
-
-SCRIPT_NAME: str = "run-tasks"
-
-STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS: int = 100
+ENCODING: str = CONFIG_MANAGER["encoding"] or sys.getdefaultencoding()
+PATTERN_FILE_JOB_COMMAND: str = CONFIG_MANAGER["pattern_file_job_command"]
+STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS: int = CONFIG_MANAGER["storage_period"]["task_run_in_days"]

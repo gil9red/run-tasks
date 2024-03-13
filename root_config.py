@@ -28,6 +28,8 @@ CONFIG: dict[str, Any] = yaml.safe_load(
     CONFIG_FILE_NAME.read_text("utf-8")
 )
 
+PROJECT_NAME: str = CONFIG["project_name"]
+
 EMAIL_HOST: str = CONFIG["email"]["host"]
 EMAIL_PORT: int = CONFIG["email"]["port"]
 EMAIL_SEND_TO: str = CONFIG["email"]["send_to"]
