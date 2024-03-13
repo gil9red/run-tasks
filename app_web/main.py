@@ -11,14 +11,14 @@ from peewee import DoesNotExist
 from app_web import config
 from app_web.app import app
 from db import Task, TaskRun, TaskRunLog
+from root_config import PROJECT_NAME
 
 
 @app.route("/")
 def index() -> str:
     return render_template(
         "index.html",
-        # Parameters to template
-        title="run-tasks",  # TODO: из конфига
+        title=PROJECT_NAME,
     )
 
 
@@ -31,8 +31,7 @@ def task(task_id: int) -> str:
 
     return render_template(
         "task.html",
-        # Parameters to template
-        title="run-tasks",  # TODO: из конфига
+        title=PROJECT_NAME,
         task=task,
     )
 
