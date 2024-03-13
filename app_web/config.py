@@ -9,3 +9,4 @@ from root_config import CONFIG
 
 HOST: str = CONFIG["web"]["host"]
 PORT: int = CONFIG["web"]["port"]
+DEBUG: bool = CONFIG["web"]["debug"]

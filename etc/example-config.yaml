@@ -8,3 +8,4 @@ email:
 web:
   host: "0.0.0.0"
   port: 5510
+  debug: false

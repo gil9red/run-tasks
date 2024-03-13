@@ -12,6 +12,7 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
+import config
 from root_config import DIR_LOGS
 
 
@@ -25,6 +26,7 @@ class UpdatedJSONProvider(DefaultJSONProvider):
 
 
 app = Flask(__name__)
+app.debug = config.DEBUG
 app.json = UpdatedJSONProvider(app)
 
 log: logging.Logger = app.logger

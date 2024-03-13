@@ -74,8 +74,6 @@ def api_task_run_logs(task_id: int, task_run_id: int) -> Response:
 
 
 if __name__ == "__main__":
-    app.debug = True
-
     app.run(
         host=config.HOST,
         port=config.PORT,
