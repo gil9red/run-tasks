@@ -4,10 +4,13 @@
 __author__ = "ipetrash"
 
 
+from typing import Any
 from root_config import CONFIG
 
 
-HOST: str = CONFIG["web"]["host"]
-PORT: int = CONFIG["web"]["port"]
-DEBUG: bool = CONFIG["web"]["debug"]
-SECRET_KEY: str | None = CONFIG["web"]["secret_key"]
+CONFIG_WEB: dict[str, Any] = CONFIG["web"]
+
+HOST: str = CONFIG_WEB["host"]
+PORT: int = CONFIG_WEB["port"]
+DEBUG: bool = CONFIG_WEB["debug"]
+SECRET_KEY: str | None = CONFIG_WEB["secret_key"]
