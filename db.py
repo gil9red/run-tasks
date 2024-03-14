@@ -396,7 +396,9 @@ class Notification(BaseModel):
         Функция, что возвращает неотправленные уведомления
         """
 
-        return list(cls.select().where(cls.sending_date.is_null(True)).order_by(cls.append_date))
+        return list(
+            cls.select().where(cls.sending_date.is_null(True)).order_by(cls.append_date)
+        )
 
     def set_as_send(self):
         """
