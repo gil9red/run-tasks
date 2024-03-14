@@ -25,7 +25,15 @@ class NotificationUnit(BaseUnit):
                         send_email(notify.name, notify.text)
 
                     case NotificationKindEnum.Telegram:
-                        add_notify(notify.name, notify.text)
+                        # TODO: генерация ссылки на запуск задачи
+                        # url_task_run: str = notify.task_run.
+                        add_notify(
+                            notify.name,
+                            notify.text,
+                            type="ERROR",
+                            # url=url_task_run, # TODO:
+                            has_delete_button=True,
+                        )
 
                     case _:
                         raise Exception(
