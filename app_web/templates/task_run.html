@@ -10,7 +10,7 @@
 
 <script>
     const TASK_ID = {{ task_run.task.id }};
-    const TASK_RUN_ID = {{ task_run.id }};
+    const TASK_RUN_SEQ = {{ task_run.seq }};
 </script>
 <script src="{{ url_for('static', filename='js/task_run.js') }}"></script>
 {% endblock %}

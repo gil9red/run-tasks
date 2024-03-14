@@ -276,6 +276,13 @@ class TaskRun(BaseModel):
             (("task_id", "seq"), True),
         )
 
+    @classmethod
+    def get_by_seq(cls, task_id: int, seq: int) -> Self:
+        return cls.get(
+            task_id=task_id,
+            seq=seq,
+        )
+
     def set_status(self, value: TaskStatusEnum):
         if value is None:
             raise ValueError(

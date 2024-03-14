@@ -355,6 +355,24 @@ class TestTask(BaseTestCaseDb):
 
 
 class TestTaskRun(BaseTestCaseDb):
+    def test_get_by_seq(self):
+        task = Task.add(name="*", command="*")
+
+        run_1 = task.add_or_get_run()
+        self.assertEqual(run_1.seq, 1)
+        self.assertEqual(run_1, TaskRun.get_by_seq(task.id, 1))
+
+        run_1.set_status(TaskStatusEnum.Running)
+
+        run_2 = task.add_or_get_run()
+        self.assertEqual(run_2.seq, 2)
+        self.assertEqual(run_2, TaskRun.get_by_seq(task.id, 2))
+
+        task_2 = Task.add(name="**", command="*")
+        run_3 = task_2.add_or_get_run()
+        self.assertEqual(run_3.seq, 1)
+        self.assertEqual(run_3, TaskRun.get_by_seq(task_2.id, 1))
+
     def test_set_status(self):
         with self.subTest(msg="Статус не меняется вместе с зависимыми полями"):
             run = Task.add(name="*", command="*").add_or_get_run()

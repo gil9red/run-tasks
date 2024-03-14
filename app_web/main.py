@@ -21,16 +21,11 @@ def get_task(task_id: int) -> Task:
         abort(404)
 
 
-def get_task_run(task_id: int, task_run_id: int) -> TaskRun:
+def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:
     try:
-        run: TaskRun = TaskRun.get_by_id(task_run_id)
+        return TaskRun.get_by_seq(task_id, task_run_seq)
     except DoesNotExist:
         abort(404)
-
-    if run.task_id != task_id:
-        abort(404)
-
-    return run
 
 
 @app.route("/")
@@ -50,12 +45,12 @@ def task(task_id: int) -> str:
     )
 
 
-@app.route("/task/<int:task_id>/run/<int:task_run_id>")
-def task_run(task_id: int, task_run_id: int) -> str:
+@app.route("/task/<int:task_id>/run/<int:task_run_seq>")
+def task_run(task_id: int, task_run_seq: int) -> str:
     return render_template(
         "task_run.html",
         title=PROJECT_NAME,
-        task_run=get_task_run(task_id, task_run_id),
+        task_run=get_task_run(task_id, task_run_seq),
     )
 
 
@@ -71,12 +66,12 @@ def api_task_runs(task_id: int) -> Response:
     )
 
 
-@app.route("/api/task/<int:task_id>/run/<int:task_run_id>/logs")
-def api_task_run_logs(task_id: int, task_run_id: int) -> Response:
+@app.route("/api/task/<int:task_id>/run/<int:task_run_seq>/logs")
+def api_task_run_logs(task_id: int, task_run_seq: int) -> Response:
     return jsonify(
         [
             obj.to_dict()
-            for obj in get_task_run(task_id, task_run_id).logs.order_by(TaskRunLog.id)
+            for obj in get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
         ]
     )
 

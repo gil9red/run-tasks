@@ -8,7 +8,7 @@ function link_to_task_run_render(data, type, row, meta) {
 $(function() {
     new DataTable('#table-task-run-logs', {
         ajax: {
-            url: `/api/task/${TASK_ID}/run/${TASK_RUN_ID}/logs`,
+            url: `/api/task/${TASK_ID}/run/${TASK_RUN_SEQ}/logs`,
             dataSrc: '',
         },
         rowId: 'id',

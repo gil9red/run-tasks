@@ -20,32 +20,9 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
 </head>
 <body>
-<!-- TODO: -->
-<!--<nav>-->
-<!--  <h1>{{ title }}</h1>-->
-<!--&lt;!&ndash;  <ul>&ndash;&gt;-->
-<!--&lt;!&ndash;    {% if g.user %}&ndash;&gt;-->
-<!--&lt;!&ndash;      <li><span>{{ g.user['username'] }}</span>&ndash;&gt;-->
-<!--&lt;!&ndash;      <li><a href="/logout">Log Out</a>&ndash;&gt;-->
-<!--&lt;!&ndash;    {% else %}&ndash;&gt;-->
-<!--&lt;!&ndash;      <li><a href="/register">Register</a>&ndash;&gt;-->
-<!--&lt;!&ndash;      <li><a href="/login">Log In</a>&ndash;&gt;-->
-<!--&lt;!&ndash;    {% endif %}&ndash;&gt;-->
-<!--&lt;!&ndash;  </ul>&ndash;&gt;-->
-<!--</nav>-->
 <div class="container">
-<!--    <h1>{{ title }}</h1>-->
-    <h1>{{ self.title() }} - {{ title }}</h1>
-<!--<section class="content">-->
-<!--    <header>-->
-<!--    {% block header %}{% endblock %}-->
-<!--    </header>-->
-    <!-- TODO: -->
-<!--    {% for message in get_flashed_messages() %}-->
-<!--        <div class="flash">{{ message }}</div>-->
-<!--    {% endfor %}-->
+    {% block header %}{% endblock %}
     {% block content %}{% endblock %}
-<!--</section>-->
 </div>
 </body>
 </html>
