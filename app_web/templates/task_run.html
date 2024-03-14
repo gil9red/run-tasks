@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+<!--TODO: -->
+{% block header %}
+<h1>{% block title %}Запуск{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<table id="table-task-run-logs" class="table table-striped"></table>
+
+<script>
+    const TASK_ID = {{ task_run.task.id }};
+    const TASK_RUN_ID = {{ task_run.id }};
+</script>
+<script src="{{ url_for('static', filename='js/task_run.js') }}"></script>
+{% endblock %}

@@ -1,3 +1,10 @@
+function link_to_task_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+    return `<a href="/task/${row.id}"><i class="bi bi-box-arrow-up-right"></i></a>`;
+}
+
 function task_name_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
@@ -14,6 +21,7 @@ $(function() {
         rowId: 'id',
         columns: [
             // TODO: Заполнить title
+            { render: link_to_task_render, orderable: false, },
             { data: 'id', title: 'id', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },
@@ -22,6 +30,10 @@ $(function() {
             { data: 'is_infinite', title: 'is_infinite', },
             { data: 'command', title: 'command', },
             { data: 'number_of_runs', title: 'number_of_runs', },
-        ]
+        ],
+        order: [
+            // Сортировка по возрастанию id
+            [1, "asc"],
+        ],
     });
 });

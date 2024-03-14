@@ -1,3 +1,10 @@
+function link_to_task_run_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+    return `<a href="/task/${row.task}/run/${row.id}"><i class="bi bi-box-arrow-up-right"></i></a>`;
+}
+
 $(function() {
     new DataTable('#table-task-runs', {
         ajax: {
@@ -7,6 +14,7 @@ $(function() {
         rowId: 'id',
         columns: [
             // TODO: Заполнить title
+            { render: link_to_task_run_render, orderable: false, },
             { data: 'id', title: 'id', },
             { data: 'task', title: 'task', },
             { data: 'command', title: 'Команда', },
@@ -20,7 +28,7 @@ $(function() {
         ],
         order: [
             // Сортировка по убыванию id
-            [0, "desc"],
+            [1, "desc"],
         ],
     });
 });

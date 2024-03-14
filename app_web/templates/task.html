@@ -8,11 +8,11 @@
 {% block content %}
 <table id="table-task-runs" class="table table-striped"></table>
 
-<script src="{{ url_for('static', filename='js/task.js') }}"></script>
 <script>
     const TASK_ID = {{ task.id }};
     {# TODO:
     const TASK = {{ task.to_dict() | safe }};
     #}
 </script>
+<script src="{{ url_for('static', filename='js/task.js') }}"></script>
 {% endblock %}

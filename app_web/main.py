@@ -14,6 +14,25 @@ from db import Task, TaskRun, TaskRunLog
 from root_config import PROJECT_NAME
 
 
+def get_task(task_id: int) -> Task:
+    try:
+        return Task.get_by_id(task_id)
+    except DoesNotExist:
+        abort(404)
+
+
+def get_task_run(task_id: int, task_run_id: int) -> TaskRun:
+    try:
+        run: TaskRun = TaskRun.get_by_id(task_run_id)
+    except DoesNotExist:
+        abort(404)
+
+    if run.task_id != task_id:
+        abort(404)
+
+    return run
+
+
 @app.route("/")
 def index() -> str:
     return render_template(
@@ -24,15 +43,19 @@ def index() -> str:
 
 @app.route("/task/<int:task_id>")
 def task(task_id: int) -> str:
-    try:
-        task: Task = Task.get_by_id(task_id)
-    except DoesNotExist:
-        abort(404)
-
     return render_template(
         "task.html",
         title=PROJECT_NAME,
-        task=task,
+        task=get_task(task_id),
+    )
+
+
+@app.route("/task/<int:task_id>/run/<int:task_run_id>")
+def task_run(task_id: int, task_run_id: int) -> str:
+    return render_template(
+        "task_run.html",
+        title=PROJECT_NAME,
+        task_run=get_task_run(task_id, task_run_id),
     )
 
 
@@ -43,25 +66,19 @@ def api_tasks() -> Response:
 
 @app.route("/api/task/<int:task_id>/runs")
 def api_task_runs(task_id: int) -> Response:
-    try:
-        task: Task = Task.get_by_id(task_id)
-    except DoesNotExist:
-        abort(404)
-
-    return jsonify([obj.to_dict() for obj in task.runs.order_by(TaskRun.id)])
+    return jsonify(
+        [obj.to_dict() for obj in get_task(task_id).runs.order_by(TaskRun.id)]
+    )
 
 
 @app.route("/api/task/<int:task_id>/run/<int:task_run_id>/logs")
 def api_task_run_logs(task_id: int, task_run_id: int) -> Response:
-    try:
-        run: TaskRun = TaskRun.get_by_id(task_run_id)
-    except DoesNotExist:
-        abort(404)
-
-    if run.task_id != task_id:
-        abort(404)
-
-    return jsonify([obj.to_dict() for obj in run.logs.order_by(TaskRunLog.id)])
+    return jsonify(
+        [
+            obj.to_dict()
+            for obj in get_task_run(task_id, task_run_id).logs.order_by(TaskRunLog.id)
+        ]
+    )
 
 
 # TODO:
