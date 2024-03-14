@@ -239,7 +239,7 @@ class TaskThread(threading.Thread):
 
             return need_stop
 
-        log_prefix = f"[Задача #{task.id}, запуск #{task_run.id}]"
+        log_prefix = f"[Задача #{task.id}, запуск seq={task_run.seq} (#{task_run.id})]"
         try:
             log.info(f"{log_prefix} Старт запуска задачи")
 

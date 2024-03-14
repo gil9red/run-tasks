@@ -34,7 +34,7 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.status == TaskStatusEnum.Running,
             TaskRun.start_date < min_start_date,
         ):
-            log_prefix = f"[Задача #{run.task.id}, запуск #{run.id}]"
+            log_prefix = f"[Задача #{run.task.id}, запуск seq={run.seq} (#{run.id})]"
             try:
                 # Попробуем найти процесс, если задан
                 if run.process_id:

@@ -237,8 +237,10 @@ class Task(BaseModel):
         # Возврат уже ранее добавленного запуска
         run = self.get_pending_run(scheduled_date)
         if not run:
+            last_run: TaskRun = self.runs.order_by(TaskRun.id.desc()).first()
             run = TaskRun.create(
                 task=self,
+                seq=last_run.seq + 1 if last_run else 1,
                 command=self.command,
                 scheduled_date=scheduled_date,
             )
@@ -258,6 +260,7 @@ class Task(BaseModel):
 
 class TaskRun(BaseModel):
     task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
+    seq = IntegerField(default=1)
     command = TextField()
     status = EnumField(choices=TaskStatusEnum, default=TaskStatusEnum.Pending)
     process_id = IntegerField(null=True)
@@ -266,6 +269,12 @@ class TaskRun(BaseModel):
     start_date = DateTimeField(null=True)
     finish_date = DateTimeField(null=True)
     scheduled_date = DateTimeField(null=True)
+
+    class Meta:
+        indexes = (
+            # Уникальный индекс по ид. задачи и номеру запуска
+            (("task_id", "seq"), True),
+        )
 
     def set_status(self, value: TaskStatusEnum):
         if value is None:

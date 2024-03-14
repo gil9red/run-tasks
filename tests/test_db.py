@@ -263,6 +263,7 @@ class TestTask(BaseTestCaseDb):
         with self.subTest(msg="Общий"):
             task_run = task.add_or_get_run()
             self.assertIsNotNone(task_run)
+            self.assertEqual(task_run.seq, 1)
             self.assertEqual(task.command, task_run.command)
             self.assertEqual(task_run.status, TaskStatusEnum.Pending)
             self.assertIsNone(task_run.process_id)
@@ -277,6 +278,7 @@ class TestTask(BaseTestCaseDb):
 
             task_run_2 = task.add_or_get_run()
             self.assertNotEqual(task_run, task_run_2)
+            self.assertEqual(task_run_2.seq, 2)
 
             # Изменение статуса из Pending, чтобы следующий add_or_get_run вернул новый TaskRun
             task_run_2.set_status(TaskStatusEnum.Stopped)

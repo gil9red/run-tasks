@@ -17,6 +17,7 @@ $(function() {
             { render: link_to_task_run_render, orderable: false, },
             { data: 'id', title: 'id', },
             { data: 'task', title: 'task', },
+            { data: 'seq', title: 'seq', },
             { data: 'command', title: 'Команда', },
             { data: 'status', title: 'Статус', },
             { data: 'process_id', title: 'process_id', },
