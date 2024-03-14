@@ -6,6 +6,9 @@ manager:
   storage_period:
     task_run_in_days: 100
 
+notification:
+  base_url: "http://127.0.0.1:5510"
+
 email:
   host: "smtp.mail.ru"
   port: 465
