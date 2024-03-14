@@ -2,7 +2,15 @@
 
 <!--TODO: -->
 {% block header %}
-<h1>{% block title %}Запуск{% endblock %}</h1>
+<h1>{% block title %}Запуск #{{ task_run.seq }}{% endblock %}</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
+        <li class="breadcrumb-item"><a href="/task/{{ task_run.task.id }}">{{ task_run.task.name }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page">#{{ task_run.seq }}</li>
+    </ol>
+</nav>
 {% endblock %}
 
 {% block content %}

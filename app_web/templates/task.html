@@ -3,6 +3,13 @@
 <!--TODO: -->
 {% block header %}
 <h1>{% block title %}Задача "{{ task.name }}"{% endblock %}</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ task.name }}</li>
+    </ol>
+</nav>
 {% endblock %}
 
 {% block content %}
