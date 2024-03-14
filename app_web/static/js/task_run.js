@@ -1,10 +1,3 @@
-function link_to_task_run_render(data, type, row, meta) {
-    if (type === 'filter') {
-        return null;
-    }
-    return `<a href="/task/${row.task}/run/${row.id}"><i class="bi bi-box-arrow-up-right"></i></a>`;
-}
-
 $(function() {
     new DataTable('#table-task-run-logs', {
         ajax: {
