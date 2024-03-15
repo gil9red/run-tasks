@@ -88,6 +88,21 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
     return temp_file
 
 
+# SOURCE: https://stackoverflow.com/a/66292378/5909792
+class RaisingThread(threading.Thread):
+    def run(self):
+        self._exc = None
+        try:
+            super().run()
+        except Exception as e:
+            self._exc = e
+
+    def join(self, timeout: float | None = None):
+        super().join(timeout=timeout)
+        if self._exc:
+            raise self._exc
+
+
 class ThreadRunProcess(threading.Thread):
     def __init__(
         self,
@@ -117,53 +132,71 @@ class ThreadRunProcess(threading.Thread):
         self.process: psutil.Popen | None = None
         self.process_return_code = None
 
+        self._exc: Exception | None = None
+
     def run(self):
-        if self.stop_on():
-            return
+        try:
+            if self.stop_on():
+                return
 
-        def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]):
-            for text in iter(stream.readline, ""):
-                on_callback(text)
-                if self.stop_on():
+            def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]):
+                for text in iter(stream.readline, ""):
+                    on_callback(text)
+                    if self.stop_on():
+                        break
+                stream.close()
+
+            log.info(f"Запуск: {self.command}")
+            self.process = psutil.Popen(
+                self.command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding=self.encoding,
+            )
+            self.on_start_callback(self.process)
+
+            thread_stdout = RaisingThread(
+                target=read_stream,
+                args=(self.process.stdout, self.on_stdout_callback),
+                daemon=True,
+            )
+            thread_stdout.start()
+
+            thread_stderr = RaisingThread(
+                target=read_stream,
+                args=(self.process.stderr, self.on_stderr_callback),
+                daemon=True,
+            )
+            thread_stderr.start()
+
+            while True:
+                try:
+                    if self.stop_on():
+                        log.info(f"Нужно остановить процесс #{self.process.pid}")
+                        kill_proc_tree(self.process.pid)
+
+                    self.process_return_code = self.process.wait(timeout=0)
                     break
-            stream.close()
 
-        log.info(f"Запуск: {self.command}")
-        self.process = psutil.Popen(
-            self.command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding=self.encoding,
-        )
-        self.on_start_callback(self.process)
+                except psutil.TimeoutExpired:
+                    pass
 
-        thread_stdout = threading.Thread(
-            target=read_stream,
-            args=(self.process.stdout, self.on_stdout_callback),
-            daemon=True,
-        )
-        thread_stdout.start()
+            # Для обработки возможного исключения
+            # Тут потоки уже должны были завершиться
+            thread_stdout.join()
+            thread_stderr.join()
 
-        thread_stderr = threading.Thread(
-            target=read_stream,
-            args=(self.process.stderr, self.on_stderr_callback),
-            daemon=True,
-        )
-        thread_stderr.start()
+        except Exception as e:
+            self._exc = e
 
-        while True:
-            try:
-                if self.stop_on():
-                    log.info(f"Нужно остановить процесс #{self.process.pid}")
-                    kill_proc_tree(self.process.pid)
+        finally:
+            self.on_finish_callback and self.on_finish_callback(self.process)
 
-                self.process_return_code = self.process.wait(timeout=0)
-                break
+    def join(self, timeout: float | None = None):
+        super().join(timeout=timeout)
 
-            except psutil.TimeoutExpired:
-                pass
-
-        self.on_finish_callback and self.on_finish_callback(self.process)
+        if self._exc:
+            raise self._exc
 
 
 class TaskThread(threading.Thread):
