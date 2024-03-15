@@ -211,7 +211,10 @@ class TaskThread(threading.Thread):
         self._is_stopped: bool = False
 
     def stop(self):
-        if self.current_task_run and self.current_task_run.status == TaskStatusEnum.Running:
+        if (
+            self.current_task_run
+            and self.current_task_run.status == TaskStatusEnum.Running
+        ):
             self.current_task_run.set_status(TaskStatusEnum.Stopped)
 
         self._is_stopped = True
@@ -266,9 +269,15 @@ class TaskThread(threading.Thread):
                 task_run.set_status(TaskStatusEnum.Stopped)
 
             status = task_run.get_actual_status()
-            need_stop = status in [TaskStatusEnum.Stopped, TaskStatusEnum.Unknown, TaskStatusEnum.Error]
+            need_stop = status in [
+                TaskStatusEnum.Stopped,
+                TaskStatusEnum.Unknown,
+                TaskStatusEnum.Error,
+            ]
             if need_stop:
-                log.debug(f"{log_prefix} нужно остановить задачу, текущий статус {status.value}")
+                log.debug(
+                    f"{log_prefix} нужно остановить задачу, текущий статус {status.value}"
+                )
 
             return need_stop
 
