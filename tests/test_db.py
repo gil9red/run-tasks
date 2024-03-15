@@ -293,7 +293,7 @@ class TestTask(BaseTestCaseDb):
             task_run.set_status(TaskStatusEnum.Stopped)
 
         with self.subTest(
-            msg="Проверка ограничения количества TaskRun по scheduled_date"
+                msg="Проверка ограничения количества TaskRun по scheduled_date"
         ):
             task_run_1 = task.add_or_get_run()
             self.assertIsNotNone(task_run_1)
