@@ -36,7 +36,7 @@ class NotificationUnit(BaseUnit):
                             notify.name,
                             notify.text,
                             type="ERROR",
-                            url=notify.task_run.get_full_url(),
+                            url=notify.task_run.get_url(),
                             has_delete_button=True,
                         )
 

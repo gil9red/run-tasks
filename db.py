@@ -20,6 +20,7 @@ from peewee import (
     CharField,
     IntegerField,
 )
+from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
@@ -143,15 +144,26 @@ class Task(BaseModel):
     cron = TextField(null=True)
     is_infinite = BooleanField(default=False)
 
-    # TODO:
-    from playhouse.hybrid import hybrid_property
+    # TODO: test
     @hybrid_property
     def number_of_runs(self) -> int:
         return self.runs.count()
 
+    # TODO: test
+    def get_last_run(self) -> Optional["TaskRun"]:
+        return self.runs.order_by(TaskRun.id.desc()).first()
+
+    @hybrid_property
+    def last_run_seq(self) -> int | None:
+        run: TaskRun | None = self.get_last_run()
+        return run.seq if run else None
+
     def to_dict(self) -> dict[str, Any]:
-        # TODO: extra_attrs
-        return model_to_dict(self, recurse=False, extra_attrs=["number_of_runs"])
+        return model_to_dict(
+            self,
+            recurse=False,
+            extra_attrs=["number_of_runs", "last_run_seq"],
+        )
 
     @classmethod
     def get_by_name(cls, name: str) -> Self | None:
@@ -214,9 +226,7 @@ class Task(BaseModel):
 
     # TODO: Надо ли?
     def get_last_scheduled_run(self) -> Optional["TaskRun"]:
-        last_run: TaskRun | None = self.runs.order_by(
-            TaskRun.create_date.desc()
-        ).first()
+        last_run: TaskRun | None = self.get_last_run()
         if not last_run or last_run.scheduled_date is None:
             return None
 
@@ -238,7 +248,7 @@ class Task(BaseModel):
         # Возврат уже ранее добавленного запуска
         run = self.get_pending_run(scheduled_date)
         if not run:
-            last_run: TaskRun = self.runs.order_by(TaskRun.id.desc()).first()
+            last_run = self.get_last_run()
             run = TaskRun.create(
                 task=self,
                 seq=last_run.seq + 1 if last_run else 1,
@@ -360,11 +370,11 @@ class TaskRun(BaseModel):
     def add_log_err(self, text: str) -> "TaskRunLog":
         return self.add_log(text=text, kind=LogKindEnum.Err)
 
-    def get_full_url(self) -> str:
-        return urljoin(
-            CONFIG["notification"]["base_url"],
-            f"/task/{self.task.id}/run/{self.seq}",
-        )
+    def get_url(self, full: bool = True) -> str:
+        uri: str = f"/task/{self.task.id}/run/{self.seq}"
+        if not full:
+            return uri
+        return urljoin(CONFIG["notification"]["base_url"], uri)
 
 
 class TaskRunLog(BaseModel):

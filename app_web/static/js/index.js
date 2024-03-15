@@ -1,8 +1,59 @@
-function link_to_task_render(data, type, row, meta) {
+function on_ajax_success(data) {
+    let ok = data.status == 'ok';
+    if (data.text) {
+        noty({
+            text: data.text,
+            type: ok ? 'success' : 'warning',
+        });
+    }
+}
+
+function on_ajax_error(data, reason) {
+    noty({
+        text: `На сервере произошла неожиданная ошибка ${reason}`,
+        type: 'error',
+    });
+}
+
+function send_ajax(url, method) {
+    $.ajax({
+        url: url,
+        method: method,
+        dataType: "json",  // Тип данных загружаемых с сервера
+        success: on_ajax_success,
+        error: on_ajax_error,
+    });
+}
+
+$(document).on("click", "[data-url]", function() {
+    send_ajax(
+        $(this).data("url"),
+        $(this).data("method")
+    );
+});
+
+function actions_task_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
     }
-    return `<a href="/task/${row.id}"><i class="bi bi-box-arrow-up-right"></i></a>`;
+
+    // TODO: не показывать, если row.last_run_seq == null
+    return `
+        <a href="/task/${row.id}" target=”_blank”>
+            <i class="bi bi-box-arrow-up-right"></i>
+        </a>
+        <button
+            class="btn btn-link p-0"
+            title="Запуск задачи"
+            data-url="/api/task/${row.id}/action/run"
+            data-method="POST"
+        >
+            <i class="bi bi-play-fill text-success"></i>
+        </button>
+        <a href="/task/${row.id}/run/${row.last_run_seq}" target=”_blank”>
+            <i class="bi bi-terminal"></i>
+        </a>
+    `;
 }
 
 function task_name_render(data, type, row, meta) {
@@ -21,7 +72,7 @@ $(function() {
         rowId: 'id',
         columns: [
             // TODO: Заполнить title
-            { render: link_to_task_render, orderable: false, },
+            { render: actions_task_render, orderable: false, },
             { data: 'id', title: 'id', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },

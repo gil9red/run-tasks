@@ -751,9 +751,15 @@ class TestTaskRun(BaseTestCaseDb):
 
     def test_get_full_url(self):
         run = Task.add(name="*", command="*").add_or_get_run()
-        self.assertTrue(run.get_full_url())
-        self.assertTrue(str(run.task.id) in run.get_full_url())
-        self.assertTrue(str(run.seq) in run.get_full_url())
+        self.assertTrue(run.get_url())
+        self.assertTrue(str(run.task.id) in run.get_url())
+        self.assertTrue(str(run.seq) in run.get_url())
+
+        self.assertTrue(run.get_url(full=False))
+        self.assertTrue(str(run.task.id) in run.get_url(full=False))
+        self.assertTrue(str(run.seq) in run.get_url(full=False))
+
+        self.assertNotEqual(run.get_url(), run.get_url(full=False))
 
 
 class TestTaskRunLog(BaseTestCaseDb):

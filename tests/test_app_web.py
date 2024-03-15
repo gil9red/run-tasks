@@ -78,6 +78,9 @@ class TestAppWeb(TestCase):
         # TODO:
         self.fail()
 
+    def test_api_task_action_run(self):
+        self.fail()
+
     def test_api_task_run_logs(self):
         # TODO:
         self.fail()
@@ -88,6 +91,6 @@ class TestAppWeb(TestCase):
 
     def test_task_run_get_full_url(self):
         run = Task.add(name="*", command="*").add_or_get_run()
-        rs = self.client.get(run.get_full_url())
+        rs = self.client.get(run.get_url())
         self.assertEqual(rs.status_code, 200)
         self.assertTrue(rs.text)

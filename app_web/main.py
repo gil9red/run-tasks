@@ -66,6 +66,21 @@ def api_task_runs(task_id: int) -> Response:
     )
 
 
+@app.route("/api/task/<int:task_id>/action/run", methods=["POST"])
+def api_task_action_run(task_id: int) -> Response:
+    run = get_task(task_id).add_or_get_run()
+    # TODO: какой-нибудь общий метод для возврата ответа
+    return jsonify({
+        "status": "ok",
+        "text": (
+            f'Создан запуск {run.seq} (#{run.id}) '
+            f'<a href="{run.get_url(full=False)}" target=”_blank”>'
+            f'<i class="bi bi-box-arrow-up-right"></i>'
+            f'</a>'
+        ),
+    })
+
+
 @app.route("/api/task/<int:task_id>/run/<int:task_run_seq>/logs")
 def api_task_run_logs(task_id: int, task_run_seq: int) -> Response:
     return jsonify(
