@@ -749,6 +749,12 @@ class TestTaskRun(BaseTestCaseDb):
         task.delete_instance()
         self.assertEqual(0, task.runs.count())
 
+    def test_get_full_url(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertTrue(run.get_full_url())
+        self.assertTrue(str(run.task.id) in run.get_full_url())
+        self.assertTrue(str(run.seq) in run.get_full_url())
+
 
 class TestTaskRunLog(BaseTestCaseDb):
     def test_delete_cascade(self):

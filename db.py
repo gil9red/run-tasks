@@ -8,6 +8,7 @@ import enum
 import time
 from datetime import datetime
 from typing import Type, Iterable, Self, Optional, Any
+from urllib.parse import urljoin
 
 # pip install peewee
 from peewee import (
@@ -22,7 +23,7 @@ from peewee import (
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
-from root_config import DB_FILE_NAME
+from root_config import DB_FILE_NAME, CONFIG
 from third_party.db_enum_field import EnumField
 from third_party.shorten import shorten
 
@@ -358,6 +359,12 @@ class TaskRun(BaseModel):
 
     def add_log_err(self, text: str) -> "TaskRunLog":
         return self.add_log(text=text, kind=LogKindEnum.Err)
+
+    def get_full_url(self) -> str:
+        return urljoin(
+            CONFIG["notification"]["base_url"],
+            f"/task/{self.task.id}/run/{self.seq}",
+        )
 
 
 class TaskRunLog(BaseModel):

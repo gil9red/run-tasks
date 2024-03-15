@@ -85,3 +85,9 @@ class TestAppWeb(TestCase):
     # TODO:
     # def test_favicon(self):
     #     self.fail()
+
+    def test_task_run_get_full_url(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        rs = self.client.get(run.get_full_url())
+        self.assertEqual(rs.status_code, 200)
+        self.assertTrue(rs.text)
