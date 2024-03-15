@@ -9,7 +9,14 @@ import time
 from app_task_manager.units.base_unit import BaseUnit
 from db import Notification, NotificationKindEnum
 from root_common import get_full_exception, send_email
+from root_config import CONFIG
+
+import third_party.add_notify_telegram
 from third_party.add_notify_telegram import add_notify
+
+
+# Установка адреса сервера, через который отправляются уведомления
+third_party.add_notify_telegram.URL = CONFIG["notification"]["telegram"]["add_notify_url"]
 
 
 class NotificationUnit(BaseUnit):

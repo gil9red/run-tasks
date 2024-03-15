@@ -9,6 +9,9 @@ manager:
 notification:
   base_url: "http://127.0.0.1:5510"
 
+  telegram:
+    add_notify_url: "http://127.0.0.1:10016/add_notify"
+
 email:
   host: "smtp.mail.ru"
   port: 465
