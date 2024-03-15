@@ -151,6 +151,7 @@ class ThreadRunProcess(threading.Thread):
                 self.command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                text=True,
                 encoding=self.encoding,
             )
             self.on_start_callback(self.process)
