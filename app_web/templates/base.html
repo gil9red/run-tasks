@@ -29,22 +29,20 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='index.css') }}">
 </head>
 <body>
-    <nav class="navbar bg-body-tertiary">
-        <div class="container-fluid">
+    <div class="sticky-top">
+        <nav class="navbar bg-body-tertiary ps-3">
             <a class="navbar-brand" href="/">
                 <!-- TODO: вместо иконки -->
                 <i class="bi bi-list-task"></i>
                 {{ title }}
             </a>
-        </div>
-    </nav>
-    <nav class="bg-light-subtle" aria-label="breadcrumb">
-        <div class="container-fluid">
+        </nav>
+        <nav class="bg-light-subtle ps-3" aria-label="breadcrumb">
             <ol class="breadcrumb">
                 {% block header %}{% endblock %}
             </ol>
-        </div>
-    </nav>
+        </nav>
+    </div>
     <div class="container">
         {% block content %}{% endblock %}
     </div>
