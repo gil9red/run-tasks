@@ -9,15 +9,15 @@ manager:
 notification:
   base_url: "http://127.0.0.1:5510"
 
+  email:
+    host: "smtp.mail.ru"
+    port: 465
+    send_to: "ilya.petrash@inbox.ru"
+    login: "ilya.petrash@inbox.ru"
+    password: "<password>"
+
   telegram:
     add_notify_url: "http://127.0.0.1:10016/add_notify"
-
-email:
-  host: "smtp.mail.ru"
-  port: 465
-  send_to: "ilya.petrash@inbox.ru"
-  login: "ilya.petrash@inbox.ru"
-  password: "<password>"
 
 web:
   host: "0.0.0.0"

@@ -11,15 +11,17 @@ import traceback
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+from typing import Any
 
-from root_config import (
-    DIR_LOGS,
-    EMAIL_HOST,
-    EMAIL_PORT,
-    EMAIL_LOGIN,
-    EMAIL_PASSWORD,
-    EMAIL_SEND_TO,
-)
+from root_config import DIR_LOGS, CONFIG
+
+
+CONFIG_EMAIL: dict[str, Any] = CONFIG["notification"]["email"]
+EMAIL_HOST: str = CONFIG_EMAIL["host"]
+EMAIL_PORT: int = CONFIG_EMAIL["port"]
+EMAIL_SEND_TO: str = CONFIG_EMAIL["send_to"]
+EMAIL_LOGIN: str = CONFIG_EMAIL["login"]
+EMAIL_PASSWORD: str = CONFIG_EMAIL["password"]
 
 
 def get_full_exception(e: BaseException) -> str:

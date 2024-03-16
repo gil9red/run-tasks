@@ -29,9 +29,3 @@ CONFIG: dict[str, Any] = yaml.safe_load(
 )
 
 PROJECT_NAME: str = CONFIG["project_name"]
-
-EMAIL_HOST: str = CONFIG["email"]["host"]
-EMAIL_PORT: int = CONFIG["email"]["port"]
-EMAIL_SEND_TO: str = CONFIG["email"]["send_to"]
-EMAIL_LOGIN: str = CONFIG["email"]["login"]
-EMAIL_PASSWORD: str = CONFIG["email"]["password"]
