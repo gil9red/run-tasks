@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Все уведомления{% endblock %}
+
+{% block header %}
+<li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
+<li class="breadcrumb-item active" aria-current="page"></li>
+{% endblock %}
+
+{% block content %}
+<table id="table-notifications" class="table table-striped"></table>
+
+<script src="{{ url_for('static', filename='js/notifications.js') }}"></script>
+{% endblock %}

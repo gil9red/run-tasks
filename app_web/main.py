@@ -10,7 +10,7 @@ from peewee import DoesNotExist
 
 from app_web import config
 from app_web.app import app
-from db import Task, TaskRun, TaskRunLog
+from db import Task, TaskRun, TaskRunLog, Notification
 from root_config import PROJECT_NAME
 
 
@@ -54,6 +54,14 @@ def task_run(task_id: int, task_run_seq: int) -> str:
     )
 
 
+@app.route("/notifications")
+def notifications() -> str:
+    return render_template(
+        "notifications.html",
+        title=PROJECT_NAME,
+    )
+
+
 @app.route("/api/tasks")
 def api_tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
@@ -70,15 +78,17 @@ def api_task_runs(task_id: int) -> Response:
 def api_task_action_run(task_id: int) -> Response:
     run = get_task(task_id).add_or_get_run()
     # TODO: какой-нибудь общий метод для возврата ответа
-    return jsonify({
-        "status": "ok",
-        "text": (
-            f'Создан запуск {run.seq} (#{run.id}) '
-            f'<a href="{run.get_url(full=False)}" target=”_blank”>'
-            f'<i class="bi bi-box-arrow-up-right"></i>'
-            f'</a>'
-        ),
-    })
+    return jsonify(
+        {
+            "status": "ok",
+            "text": (
+                f"Создан запуск {run.seq} (#{run.id}) "
+                f'<a href="{run.get_url(full=False)}" target=”_blank”>'
+                '<i class="bi bi-box-arrow-up-right"></i>'
+                "</a>"
+            ),
+        }
+    )
 
 
 @app.route("/api/task/<int:task_id>/run/<int:task_run_seq>/logs")
@@ -88,6 +98,13 @@ def api_task_run_logs(task_id: int, task_run_seq: int) -> Response:
             obj.to_dict()
             for obj in get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
         ]
+    )
+
+
+@app.route("/api/notifications")
+def api_notifications() -> Response:
+    return jsonify(
+        [obj.to_dict() for obj in Notification.select().order_by(Notification.id)]
     )
 
 
