@@ -150,19 +150,28 @@ class Task(BaseModel):
         return self.runs.count()
 
     # TODO: test
-    def get_last_run(self) -> Optional["TaskRun"]:
-        return self.runs.order_by(TaskRun.id.desc()).first()
+    def get_last_started_run(self) -> Optional["TaskRun"]:
+        return (
+            self
+            .runs
+            .where(TaskRun.status != TaskStatusEnum.Pending)
+            .order_by(TaskRun.id.desc())
+            .first()
+        )
 
     @hybrid_property
-    def last_run_seq(self) -> int | None:
-        run: TaskRun | None = self.get_last_run()
+    def last_started_run_seq(self) -> int | None:
+        run: TaskRun | None = self.get_last_started_run()
         return run.seq if run else None
 
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(
             self,
             recurse=False,
-            extra_attrs=["number_of_runs", "last_run_seq"],
+            extra_attrs=[
+                "number_of_runs",
+                "last_started_run_seq",
+            ],
         )
 
     @classmethod

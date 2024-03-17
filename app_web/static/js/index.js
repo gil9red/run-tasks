@@ -36,12 +36,13 @@ function actions_task_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
     }
-
-    // TODO: не показывать, если row.last_run_seq == null
-    return `
+    let tags = [
+        `
         <a href="/task/${row.id}" target="_blank">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
+        `,
+        `
         <button
             class="btn btn-link p-0"
             title="Запуск задачи"
@@ -50,10 +51,16 @@ function actions_task_render(data, type, row, meta) {
         >
             <i class="bi bi-play-fill text-success"></i>
         </button>
-        <a href="/task/${row.id}/run/${row.last_run_seq}" target="_blank">
-            <i class="bi bi-terminal"></i>
-        </a>
-    `;
+        `,
+    ];
+    if (row.last_started_run_seq != null) {
+        tags.push(
+            `<a href="/task/${row.id}/run/${row.last_started_run_seq}" target="_blank">
+               <i class="bi bi-terminal"></i>
+            </a>`
+        );
+    }
+    return tags.join("");
 }
 
 function task_name_render(data, type, row, meta) {
