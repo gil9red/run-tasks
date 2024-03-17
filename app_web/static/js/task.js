@@ -26,10 +26,10 @@ $(function() {
             { data: 'status', title: 'Статус', },
             { data: 'process_id', title: 'process_id', },
             { data: 'process_return_code', title: 'process_return_code', },
-            { data: 'create_date', title: 'create_date', },
-            { data: 'start_date', title: 'start_date', },
-            { data: 'finish_date', title: 'finish_date', },
-            { data: 'scheduled_date', title: 'scheduled_date', },
+            { data: 'create_date', title: 'create_date', render: date_render, },
+            { data: 'start_date', title: 'start_date', render: date_render, },
+            { data: 'finish_date', title: 'finish_date', render: date_render, },
+            { data: 'scheduled_date', title: 'scheduled_date', render: date_render, },
         ],
         order: [
             // Сортировка по убыванию id

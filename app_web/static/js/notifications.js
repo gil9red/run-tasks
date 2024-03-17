@@ -30,8 +30,8 @@ $(function() {
             { data: 'name', title: 'name', },
             { data: 'text', title: 'text', },
             { data: 'kind', title: 'kind', render: kind_render, },
-            { data: 'append_date', title: 'append_date', },
-            { data: 'sending_date', title: 'sending_date', },
+            { data: 'append_date', title: 'append_date', render: date_render, },
+            { data: 'sending_date', title: 'sending_date', render: date_render, },
         ],
         order: [
             // Сортировка по возрастанию id

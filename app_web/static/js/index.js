@@ -44,16 +44,15 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            // TODO: Заполнить title
             { render: actions_task_render, orderable: false, },
-            { data: 'id', title: 'id', },
+            { data: 'id', title: 'Ид.', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },
             { data: 'cron', title: 'Cron', },
-            { data: 'is_enabled', title: 'is_enabled', },
-            { data: 'is_infinite', title: 'is_infinite', },
-            { data: 'command', title: 'command', },
-            { data: 'number_of_runs', title: 'number_of_runs', },
+            { data: 'is_enabled', title: 'Активно', },
+            { data: 'is_infinite', title: 'Бесконечно', },
+            { data: 'command', title: 'Команда', },
+            { data: 'number_of_runs', title: 'Запусков', },
         ],
         order: [
             // Сортировка по возрастанию id

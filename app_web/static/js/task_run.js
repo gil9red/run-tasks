@@ -11,7 +11,7 @@ $(function() {
             { data: 'task_run', title: 'task_run', },
             { data: 'kind', title: 'kind', },
             { data: 'text', title: 'text', },
-            { data: 'date', title: 'date', },
+            { data: 'date', title: 'date', render: date_render, },
         ],
         order: [
             // Сортировка по возрастанию id

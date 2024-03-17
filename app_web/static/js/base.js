@@ -253,6 +253,18 @@ LANG_DATATABLES = {
 }
 
 
+function date_render(data, type, row, meta) {
+    if (data == null) {
+        return data;
+    }
+
+    if (type === 'display' || type === 'filter') {
+        return moment.utc(data).local().format("DD/MM/YYYY HH:mm:ss");
+    }
+    return data;
+}
+
+
 function on_ajax_success(data) {
     let ok = data.status == 'ok';
     if (data.text) {
