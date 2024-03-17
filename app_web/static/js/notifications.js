@@ -2,10 +2,17 @@ function kind_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
     }
-    let icon = data == 'email'
-        ? `<i class="bi bi-envelope-fill"></i>`
-        : `<i class="bi bi-telegram"></i>`
-    ;
+
+    let icon = data;
+    switch (data) {
+        case "email":
+            icon = `<i class="bi bi-envelope-fill"></i>`;
+            break;
+
+        case "telegram":
+            icon = `<i class="bi bi-telegram"></i>`;
+            break;
+    }
     return `<div class="d-flex justify-content-center">${icon}</div>`;
 }
 
