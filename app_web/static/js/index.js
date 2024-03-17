@@ -1,37 +1,3 @@
-function on_ajax_success(data) {
-    let ok = data.status == 'ok';
-    if (data.text) {
-        noty({
-            text: data.text,
-            type: ok ? 'success' : 'warning',
-        });
-    }
-}
-
-function on_ajax_error(data, reason) {
-    noty({
-        text: `На сервере произошла неожиданная ошибка ${reason}`,
-        type: 'error',
-    });
-}
-
-function send_ajax(url, method) {
-    $.ajax({
-        url: url,
-        method: method,
-        dataType: "json",  // Тип данных загружаемых с сервера
-        success: on_ajax_success,
-        error: on_ajax_error,
-    });
-}
-
-$(document).on("click", "[data-url]", function() {
-    send_ajax(
-        $(this).data("url"),
-        $(this).data("method")
-    );
-});
-
 function actions_task_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
@@ -93,5 +59,6 @@ $(function() {
             // Сортировка по возрастанию id
             [1, "asc"],
         ],
+        language: LANG_DATATABLES,
     });
 });

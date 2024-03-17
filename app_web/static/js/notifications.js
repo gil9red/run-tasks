@@ -37,5 +37,6 @@ $(function() {
             // Сортировка по возрастанию id
             [0, "asc"],
         ],
+        language: LANG_DATATABLES,
     });
 });

@@ -35,5 +35,6 @@ $(function() {
             // Сортировка по убыванию id
             [1, "desc"],
         ],
+        language: LANG_DATATABLES,
     });
 });
