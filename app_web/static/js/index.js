@@ -39,7 +39,7 @@ function actions_task_render(data, type, row, meta) {
 
     // TODO: не показывать, если row.last_run_seq == null
     return `
-        <a href="/task/${row.id}" target=”_blank”>
+        <a href="/task/${row.id}" target="_blank">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
         <button
@@ -50,7 +50,7 @@ function actions_task_render(data, type, row, meta) {
         >
             <i class="bi bi-play-fill text-success"></i>
         </button>
-        <a href="/task/${row.id}/run/${row.last_run_seq}" target=”_blank”>
+        <a href="/task/${row.id}/run/${row.last_run_seq}" target="_blank">
             <i class="bi bi-terminal"></i>
         </a>
     `;

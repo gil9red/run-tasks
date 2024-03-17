@@ -3,7 +3,7 @@ function link_to_task_run_render(data, type, row, meta) {
         return null;
     }
     return `
-        <a href="/task/${row.task}/run/${row.seq}" target=”_blank”>
+        <a href="/task/${row.task}/run/${row.seq}" target="_blank">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
     `;
