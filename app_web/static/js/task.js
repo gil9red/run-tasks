@@ -1,4 +1,4 @@
-function link_to_task_run_render(data, type, row, meta) {
+function actions_task_run_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
     }
@@ -18,7 +18,7 @@ $(function() {
         rowId: 'id',
         columns: [
             // TODO: Заполнить title
-            { render: link_to_task_run_render, orderable: false, },
+            { render: actions_task_run_render, orderable: false, },
             { data: 'id', title: 'id', },
             { data: 'task', title: 'task', },
             { data: 'seq', title: 'seq', },
