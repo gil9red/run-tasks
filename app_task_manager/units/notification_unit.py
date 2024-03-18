@@ -16,7 +16,9 @@ from third_party.add_notify_telegram import add_notify
 
 
 # Установка адреса сервера, через который отправляются уведомления
-third_party.add_notify_telegram.URL = CONFIG["notification"]["telegram"]["add_notify_url"]
+third_party.add_notify_telegram.URL = CONFIG["notification"]["telegram"][
+    "add_notify_url"
+]
 
 
 class NotificationUnit(BaseUnit):
@@ -36,7 +38,11 @@ class NotificationUnit(BaseUnit):
                             notify.name,
                             notify.text,
                             type="ERROR",
-                            url=notify.task_run.get_url(),
+                            url=(
+                                notify.task_run.get_url()
+                                if notify.task_run
+                                else CONFIG["notification"]["base_url"]
+                            ),
                             has_delete_button=True,
                         )
 
@@ -50,7 +56,9 @@ class NotificationUnit(BaseUnit):
             except Exception as e:
                 text = "Ошибка при отправке уведомления"
                 self.log_exception(text, e)
-                notify.task_run.add_log_err(f"{text}:\n{get_full_exception(e)}")
+
+                if notify.task_run:
+                    notify.task_run.add_log_err(f"{text}:\n{get_full_exception(e)}")
 
                 time.sleep(60)
 
