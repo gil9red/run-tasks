@@ -16,6 +16,7 @@ from db import (
     TaskRun,
     Notification,
     TaskStatusEnum,
+    NotificationKindEnum,
 )
 
 from app_web.main import app
@@ -263,6 +264,32 @@ class TestAppWeb(TestCase):
                 for obj in Notification.select().order_by(Notification.id)
             ],
         )
+
+    def test_api_notification_create(self):
+        uri: str = "/api/notification/create"
+
+        with self.subTest("405 - Method Not Allowed"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 405)
+            # TODO: ?
+            # self.assertEqual(rs.json, [])
+
+        with self.subTest("200 - Ok"):
+            data = dict(
+                kind=NotificationKindEnum.Email.value,
+                name="Title",
+                text="Test\nТест",
+            )
+
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, 200)
+
+            rs_data = rs.json
+            self.assertEqual(rs_data["status"], "ok")
+            self.assertTrue(Notification.get_by_id(rs_data["result"][0]["id"]))
+            self.assertEqual(rs_data["result"][0]["name"], data["name"])
+            self.assertEqual(rs_data["result"][0]["kind"], data["kind"])
+            self.assertEqual(rs_data["result"][0]["text"], data["text"])
 
     def test_favicon(self):
         uri: str = "/favicon.ico"
