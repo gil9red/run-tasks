@@ -4,15 +4,35 @@
 __author__ = "ipetrash"
 
 
+import enum
 from pathlib import Path
+from typing import Any
 
-from flask import render_template, jsonify, Response, abort, send_from_directory
+from flask import render_template, jsonify, Response, abort, send_from_directory, request
 from peewee import DoesNotExist
 
 from app_web import config
 from app_web.app import app
-from db import Task, TaskRun, TaskRunLog, Notification
+from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
 from root_config import PROJECT_NAME
+
+
+@enum.unique
+class StatusEnum(enum.StrEnum):
+    OK = enum.auto()
+    ERROR = enum.auto()
+
+
+def prepare_response(
+    status: StatusEnum,
+    text: str,
+    result: None | list[dict[str, Any]] = None,
+) -> dict[str, Any]:
+    return {
+        "status": status,
+        "text": text,
+        "result": result,
+    }
 
 
 def get_task(task_id: int) -> Task:
@@ -80,15 +100,15 @@ def api_task_action_run(task_id: int) -> Response:
     run = get_task(task_id).add_or_get_run()
     # TODO: какой-нибудь общий метод для возврата ответа
     return jsonify(
-        {
-            "status": "ok",
-            "text": (
+        prepare_response(
+            status=StatusEnum.OK,
+            text=(
                 f"Создан запуск {run.seq} (#{run.id}) "
                 f'<a href="{run.get_url(full=False)}" target=”_blank”>'
                 '<i class="bi bi-box-arrow-up-right"></i>'
                 "</a>"
             ),
-        }
+        ),
     )
 
 
@@ -106,6 +126,26 @@ def api_task_run_logs(task_id: int, task_run_seq: int) -> Response:
 def api_notifications() -> Response:
     return jsonify(
         [obj.to_dict() for obj in Notification.select().order_by(Notification.id)]
+    )
+
+
+@app.route("/api/notification/create", methods=["POST"])
+def api_notification_create() -> Response:
+    # TODO: добавить проверку полей
+    data: dict[str, str] = request.json
+
+    notification = Notification.add(
+        task_run=None,
+        name=data["name"],
+        text=data["text"],
+        kind=NotificationKindEnum(data["kind"]),
+    )
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            text=f"Создано уведомление #{notification.id}",
+            result=[notification.to_dict()],
+        ),
     )
 
 

@@ -415,7 +415,7 @@ class Notification(BaseModel):
     @classmethod
     def add(
         cls,
-        task_run: TaskRun,
+        task_run: TaskRun | None,
         name: str,
         text: str,
         kind: NotificationKindEnum,

@@ -265,17 +265,21 @@ function date_render(data, type, row, meta) {
 }
 
 
-function on_ajax_success(data) {
-    let ok = data.status == 'ok';
-    if (data.text) {
+function on_ajax_success(rs, callback=null) {
+    let ok = rs.status == 'ok';
+    if (rs.text) {
         noty({
-            text: data.text,
+            text: rs.text,
             type: ok ? 'success' : 'warning',
         });
     }
+
+    if (callback) {
+        callback(rs);
+    }
 }
 
-function on_ajax_error(data, reason) {
+function on_ajax_error(rs, reason) {
     noty({
         text: `На сервере произошла неожиданная ошибка ${reason}`,
         type: 'error',
@@ -298,3 +302,16 @@ $(document).on("click", "[data-url]", function() {
         $(this).data("method")
     );
 });
+
+// SOURCE: https://technotrampoline.com/articles/how-to-convert-form-data-to-json-with-jquery/
+function convertFormToJSON(form) {
+    return $(form)
+    .serializeArray()
+    .reduce(
+        function (json, { name, value }) {
+            json[name] = value;
+            return json;
+        },
+        {}
+    );
+}
