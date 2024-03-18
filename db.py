@@ -159,6 +159,15 @@ class Task(BaseModel):
             .first()
         )
 
+    # TODO: единая логика с get_last_started_run. Добавить параметр фильтра
+    def get_last_run(self) -> Optional["TaskRun"]:
+        return (
+            self
+            .runs
+            .order_by(TaskRun.id.desc())
+            .first()
+        )
+
     @hybrid_property
     def last_started_run_seq(self) -> int | None:
         run: TaskRun | None = self.get_last_started_run()
@@ -394,7 +403,7 @@ class TaskRunLog(BaseModel):
 
 
 class Notification(BaseModel):
-    task_run = ForeignKeyField(TaskRun, on_delete="CASCADE", backref="notifications")
+    task_run = ForeignKeyField(TaskRun, null=True, on_delete="CASCADE", backref="notifications")
     name = TextField()
     text = TextField()
     kind = EnumField(choices=NotificationKindEnum)
