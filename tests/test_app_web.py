@@ -178,8 +178,21 @@ class TestAppWeb(TestCase):
         self.fail()
 
     def test_api_notifications(self):
-        # TODO:
-        self.fail()
+        uri: str = "/api/notifications"
+
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+
+        def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+            return dict(id=d["id"], kind=d["kind"], text=d["text"])
+
+        self.assertEqual(
+            [get_common_view(obj) for obj in rs.json],
+            [
+                get_common_view(obj.to_dict())
+                for obj in Notification.select().order_by(Notification.id)
+            ],
+        )
 
     # TODO:
     # def test_favicon(self):
