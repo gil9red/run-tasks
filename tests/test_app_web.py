@@ -10,17 +10,12 @@ from typing import Any
 
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-# TODO:
 from db import (
-    NotDefinedParameterException,
     BaseModel,
     Task,
     TaskRun,
-    TaskRunLog,
     Notification,
     TaskStatusEnum,
-    LogKindEnum,
-    NotificationKindEnum,
 )
 
 from app_web.main import app
@@ -171,11 +166,86 @@ class TestAppWeb(TestCase):
             )
 
     def test_api_task_action_run(self):
-        self.fail()
+        with self.subTest("405 - Method Not Allowed"):
+            uri: str = "/api/task/99999/action/run"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 405)
+            # TODO: ?
+            # self.assertEqual(rs.json, [])
+
+        with self.subTest("404 - Not Found"):
+            uri: str = "/api/task/99999/action/run"
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 404)
+            # TODO:
+            # self.assertEqual(rs.json, [])
+
+        with self.subTest("200 - Ok"):
+            task_1 = Task.add(
+                name="1",
+                command="ping 127.0.0.1",
+            )
+            self.assertIsNone(task_1.get_last_run())
+
+            uri: str = f"/api/task/{task_1.id}/action/run"
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+
+            self.assertIsNotNone(task_1.get_last_run())
 
     def test_api_task_run_logs(self):
-        # TODO:
-        self.fail()
+        with self.subTest("404 - Not Found"):
+            uri: str = "/api/task/99999/run/99999/logs"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            # TODO:
+            # self.assertEqual(rs.json, [])
+
+            task_1 = Task.add(
+                name="1",
+                command="ping 127.0.0.1",
+            )
+
+            uri: str = f"/api/task/{task_1.id}/run/99999/logs"
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            # TODO:
+            # self.assertEqual(rs.json, [])
+
+        with self.subTest("200 - Ok"):
+            task_2 = Task.add(
+                name="2",
+                command="ping 127.0.0.1",
+            )
+            run_1 = task_2.add_or_get_run()
+
+            uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/logs"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json, [])
+
+            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+                return dict(
+                    id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
+                )
+
+            items = []
+            for i in range(5):
+                items.append(run_1.add_log_out(f"out={i}"))
+                items.append(run_1.add_log_err(f"out={i}"))
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj) for obj in rs.json],
+                [get_common_view(obj.to_dict()) for obj in items],
+            )
 
     def test_api_notifications(self):
         uri: str = "/api/notifications"
