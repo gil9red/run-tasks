@@ -52,7 +52,11 @@ function update_rows_table_by_response(rs) {
 
 $(function() {
     // Создание уведомления
-    $("#modal-create-notification form").submit(function() {
+    let $modal_create_notification = $('#modal-create-notification');
+
+    $modal_create_notification.find("form").submit(function() {
+        $modal_create_notification.modal('hide');
+
         let thisForm = this;
 
         let url = $(this).attr("action");
