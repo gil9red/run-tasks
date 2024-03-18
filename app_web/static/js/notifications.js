@@ -90,14 +90,13 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            // TODO: Заполнить title
-            { data: 'id', title: 'id', },
-            { data: 'task_run', title: 'task_run', },
-            { data: 'name', title: 'name', },
-            { data: 'text', title: 'text', },
-            { data: 'kind', title: 'kind', render: kind_render, },
-            { data: 'append_date', title: 'append_date', render: date_render, },
-            { data: 'sending_date', title: 'sending_date', render: date_render, },
+            { data: 'id', title: 'Ид.', }, // TODO: Спрятать?
+            { data: 'task_run', title: 'Ид. запуска', }, // TODO: Спрятать? Заполнять ссылку на запуск (брать task_run_seq)?
+            { data: 'name', title: 'Название', },
+            { data: 'text', title: 'Текст', },
+            { data: 'kind', title: 'Тип', render: kind_render, },
+            { data: 'append_date', title: 'Добавлено', render: date_render, },
+            { data: 'sending_date', title: 'Отправлено', render: date_render, },
         ],
         order: [
             // Сортировка по убыванию id
