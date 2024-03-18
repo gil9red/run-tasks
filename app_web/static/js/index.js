@@ -52,7 +52,7 @@ $(function() {
             { data: 'is_enabled', title: 'Активный', },
             { data: 'is_infinite', title: 'Бесконечный', },
             { data: 'command', title: 'Команда', },
-            { data: 'number_of_runs', title: 'Запусков', },
+            { data: 'number_of_runs', title: 'Запуски', },
         ],
         order: [
             // Сортировка по возрастанию id
