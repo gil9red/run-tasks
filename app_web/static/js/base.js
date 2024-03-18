@@ -259,7 +259,7 @@ function date_render(data, type, row, meta) {
     }
 
     if (type === 'display' || type === 'filter') {
-        return moment.utc(data).local().format("DD/MM/YYYY HH:mm:ss");
+        return moment.utc(data).format("DD/MM/YYYY HH:mm:ss");
     }
     return data;
 }
