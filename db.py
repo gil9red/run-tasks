@@ -159,6 +159,7 @@ class Task(BaseModel):
             .first()
         )
 
+    # TODO: test
     # TODO: единая логика с get_last_started_run. Добавить параметр фильтра
     def get_last_run(self) -> Optional["TaskRun"]:
         return (
@@ -168,6 +169,7 @@ class Task(BaseModel):
             .first()
         )
 
+    # TODO: test
     @hybrid_property
     def last_started_run_seq(self) -> int | None:
         run: TaskRun | None = self.get_last_started_run()
