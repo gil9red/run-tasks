@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %} - {{ title }}</title>
 
-    <!-- TODO: -->
-<!--    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.png') }}">-->
+    <link rel="shortcut icon" type="image/x-icon" href="{{ url_for('static', filename='images/avatar-256.png') }}">
 
     <script src="{{ url_for('static', filename='js/jquery-3.1.1.min.js') }}"></script>
 
@@ -30,8 +29,7 @@
     <div class="sticky-top">
         <nav class="navbar bg-body-tertiary ps-3 pe-3">
             <a class="navbar-brand" href="/">
-                <!-- TODO: вместо иконки -->
-                <i class="bi bi-list-task"></i>
+                <img src="/favicon.ico" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">
                 {{ title }}
             </a>
             <a href="/notifications" class="icon-link icon-link-hover d-flex">

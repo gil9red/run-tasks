@@ -4,8 +4,9 @@
 __author__ = "ipetrash"
 
 
-from flask import render_template, jsonify, Response, abort
+from pathlib import Path
 
+from flask import render_template, jsonify, Response, abort, send_from_directory
 from peewee import DoesNotExist
 
 from app_web import config
@@ -108,12 +109,9 @@ def api_notifications() -> Response:
     )
 
 
-# TODO:
-# @app.route("/favicon.ico")
-# def favicon():
-#     return send_from_directory(
-#         os.path.join(app.root_path, "static/images"), "favicon.png"
-#     )
+@app.route("/favicon.ico")
+def favicon() -> Response:
+    return send_from_directory(Path(app.root_path) / "static/images", "avatar-256.png")
 
 
 if __name__ == "__main__":
