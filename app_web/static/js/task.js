@@ -9,6 +9,7 @@ function actions_task_run_render(data, type, row, meta) {
     `;
 }
 
+
 $(function() {
     new DataTable('#table-task-runs', {
         ajax: {

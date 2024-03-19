@@ -16,14 +16,17 @@ function kind_render(data, type, row, meta) {
     return `<div class="d-flex justify-content-center">${icon}</div>`;
 }
 
+
 // TODO: Общий код для функций обновления таблиц
 function get_table() {
     return $("#table-notifications").DataTable();
 }
 
+
 function get_table_row_by_id(id) {
     return get_table().row("#" + id);
 }
+
 
 function process_table_rows_from_response(rs, callback) {
     let ok = rs.status == 'ok';
@@ -35,6 +38,7 @@ function process_table_rows_from_response(rs, callback) {
         }
     }
 }
+
 
 function update_rows_table_by_response(rs) {
     process_table_rows_from_response(
@@ -49,6 +53,7 @@ function update_rows_table_by_response(rs) {
         }
     );
 }
+
 
 $(function() {
     // Создание уведомления
