@@ -8,7 +8,12 @@
 {% endblock %}
 
 {% block content %}
-<table id="table-tasks" class="table table-striped"></table>
+<table
+        id="table-tasks"
+        class="table"
+        data-url-update="/api/task/update"
+>
+</table>
 
 <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 {% endblock %}

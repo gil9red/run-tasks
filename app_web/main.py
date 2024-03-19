@@ -25,8 +25,8 @@ class StatusEnum(enum.StrEnum):
 
 def prepare_response(
     status: StatusEnum,
-    text: str,
-    result: None | list[dict[str, Any]] = None,
+    text: str | None = None,
+    result: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     return {
         "status": status,
@@ -88,6 +88,39 @@ def api_tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 
 
+@app.route("/api/task/update", methods=["POST"])
+def api_task_update() -> Response:
+    data: dict[str, Any] = request.json
+
+    task: Task = get_task(data["id"])
+
+    if "command" in data:
+        task.command = data["command"]
+
+    if "cron" in data:
+        task.cron = data["cron"]
+
+    if "is_enabled" in data:
+        task.is_enabled = data["is_enabled"]
+
+    if "is_infinite" in data:
+        task.is_infinite = data["is_infinite"]
+
+    if "description" in data:
+        task.description = data["description"]
+
+    task.save()
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            # TODO: Нужно ли?
+            # text=f"Создано уведомление #{notification.id}",
+            result=[task.to_dict()],
+        ),
+    )
+
+
 @app.route("/api/task/<int:task_id>/runs")
 def api_task_runs(task_id: int) -> Response:
     return jsonify(
@@ -132,7 +165,7 @@ def api_notifications() -> Response:
 @app.route("/api/notification/create", methods=["POST"])
 def api_notification_create() -> Response:
     # TODO: добавить проверку полей
-    data: dict[str, str] = request.json
+    data: dict[str, Any] = request.json
 
     notification = Notification.add(
         task_run=None,

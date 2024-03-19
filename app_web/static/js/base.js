@@ -257,11 +257,32 @@ function date_render(data, type, row, meta) {
     if (data == null) {
         return data;
     }
-
     if (type === 'display' || type === 'filter') {
         return moment.utc(data).format("DD/MM/YYYY HH:mm:ss");
     }
     return data;
+}
+
+
+function bool_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return data;
+    }
+    return `
+        <div class="form-check form-switch d-flex justify-content-center">
+            <input
+                    class="form-check-input"
+                    type="checkbox"
+                    role="switch"
+                    data-context-obj-id="${row.id}"
+                    data-context-obj-field="${meta.settings.aoColumns[meta.col].data}"
+                    data-context-row="${meta.row}"
+                    data-context-col="${meta.col}"
+                    data-context-table-id="#${meta.settings.sTableId}"
+                    ${data ? "checked" : ""}
+            >
+        </div>
+    `;
 }
 
 
@@ -274,10 +295,11 @@ function on_ajax_success(rs, callback=null) {
         });
     }
 
-    if (callback) {
+    if (callback != null) {
         callback(rs);
     }
 }
+
 
 function on_ajax_error(rs, reason) {
     noty({
@@ -286,22 +308,47 @@ function on_ajax_error(rs, reason) {
     });
 }
 
-function send_ajax(url, method) {
+
+function send_ajax(url, method, json=null) {
     $.ajax({
         url: url,
         method: method,
+        data: json ? JSON.stringify(json) : null,
+        contentType: "application/json; charset=utf-8",
         dataType: "json",  // Тип данных загружаемых с сервера
-        success: on_ajax_success,
-        error: on_ajax_error,
+        success: data => on_ajax_success(data),
+        error: data => on_ajax_error(data),
     });
 }
 
+
 $(document).on("click", "[data-url]", function() {
+    let $this = $(this);
     send_ajax(
-        $(this).data("url"),
-        $(this).data("method")
+        $this.data("url"),
+        $this.data("method")
     );
 });
+
+
+$(document).on("change", "[data-context-obj-id][type=checkbox]", function() {
+    let $this = $(this);
+    let value = $this.is(':checked');
+
+    let $table = $($this.data("context-table-id"));
+    let url = $table.data("url-update");
+
+    let field = $this.data("context-obj-field");
+
+    let obj = new Object();
+    obj["id"] = $this.data("context-obj-id");
+    obj[field] = value;
+
+    // TODO: Обновить таблицу от ответа из сервера
+    // TODO: Мб какой-нибудь контекст передавать в send_ajax?
+    send_ajax(url, "POST", obj);
+});
+
 
 // SOURCE: https://technotrampoline.com/articles/how-to-convert-form-data-to-json-with-jquery/
 function convertFormToJSON(form) {

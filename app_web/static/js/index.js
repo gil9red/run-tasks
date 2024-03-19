@@ -10,10 +10,10 @@ function actions_task_render(data, type, row, meta) {
         `,
         `
         <button
-            class="btn btn-link p-0"
-            title="Запуск задачи"
-            data-url="/api/task/${row.id}/action/run"
-            data-method="POST"
+                class="btn btn-link p-0"
+                title="Запуск задачи"
+                data-url="/api/task/${row.id}/action/run"
+                data-method="POST"
         >
             <i class="bi bi-play-fill text-success"></i>
         </button>
@@ -22,12 +22,13 @@ function actions_task_render(data, type, row, meta) {
     if (row.last_started_run_seq != null) {
         tags.push(
             `<a href="/task/${row.id}/run/${row.last_started_run_seq}">
-               <i class="bi bi-terminal"></i>
+                <i class="bi bi-terminal"></i>
             </a>`
         );
     }
     return tags.join("");
 }
+
 
 function task_name_render(data, type, row, meta) {
     if (type === 'filter') {
@@ -36,20 +37,6 @@ function task_name_render(data, type, row, meta) {
     return `<a href="/task/${row.id}">${data}</a>`;
 }
 
-// TODO:
-function bool_render(data, type, row, meta) {
-    if (type === 'filter') {
-        return data;
-    }
-    console.log(
-        data, type, row, meta
-    );
-    return `
-        <div class="form-check form-switch d-flex justify-content-center">
-            <input class="form-check-input" type="checkbox" role="switch" ${data ? "checked" : ""}>
-        </div>
-    `;
-}
 
 $(function() {
     new DataTable('#table-tasks', {
