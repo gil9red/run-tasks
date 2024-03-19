@@ -4,7 +4,7 @@ function actions_task_render(data, type, row, meta) {
     }
     let tags = [
         `
-        <a href="/task/${row.id}" target="_blank">
+        <a href="/task/${row.id}">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
         `,
@@ -21,7 +21,7 @@ function actions_task_render(data, type, row, meta) {
     ];
     if (row.last_started_run_seq != null) {
         tags.push(
-            `<a href="/task/${row.id}/run/${row.last_started_run_seq}" target="_blank">
+            `<a href="/task/${row.id}/run/${row.last_started_run_seq}">
                <i class="bi bi-terminal"></i>
             </a>`
         );
@@ -34,6 +34,21 @@ function task_name_render(data, type, row, meta) {
         return data;
     }
     return `<a href="/task/${row.id}">${data}</a>`;
+}
+
+// TODO:
+function bool_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return data;
+    }
+    console.log(
+        data, type, row, meta
+    );
+    return `
+        <div class="form-check form-switch d-flex justify-content-center">
+            <input class="form-check-input" type="checkbox" role="switch" ${data ? "checked" : ""}>
+        </div>
+    `;
 }
 
 $(function() {
@@ -49,8 +64,8 @@ $(function() {
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },
             { data: 'cron', title: 'Cron', },
-            { data: 'is_enabled', title: 'Активный', },
-            { data: 'is_infinite', title: 'Бесконечный', },
+            { data: 'is_enabled', title: 'Активный', render: bool_render, },
+            { data: 'is_infinite', title: 'Бесконечный', render: bool_render, },
             { data: 'command', title: 'Команда', },
             { data: 'number_of_runs', title: 'Запуски', },
         ],
