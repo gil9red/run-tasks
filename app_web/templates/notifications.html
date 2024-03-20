@@ -20,7 +20,13 @@
             <form method="post" action="/api/notification/create">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="modal-create-notification-label">Создание уведомления</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"
+                            aria-label="Закрыть"
+                    >
+                    </button>
                 </div>
                 <div class="modal-body">
                         <div class="mb-3">
@@ -58,17 +64,19 @@
                 </div>
                 <div class="modal-footer">
                     <button
+                            type="submit"
+                            class="btn btn-primary"
+                    >
+                        <i class="bi bi-check-circle"></i>
+                        Создать
+                    </button>
+                    <button
                             type="button"
                             class="btn btn-secondary"
                             data-bs-dismiss="modal"
                     >
+                        <i class="bi bi-x-circle"></i>
                         Отмена
-                    </button>
-                    <button
-                            type="submit"
-                            class="btn btn-primary"
-                    >
-                        Создать
                     </button>
                 </div>
             </form>
