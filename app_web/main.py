@@ -8,11 +8,13 @@ import enum
 from pathlib import Path
 from typing import Any
 
-from flask import render_template, jsonify, Response, abort, send_from_directory, request
+import flask_login
+from flask import render_template, jsonify, Response, abort, send_from_directory, request, redirect, url_for
+
 from peewee import DoesNotExist
 
 from app_web import config
-from app_web.app import app
+from app_web.app import app, USERS
 from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
 from root_config import PROJECT_NAME
 
@@ -49,7 +51,23 @@ def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:
         abort(404)
 
 
-@app.route("/")
+def public_route(decorated_function):
+    decorated_function.is_public = True
+    return decorated_function
+
+
+@app.before_request
+def check_route_access():
+    if any([not request.endpoint or request.endpoint.startswith('static'),
+            flask_login.current_user.is_authenticated,  # From Flask-Login
+            getattr(app.view_functions.get(request.endpoint), 'is_public', False)]):
+        return  # Access granted
+
+    params: dict = {"from": request.path}
+    return redirect(url_for("login", **params))
+
+
+@app.get("/")
 def index() -> str:
     return render_template(
         "index.html",
@@ -57,7 +75,48 @@ def index() -> str:
     )
 
 
-@app.route("/task/<int:task_id>")
+@app.route("/login", methods=["GET", "POST"])
+@public_route
+def login() -> str | Response:
+    error_text: str | None = None
+
+    if request.method == "POST":
+        login: str = request.form["login"]
+        password: str = request.form["password"]
+
+        user = USERS.get(login)
+        if user is None or user.password != password:
+            error_text = "Неправильный логин или пароль!"
+        else:
+            flask_login.login_user(user, remember=True)
+
+    if flask_login.current_user.is_authenticated:
+        url: str = request.args.get("from", default="/")
+        return redirect(url)
+
+    return render_template(
+        "login.html",
+        title=PROJECT_NAME,
+        query_string=str(request.query_string, encoding="utf-8"),
+        error_text=error_text,
+    )
+
+
+@app.route("/logout")
+def logout() -> Response:
+    flask_login.logout_user()
+    return redirect(url_for("index"))
+
+
+@app.get("/notifications")
+def notifications() -> str:
+    return render_template(
+        "notifications.html",
+        title=PROJECT_NAME,
+    )
+
+
+@app.get("/task/<int:task_id>")
 def task(task_id: int) -> str:
     return render_template(
         "task.html",
@@ -75,15 +134,7 @@ def task_run(task_id: int, task_run_seq: int) -> str:
     )
 
 
-@app.route("/notifications")
-def notifications() -> str:
-    return render_template(
-        "notifications.html",
-        title=PROJECT_NAME,
-    )
-
-
-@app.route("/api/tasks")
+@app.get("/api/tasks")
 def api_tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 

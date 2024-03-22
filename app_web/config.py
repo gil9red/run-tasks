@@ -14,3 +14,7 @@ HOST: str = CONFIG_WEB["host"]
 PORT: int = CONFIG_WEB["port"]
 DEBUG: bool = CONFIG_WEB["debug"]
 SECRET_KEY: str | None = CONFIG_WEB["secret_key"]
+
+USERS: dict[str, str] = {
+    CONFIG_WEB["login"]: CONFIG_WEB["password"],
+}

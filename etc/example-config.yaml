@@ -24,3 +24,5 @@ web:
   port: 5510
   debug: false
   secret_key: "<your-secret-key>"
+  login: "<login>"
+  password: "<password>"

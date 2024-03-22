@@ -1,4 +1,5 @@
 flask==3.0.2
+flask-login==0.6.3
 peewee==3.17.1
 psutil==5.9.8
 cron-converter==1.0.2

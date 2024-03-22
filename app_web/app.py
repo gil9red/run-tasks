@@ -12,6 +12,8 @@ from logging.handlers import RotatingFileHandler
 from flask import Flask
 from flask.json.provider import DefaultJSONProvider
 
+import flask_login
+
 from app_web import config
 from root_config import DIR_LOGS
 
@@ -25,10 +27,31 @@ class UpdatedJSONProvider(DefaultJSONProvider):
         return super().default(o)
 
 
+class User(flask_login.UserMixin):
+    def __init__(self, login: str, password: str):
+        self.id = login
+        self.password = password
+
+
 app = Flask(__name__)
 app.debug = config.DEBUG
 app.secret_key = config.SECRET_KEY
 app.json = UpdatedJSONProvider(app)
+
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+
+USERS: dict[str, User] = {
+    login: User(login, password)
+    for login, password in config.USERS.items()
+}
+
+
+@login_manager.user_loader
+def user_loader(id: str) -> User | None:
+    return USERS.get(id)
+
 
 log: logging.Logger = app.logger
 log.handlers.clear()
