@@ -60,13 +60,13 @@ def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:
         abort(404)
 
 
-def public_route(decorated_function):
+def public_route(decorated_function: callable) -> callable:
     decorated_function.is_public = True
     return decorated_function
 
 
 @app.before_request
-def check_route_access():
+def check_route_access() -> Response | None:
     if any(
         [
             not request.endpoint or request.endpoint.startswith("static"),
