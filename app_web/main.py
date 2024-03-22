@@ -9,7 +9,16 @@ from pathlib import Path
 from typing import Any
 
 import flask_login
-from flask import render_template, jsonify, Response, abort, send_from_directory, request, redirect, url_for
+from flask import (
+    render_template,
+    jsonify,
+    Response,
+    abort,
+    send_from_directory,
+    request,
+    redirect,
+    url_for,
+)
 
 from peewee import DoesNotExist
 
@@ -58,16 +67,20 @@ def public_route(decorated_function):
 
 @app.before_request
 def check_route_access():
-    if any([not request.endpoint or request.endpoint.startswith('static'),
+    if any(
+        [
+            not request.endpoint or request.endpoint.startswith("static"),
             flask_login.current_user.is_authenticated,  # From Flask-Login
-            getattr(app.view_functions.get(request.endpoint), 'is_public', False)]):
+            getattr(app.view_functions.get(request.endpoint), "is_public", False),
+        ]
+    ):
         return  # Access granted
 
     params: dict = {"from": request.path}
     return redirect(url_for("login", **params))
 
 
-@app.get("/")
+@app.route("/")
 def index() -> str:
     return render_template(
         "index.html",
@@ -108,7 +121,7 @@ def logout() -> Response:
     return redirect(url_for("index"))
 
 
-@app.get("/notifications")
+@app.route("/notifications")
 def notifications() -> str:
     return render_template(
         "notifications.html",
@@ -116,7 +129,7 @@ def notifications() -> str:
     )
 
 
-@app.get("/task/<int:task_id>")
+@app.route("/task/<int:task_id>")
 def task(task_id: int) -> str:
     return render_template(
         "task.html",
@@ -134,7 +147,7 @@ def task_run(task_id: int, task_run_seq: int) -> str:
     )
 
 
-@app.get("/api/tasks")
+@app.route("/api/tasks")
 def api_tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 
