@@ -247,6 +247,7 @@ def api_notification_create() -> Response:
 
 
 @app.route("/favicon.ico")
+@public_route
 def favicon() -> Response:
     return send_from_directory(Path(app.root_path) / "static/images", "avatar-256.png")
 
