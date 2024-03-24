@@ -60,6 +60,7 @@ $(function() {
             { data: 'is_enabled', title: 'Активный', render: bool_render, },
             { data: 'is_infinite', title: 'Бесконечный', render: bool_render, },
             { data: 'command', title: 'Команда', },
+            { data: 'last_started_run_start_date', title: 'Дата последнего запуска', render: date_render, },
             { data: 'number_of_runs', title: 'Запуски', },
         ],
         order: [

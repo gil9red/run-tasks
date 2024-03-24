@@ -175,6 +175,12 @@ class Task(BaseModel):
         run: TaskRun | None = self.get_last_started_run()
         return run.seq if run else None
 
+    # TODO: test
+    @hybrid_property
+    def last_started_run_start_date(self) -> int | None:
+        run: TaskRun | None = self.get_last_started_run()
+        return run.start_date if run else None
+
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(
             self,
@@ -182,6 +188,7 @@ class Task(BaseModel):
             extra_attrs=[
                 "number_of_runs",
                 "last_started_run_seq",
+                "last_started_run_start_date",
             ],
         )
 
