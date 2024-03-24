@@ -4,7 +4,10 @@ function actions_task_render(data, type, row, meta) {
     }
     let tags = [
         `
-        <a href="/task/${row.id}">
+        <a
+                href="/task/${row.id}"
+                title="Страница задачи"
+        >
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
         `,
@@ -21,7 +24,10 @@ function actions_task_render(data, type, row, meta) {
     ];
     if (row.last_started_run_seq != null) {
         tags.push(
-            `<a href="/task/${row.id}/run/${row.last_started_run_seq}">
+            `<a
+                    href="/task/${row.id}/run/${row.last_started_run_seq}"
+                    title="Страница последнего запуска"
+            >
                 <i class="bi bi-terminal"></i>
             </a>`
         );
