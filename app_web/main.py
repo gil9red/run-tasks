@@ -18,6 +18,7 @@ from flask import (
     request,
     redirect,
     url_for,
+    flash,
 )
 
 from peewee import DoesNotExist
@@ -107,11 +108,13 @@ def login() -> str | Response:
         url: str = request.args.get("from", default="/")
         return redirect(url)
 
+    if error_text:
+        flash(error_text, category="error")
+
     return render_template(
         "login.html",
         title=PROJECT_NAME,
         query_string=str(request.query_string, encoding="utf-8"),
-        error_text=error_text,
     )
 
 

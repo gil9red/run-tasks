@@ -38,12 +38,16 @@
                         <label class="form-label" for="password">Пароль</label>
                         <input type="password" id="password" class="form-control form-control-lg" name="password" />
                     </div>
-                    {% if error_text %}
+                    {% with errors = get_flashed_messages(category_filter=["error"]) %}
+                    {% if errors %}
+                    {%- for msg in errors %}
                     <p class="text-danger">
                         <i class="bi bi-exclamation-circle"></i>
-                        {{ error_text }}
+                        {{ msg }}
                     </p>
+                    {% endfor -%}
                     {% endif %}
+                    {% endwith %}
                     <button
                             type="submit"
                             class="btn btn-primary btn-lg w-100"
