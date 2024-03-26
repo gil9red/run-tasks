@@ -7,15 +7,17 @@ __author__ = "ipetrash"
 import logging
 import sys
 from datetime import datetime, date
+from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, Response, request, redirect, url_for
+from flask import Flask, Response, request, redirect, url_for, abort, jsonify
 from flask.json.provider import DefaultJSONProvider
 
 import flask_login
 
 from app_web import config
 from app_web.api.api import api_bp
+from app_web.common import StatusEnum, prepare_response
 from root_config import DIR_LOGS
 
 
@@ -45,7 +47,7 @@ app.debug = config.DEBUG
 app.secret_key = config.SECRET_KEY
 app.json = UpdatedJSONProvider(app)
 
-app.register_blueprint(api_bp, url_prefix='/api')
+app.register_blueprint(api_bp, url_prefix="/api")
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
@@ -57,7 +59,7 @@ def user_loader(id: str) -> User | None:
 
 
 @app.before_request
-def check_route_access() -> Response | None:
+def check_route_access() -> Response | tuple[Response, int] | None:
     if any(
         [
             not request.endpoint or request.endpoint.startswith("static"),
@@ -66,6 +68,17 @@ def check_route_access() -> Response | None:
         ]
     ):
         return  # Access granted
+
+    if request.blueprint == api_bp.name:
+        return (
+            jsonify(
+                prepare_response(
+                    status=StatusEnum.ERROR,
+                    text=HTTPStatus.UNAUTHORIZED.phrase,
+                )
+            ),
+            HTTPStatus.UNAUTHORIZED.value,
+        )
 
     params: dict = {"from": request.path}
     return redirect(url_for("login", **params))
