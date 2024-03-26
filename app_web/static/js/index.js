@@ -18,7 +18,7 @@ function actions_task_render(data, type, row, meta) {
                 data-url="/api/task/${row.id}/action/run"
                 data-method="POST"
         >
-            <i class="bi bi-play-fill text-success"></i>
+            <i class="bi bi-play-circle text-success"></i>
         </button>
         `,
     ];
