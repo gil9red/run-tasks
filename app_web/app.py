@@ -9,12 +9,13 @@ import sys
 from datetime import datetime, date
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask
+from flask import Flask, Response, request, redirect, url_for
 from flask.json.provider import DefaultJSONProvider
 
 import flask_login
 
 from app_web import config
+from app_web.api.api import api_bp
 from root_config import DIR_LOGS
 
 
@@ -33,24 +34,41 @@ class User(flask_login.UserMixin):
         self.password = password
 
 
-app = Flask(__name__)
-app.debug = config.DEBUG
-app.secret_key = config.SECRET_KEY
-app.json = UpdatedJSONProvider(app)
-
-login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
-
-
 USERS: dict[str, User] = {
     login: User(login, password)
     for login, password in config.USERS.items()
 }
 
 
+app = Flask(__name__)
+app.debug = config.DEBUG
+app.secret_key = config.SECRET_KEY
+app.json = UpdatedJSONProvider(app)
+
+app.register_blueprint(api_bp, url_prefix='/api')
+
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+
 @login_manager.user_loader
 def user_loader(id: str) -> User | None:
     return USERS.get(id)
+
+
+@app.before_request
+def check_route_access() -> Response | None:
+    if any(
+        [
+            not request.endpoint or request.endpoint.startswith("static"),
+            flask_login.current_user.is_authenticated,  # From Flask-Login
+            getattr(app.view_functions.get(request.endpoint), "is_public", False),
+        ]
+    ):
+        return  # Access granted
+
+    params: dict = {"from": request.path}
+    return redirect(url_for("login", **params))
 
 
 log: logging.Logger = app.logger
