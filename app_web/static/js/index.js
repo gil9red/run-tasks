@@ -67,6 +67,9 @@ $(function() {
             // Сортировка по возрастанию id
             [1, "asc"],
         ],
+        rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
+            $(row).toggleClass("row-disabled", !data.is_enabled);
+        },
         language: LANG_DATATABLES,
     });
 });
