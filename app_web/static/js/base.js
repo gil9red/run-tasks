@@ -286,7 +286,29 @@ function bool_render(data, type, row, meta) {
 }
 
 
-function on_ajax_success(rs, callback=null) {
+function update_rows_table_by_response(css_selector_table, rs) {
+    if (css_selector_table == null) {
+        return;
+    }
+
+    let ok = rs.status == 'ok';
+    if (ok && rs.result != null) {
+        let table = $(css_selector_table).DataTable();
+
+        for (let obj of rs.result) {
+            let row = table.row("#" + obj.id);
+            let is_exist = row.any();
+            if (is_exist) {
+                row.data(obj).draw("full-hold"); // full-hold сохраняет пагинацию
+            } else {
+                row.table().row.add(obj).draw(); // Тут пагинация вернется к первой странице
+            }
+        }
+    }
+}
+
+
+function on_ajax_success(rs, css_selector_table=null, callback=null) {
     let ok = rs.status == 'ok';
     if (rs.text) {
         noty({
@@ -296,7 +318,7 @@ function on_ajax_success(rs, callback=null) {
     }
 
     if (callback != null) {
-        callback(rs);
+        callback(css_selector_table, rs);
     }
 }
 
@@ -309,14 +331,14 @@ function on_ajax_error(rs, reason) {
 }
 
 
-function send_ajax(url, method, json=null) {
+function send_ajax(url, method, json=null, css_selector_table=null, callback=null) {
     $.ajax({
         url: url,
         method: method,
         data: json ? JSON.stringify(json) : null,
         contentType: "application/json; charset=utf-8",
         dataType: "json",  // Тип данных загружаемых с сервера
-        success: data => on_ajax_success(data),
+        success: data => on_ajax_success(data, css_selector_table, callback),
         error: data => on_ajax_error(data),
     });
 }
@@ -335,7 +357,8 @@ $(document).on("change", "[data-context-obj-id][type=checkbox]", function() {
     let $this = $(this);
     let value = $this.is(':checked');
 
-    let $table = $($this.data("context-table-id"));
+    let table_id = $this.data("context-table-id");
+    let $table = $(table_id);
     let url = $table.data("url-update");
 
     let field = $this.data("context-obj-field");
@@ -344,9 +367,7 @@ $(document).on("change", "[data-context-obj-id][type=checkbox]", function() {
     obj["id"] = $this.data("context-obj-id");
     obj[field] = value;
 
-    // TODO: Обновить таблицу от ответа из сервера
-    // TODO: Мб какой-нибудь контекст передавать в send_ajax?
-    send_ajax(url, "POST", obj);
+    send_ajax(url, "POST", obj, table_id, update_rows_table_by_response);
 });
 
 

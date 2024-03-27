@@ -17,44 +17,6 @@ function kind_render(data, type, row, meta) {
 }
 
 
-// TODO: Общий код для функций обновления таблиц
-function get_table() {
-    return $("#table-notifications").DataTable();
-}
-
-
-function get_table_row_by_id(id) {
-    return get_table().row("#" + id);
-}
-
-
-function process_table_rows_from_response(rs, callback) {
-    let ok = rs.status == 'ok';
-
-    if (ok && rs.result != null) {
-        for (let obj of rs.result) {
-            let row = get_table_row_by_id(obj.id);
-            callback(obj, row);
-        }
-    }
-}
-
-
-function update_rows_table_by_response(rs) {
-    process_table_rows_from_response(
-        rs,
-        (obj, row) => {
-            let is_exist = row.any();
-            if (is_exist) {
-                row.data(obj).draw("full-hold"); // full-hold сохраняет пагинацию
-            } else {
-                row.table().row.add(obj).draw(); // Тут пагинация вернется к первой странице
-            }
-        }
-    );
-}
-
-
 $(function() {
     // Создание уведомления
     let $modal_create_notification = $('#modal-create-notification');
@@ -77,7 +39,7 @@ $(function() {
             contentType: "application/json; charset=utf-8",
             dataType: "json",  // Тип данных загружаемых с сервера
             success: function(data) {
-                on_ajax_success(data, update_rows_table_by_response);
+                on_ajax_success(data, "#table-notifications", update_rows_table_by_response);
 
                 // Очищение полей формы
                 thisForm.reset();
