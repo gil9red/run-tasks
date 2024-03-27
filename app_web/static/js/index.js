@@ -13,12 +13,12 @@ function actions_task_render(data, type, row, meta) {
         `,
         `
         <button
-                class="btn btn-link p-0"
+                class="btn text-success p-0"
                 title="Запуск задачи"
                 data-url="/api/task/${row.id}/action/run"
                 data-method="POST"
         >
-            <i class="bi bi-play-circle text-success"></i>
+            ▷
         </button>
         `,
     ];
