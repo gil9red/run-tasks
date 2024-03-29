@@ -10,7 +10,7 @@ from datetime import datetime, date
 from http import HTTPStatus
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask, Response, request, redirect, url_for, abort, jsonify
+from flask import Flask, Response, request, redirect, url_for, jsonify
 from flask.json.provider import DefaultJSONProvider
 
 import flask_login
