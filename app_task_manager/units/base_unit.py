@@ -44,11 +44,11 @@ class BaseUnit(Thread, ABC):
         pass
 
     def run(self):
-        self.log_debug("Старт")
+        self.log_info("Старт")
 
         self.before_process()
 
         while not self._is_stopped:
             self.process()
 
-        self.log_debug("Финиш")
+        self.log_info("Финиш")
