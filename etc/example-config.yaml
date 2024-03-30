@@ -47,6 +47,7 @@ logging:
       encoding: "utf-8"
       backupCount: 5
       maxBytes: 10000000
+      delay: true
 
     web-server-file:
       <<: *task-manager-file
