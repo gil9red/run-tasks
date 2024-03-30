@@ -4,10 +4,7 @@
 __author__ = "ipetrash"
 
 
-from root_common import get_logger
+import logging
 
 
-log_manager = get_logger(
-    logger_name="task_manager",
-    file_name="task_manager.log",
-)
+log_manager = logging.getLogger("task-manager")

@@ -4,6 +4,8 @@
 __author__ = "ipetrash"
 
 
+import logging.config
+
 from pathlib import Path
 from typing import Any
 
@@ -24,8 +26,13 @@ CONFIG_FILE_NAME: Path = DIR / "config.yaml"
 if not CONFIG_FILE_NAME.exists():
     raise FileNotFoundError(CONFIG_FILE_NAME)
 
-CONFIG: dict[str, Any] = yaml.safe_load(
-    CONFIG_FILE_NAME.read_text("utf-8")
-)
+CONFIG: dict[str, Any] = yaml.safe_load(CONFIG_FILE_NAME.read_text("utf-8"))
+
+for handler in CONFIG["logging"]["handlers"].values():
+    try:
+        handler["filename"] = str(DIR_LOGS / handler["filename"])
+    except KeyError:
+        pass
+logging.config.dictConfig(CONFIG["logging"])
 
 PROJECT_NAME: str = CONFIG["project_name"]

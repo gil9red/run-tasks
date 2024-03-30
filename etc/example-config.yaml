@@ -26,3 +26,39 @@ web:
   secret_key: "<your-secret-key>"
   login: "<login>"
   password: "<password>"
+
+logging:
+  version: 1
+
+  formatters:
+    default:
+      format: "[%(asctime)s] %(filename)s[LINE:%(lineno)d] %(levelname)-8s %(message)s"
+
+  handlers:
+    console:
+      class: "logging.StreamHandler"
+      formatter: "default"
+      stream: "ext://sys.stdout"
+
+    task-manager-file: &task-manager-file
+      class: "logging.handlers.RotatingFileHandler"
+      formatter: "default"
+      filename: "task_manager.log"
+      encoding: "utf-8"
+      backupCount: 5
+      maxBytes: 10000000
+
+    web-server-file:
+      <<: *task-manager-file
+      filename: "web.log"
+
+  loggers:
+    task-manager:
+      handlers: ["console", "task-manager-file"]
+      level: "DEBUG"
+
+    web-server: &web-server
+      handlers: ["console", "web-server-file"]
+      level: "DEBUG"
+
+    werkzeug: *web-server
