@@ -25,9 +25,10 @@ $(function() {
         $modal_create_notification.modal('hide');
 
         let thisForm = this;
+        let $this = $(this);
 
-        let url = $(this).attr("action");
-        let method = $(this).attr("method");
+        let url = $this.attr("action");
+        let method = $this.attr("method");
         if (method === undefined) {
             method = "get";
         }
