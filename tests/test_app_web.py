@@ -296,7 +296,7 @@ class TestAppWeb(TestCase):
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
-        self.assertTrue(rs.date)
+        self.assertTrue(rs.data)
 
     def test_task_run_get_full_url(self):
         run = Task.add(name="*", command="*").add_or_get_run()
