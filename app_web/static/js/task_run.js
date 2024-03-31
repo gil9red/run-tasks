@@ -6,12 +6,11 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            // TODO: Заполнить title
-            { data: 'id', title: 'id', },
-            { data: 'task_run', title: 'task_run', },
-            { data: 'kind', title: 'kind', },
-            { data: 'text', title: 'text', },
-            { data: 'date', title: 'date', render: date_render, },
+            { data: 'id', title: 'Ид.', },
+            { data: 'task_run', title: 'Запуск', },
+            { data: 'kind', title: 'Тип', },
+            { data: 'text', title: 'Текст', },
+            { data: 'date', title: 'Дата', render: date_render, },
         ],
         order: [
             // Сортировка по возрастанию id
