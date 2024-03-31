@@ -2,3 +2,8 @@
     --bs-text-opacity: 1;
     color: rgba(var(--bs-secondary-rgb),var(--bs-text-opacity)) !important;
 }
+
+/* SOURCE: https://getbootstrap.com/docs/5.3/helpers/icon-link/#css-variables */
+.icon-link-hover {
+    --bs-icon-link-transform: translate3d(0, -.125rem, 0);
+}
