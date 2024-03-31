@@ -61,11 +61,14 @@ def user_loader(id: str) -> User | None:
 def handle_bad_request(e):
     # NOTE: request.blueprint не работает, поэтому другая проверка
     if request.path.startswith(f"/{api_bp.name}/"):
-        return jsonify(
-            prepare_response(
-                status=StatusEnum.ERROR,
-                text=str(e),
-            )
+        return (
+            jsonify(
+                prepare_response(
+                    status=StatusEnum.ERROR,
+                    text=str(e),
+                )
+            ),
+            e.code
         )
 
     return e
