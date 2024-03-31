@@ -69,7 +69,20 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            { render: actions_task_render, orderable: false, },
+            {
+                render: actions_task_render,
+                orderable: false,
+                title: `
+                    <a
+                            class="btn btn-success btn-sm"
+                            title="Создать задачу"
+                            href="/task/create"
+                            role="button"
+                    >
+                        <i class="bi bi-plus-lg"></i>
+                    </a>
+                `,
+            },
             { data: 'id', title: 'Ид.', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },
