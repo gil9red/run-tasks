@@ -9,6 +9,7 @@ from http import HTTPStatus
 
 from flask import Flask, Response, request, redirect, url_for, jsonify
 from flask.json.provider import DefaultJSONProvider
+from werkzeug.exceptions import HTTPException
 
 import flask_login
 
@@ -52,6 +53,20 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def user_loader(id: str) -> User | None:
     return USERS.get(id)
+
+
+@app.errorhandler(HTTPException)
+def handle_bad_request(e):
+    # NOTE: request.blueprint не работает, поэтому другая проверка
+    if request.path.startswith(f"/{api_bp.name}/"):
+        return jsonify(
+            prepare_response(
+                status=StatusEnum.ERROR,
+                text=str(e),
+            )
+        )
+
+    return e
 
 
 @app.before_request
