@@ -9,6 +9,7 @@ from typing import Any
 from flask import Blueprint, Response, jsonify, request
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
 from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
+from http import HTTPStatus
 
 
 api_bp = Blueprint("api", __name__)
@@ -47,6 +48,32 @@ def task_update() -> Response:
             status=StatusEnum.OK,
             # TODO: Нужно ли?
             # text=f"Создано уведомление #{notification.id}",
+            result=[task.to_dict()],
+        ),
+    )
+
+
+@api_bp.route("/task/create", methods=["POST"])
+def task_create() -> Response | tuple[Response, int]:
+    data: dict[str, Any] = request.json
+
+    task: Task = Task.get_by_name(data["name"])
+    if task:
+        return (
+            jsonify(
+                prepare_response(
+                    status=StatusEnum.ERROR,
+                    text=f"Задача с {task.name!r} уже существует",
+                ),
+            ),
+            HTTPStatus.BAD_REQUEST.value,
+        )
+
+    task = Task.add(**data)
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
             result=[task.to_dict()],
         ),
     )

@@ -209,6 +209,7 @@ class Task(BaseModel):
         command: str,
         description: str = None,
         cron: str = None,
+        is_enabled: bool = True,
         is_infinite: bool = False,
     ) -> Self:
         obj = cls.get_by_name(name)
@@ -220,6 +221,7 @@ class Task(BaseModel):
             command=command,
             description=description,
             cron=cron,
+            is_enabled=is_enabled,
             is_infinite=is_infinite,
         )
 

@@ -83,6 +83,14 @@ def task(task_id: int) -> str:
     )
 
 
+@app.route("/task/create")
+def task_create() -> str:
+    return render_template(
+        "task_create.html",
+        title=PROJECT_NAME,
+    )
+
+
 @app.route("/task/<int:task_id>/run/<int:task_run_seq>")
 def task_run(task_id: int, task_run_seq: int) -> str:
     return render_template(
