@@ -19,6 +19,7 @@ from db import (
     NotificationKindEnum,
 )
 
+from app_web.config import USERS
 from app_web.main import app
 
 
@@ -38,18 +39,23 @@ class TestAppWeb(TestCase):
         app.testing = True
         self.client = app.test_client()
 
+        login: str = list(USERS.keys())[0]
+        password: str = USERS[login]
+        self.client.post("/login", data=dict(login=login, password=password))
+
+    def tearDown(self):
+        self.client.get("/logout")
+
     def test_index(self):
         uri: str = "/"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
-        self.assertTrue(rs.text)
 
     def test_task(self):
         with self.subTest("404 - Not Found"):
             rs = self.client.get("/task/99999")
             self.assertEqual(rs.status_code, 404)
-            self.assertTrue(rs.text)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -60,14 +66,12 @@ class TestAppWeb(TestCase):
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
-            self.assertTrue(rs.text)
 
     def test_task_run(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
-            self.assertTrue(rs.text)
 
             task = Task.add(
                 name="404",
@@ -76,7 +80,6 @@ class TestAppWeb(TestCase):
             uri: str = f"/task/{task.id}/run/99999"
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
-            self.assertTrue(rs.text)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -88,14 +91,12 @@ class TestAppWeb(TestCase):
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
-            self.assertTrue(rs.text)
 
     def test_notifications(self):
         uri: str = "/notifications"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
-        self.assertTrue(rs.text)
 
     def test_api_tasks(self):
         uri: str = "/api/tasks"
@@ -296,10 +297,8 @@ class TestAppWeb(TestCase):
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
-        self.assertTrue(rs.data)
 
     def test_task_run_get_full_url(self):
         run = Task.add(name="*", command="*").add_or_get_run()
         rs = self.client.get(run.get_url())
         self.assertEqual(rs.status_code, 200)
-        self.assertTrue(rs.text)

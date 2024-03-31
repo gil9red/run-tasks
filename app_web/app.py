@@ -4,6 +4,7 @@
 __author__ = "ipetrash"
 
 
+import logging
 from datetime import datetime, date
 from http import HTTPStatus
 
@@ -39,10 +40,11 @@ USERS: dict[str, User] = {
 }
 
 
-app = Flask("web-server")
+app = Flask(__name__)
 app.debug = config.DEBUG
-app.secret_key = config.SECRET_KEY
 app.json = UpdatedJSONProvider(app)
+app.logger = logging.getLogger("web-server")
+app.secret_key = config.SECRET_KEY
 
 app.register_blueprint(api_bp, url_prefix="/api")
 
