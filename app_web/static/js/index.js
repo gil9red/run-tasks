@@ -56,7 +56,7 @@ $(function() {
             { data: 'id', title: 'Ид.', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },
-            { data: 'cron', title: 'Cron', },
+            { data: 'cron', title: 'Расписание', },
             { data: 'is_enabled', title: 'Активный', render: bool_render, },
             { data: 'is_infinite', title: 'Бесконечный', render: bool_render, },
             { data: 'command', title: 'Команда', },
