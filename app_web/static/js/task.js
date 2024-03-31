@@ -18,19 +18,18 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            // TODO: Заполнить title
             { render: actions_task_run_render, orderable: false, },
-            { data: 'id', title: 'id', },
-            { data: 'task', title: 'task', },
-            { data: 'seq', title: 'seq', },
+            { data: 'id', title: 'Ид.', },
+            { data: 'task', title: 'Задача', },
+            { data: 'seq', title: '#', },
             { data: 'command', title: 'Команда', },
             { data: 'status', title: 'Статус', },
-            { data: 'process_id', title: 'process_id', },
-            { data: 'process_return_code', title: 'process_return_code', },
-            { data: 'create_date', title: 'create_date', render: date_render, },
-            { data: 'start_date', title: 'start_date', render: date_render, },
-            { data: 'finish_date', title: 'finish_date', render: date_render, },
-            { data: 'scheduled_date', title: 'scheduled_date', render: date_render, },
+            { data: 'process_id', title: 'Ид. процесса', },
+            { data: 'process_return_code', title: 'Код возврата процесса', },
+            { data: 'create_date', title: 'Создано', render: date_render, },
+            { data: 'start_date', title: 'Запущено', render: date_render, },
+            { data: 'finish_date', title: 'Завершено', render: date_render, },
+            { data: 'scheduled_date', title: 'Запланировано', render: date_render, },
         ],
         order: [
             // Сортировка по убыванию id
