@@ -1,3 +1,6 @@
+const TABLE_ID = '#table-tasks';
+
+
 function actions_task_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
@@ -32,6 +35,20 @@ function actions_task_render(data, type, row, meta) {
             </a>`
         );
     }
+    tags.push(
+        `
+        <button
+                class="btn text-danger p-0"
+                title="Удаление задачи"
+                data-url="/api/task/${row.id}/delete"
+                data-method="DELETE"
+                data-confirm-text="Удалить задачу?"
+                data-callback="delete_table_row('${TABLE_ID}', ${row.id})"
+        >
+            <i class="bi bi-trash3"></i>
+        </button>
+        `
+    );
     return tags.join("");
 }
 
@@ -45,7 +62,7 @@ function task_name_render(data, type, row, meta) {
 
 
 $(function() {
-    new DataTable('#table-tasks', {
+    new DataTable(TABLE_ID, {
         ajax: {
             url: '/api/tasks',
             dataSrc: '',

@@ -286,6 +286,13 @@ function bool_render(data, type, row, meta) {
 }
 
 
+function delete_table_row(css_selector_table, row_id) {
+    let table = $(css_selector_table).DataTable();
+    let row = table.row("#" + row_id);
+    row.remove().draw();
+}
+
+
 function update_rows_table_by_response(css_selector_table, rs) {
     if (css_selector_table == null) {
         return;
@@ -346,10 +353,21 @@ function send_ajax(url, method, json=null, css_selector_table=null, callback=nul
 
 $(document).on("click", "[data-url]", function() {
     let $this = $(this);
+
+    let confirm_text = $this.data("confirm-text");
+    if (confirm_text != null && !window.confirm(confirm_text)) {
+        return;
+    }
+
     send_ajax(
         $this.data("url"),
         $this.data("method")
     );
+
+    let callback = $this.data("callback");
+    if (callback != null) {
+        eval(callback);
+    }
 });
 
 

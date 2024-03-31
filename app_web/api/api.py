@@ -20,6 +20,32 @@ def tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 
 
+@api_bp.route("/task/create", methods=["POST"])
+def task_create() -> Response | tuple[Response, int]:
+    data: dict[str, Any] = request.json
+
+    task: Task = Task.get_by_name(data["name"])
+    if task:
+        return (
+            jsonify(
+                prepare_response(
+                    status=StatusEnum.ERROR,
+                    text=f"Задача с {task.name!r} уже существует",
+                ),
+            ),
+            HTTPStatus.BAD_REQUEST.value,
+        )
+
+    task = Task.add(**data)
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            result=[task.to_dict()],
+        ),
+    )
+
+
 @api_bp.route("/task/update", methods=["POST"])
 def task_update() -> Response:
     data: dict[str, Any] = request.json
@@ -53,28 +79,15 @@ def task_update() -> Response:
     )
 
 
-@api_bp.route("/task/create", methods=["POST"])
-def task_create() -> Response | tuple[Response, int]:
-    data: dict[str, Any] = request.json
-
-    task: Task = Task.get_by_name(data["name"])
-    if task:
-        return (
-            jsonify(
-                prepare_response(
-                    status=StatusEnum.ERROR,
-                    text=f"Задача с {task.name!r} уже существует",
-                ),
-            ),
-            HTTPStatus.BAD_REQUEST.value,
-        )
-
-    task = Task.add(**data)
+@api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])
+def task_delete(task_id: int) -> Response:
+    task: Task = get_task(task_id)
+    task.delete_instance()
 
     return jsonify(
         prepare_response(
             status=StatusEnum.OK,
-            result=[task.to_dict()],
+            text=f"Задача #{task.id} успешно удалена",
         ),
     )
 
