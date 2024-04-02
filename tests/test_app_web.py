@@ -277,7 +277,7 @@ class TestAppWeb(TestCase):
 
         with self.subTest("200 - Ok"):
             data = dict(
-                kind=NotificationKindEnum.Email.value,
+                kind=NotificationKindEnum.EMAIL.value,
                 name="Title",
                 text="Test\nТест",
             )

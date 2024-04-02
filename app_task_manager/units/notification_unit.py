@@ -30,10 +30,10 @@ class NotificationUnit(BaseUnit):
                 )
 
                 match notify.kind:
-                    case NotificationKindEnum.Email:
+                    case NotificationKindEnum.EMAIL:
                         send_email(notify.name, notify.text)
 
-                    case NotificationKindEnum.Telegram:
+                    case NotificationKindEnum.TELEGRAM:
                         add_notify(
                             notify.name,
                             notify.text,

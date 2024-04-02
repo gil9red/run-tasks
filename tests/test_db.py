@@ -654,7 +654,7 @@ class TestTaskRun(BaseTestCaseDb):
         self.assertEqual(run.status, TaskRunStatusEnum.ERROR)
 
         last_err_log: str = (
-            run.logs.where(TaskRunLog.kind == LogKindEnum.Err)
+            run.logs.where(TaskRunLog.kind == LogKindEnum.ERR)
             .order_by(TaskRunLog.date.desc())
             .first()
         ).text
@@ -703,8 +703,8 @@ class TestTaskRun(BaseTestCaseDb):
 
         items = []
         for i in range(5):
-            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.Out))
-            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.Err))
+            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.OUT))
+            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.ERR))
 
         self.assertEqual(len(items), run.logs.count())
 
@@ -768,8 +768,8 @@ class TestTaskRunLog(BaseTestCaseDb):
 
         items = []
         for i in range(5):
-            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.Out))
-            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.Err))
+            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.OUT))
+            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.ERR))
 
             items.append(run.add_log_out(f"add_log_out {i + 1}"))
             items.append(run.add_log_err(f"add_log_err {i + 1}"))
@@ -790,13 +790,13 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name=name,
             text=text,
-            kind=NotificationKindEnum.Email,
+            kind=NotificationKindEnum.EMAIL,
         )
         self.assertIsNotNone(notification_email)
         self.assertEqual(notification_email.task_run, run)
         self.assertEqual(notification_email.name, name)
         self.assertEqual(notification_email.text, text)
-        self.assertEqual(notification_email.kind, NotificationKindEnum.Email)
+        self.assertEqual(notification_email.kind, NotificationKindEnum.EMAIL)
         self.assertIsNotNone(notification_email.append_date)
         self.assertIsNone(notification_email.sending_date)
         self.assertNotEqual(
@@ -805,7 +805,7 @@ class TestNotification(BaseTestCaseDb):
                 task_run=run,
                 name=name,
                 text=text,
-                kind=NotificationKindEnum.Email,
+                kind=NotificationKindEnum.EMAIL,
             ),
         )
 
@@ -813,13 +813,13 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name=name,
             text=text,
-            kind=NotificationKindEnum.Telegram,
+            kind=NotificationKindEnum.TELEGRAM,
         )
         self.assertIsNotNone(notification_tg)
         self.assertEqual(notification_tg.task_run, run)
         self.assertEqual(notification_tg.name, name)
         self.assertEqual(notification_tg.text, text)
-        self.assertEqual(notification_tg.kind, NotificationKindEnum.Telegram)
+        self.assertEqual(notification_tg.kind, NotificationKindEnum.TELEGRAM)
         self.assertIsNotNone(notification_tg.append_date)
         self.assertIsNone(notification_tg.sending_date)
         self.assertNotEqual(
@@ -828,7 +828,7 @@ class TestNotification(BaseTestCaseDb):
                 task_run=run,
                 name=name,
                 text=text,
-                kind=NotificationKindEnum.Telegram,
+                kind=NotificationKindEnum.TELEGRAM,
             ),
         )
 
@@ -841,7 +841,7 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name="name",
             text="text",
-            kind=NotificationKindEnum.Email,
+            kind=NotificationKindEnum.EMAIL,
         )
         time.sleep(DATETIME_DELAY_SECS)
         self.assertEqual(Notification.get_unsent(), [notification_email])
@@ -850,7 +850,7 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name="name",
             text="text",
-            kind=NotificationKindEnum.Telegram,
+            kind=NotificationKindEnum.TELEGRAM,
         )
         time.sleep(DATETIME_DELAY_SECS)
         self.assertEqual(
@@ -861,7 +861,7 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name="name",
             text="text",
-            kind=NotificationKindEnum.Telegram,
+            kind=NotificationKindEnum.TELEGRAM,
         )
         time.sleep(DATETIME_DELAY_SECS)
         self.assertEqual(
@@ -884,7 +884,7 @@ class TestNotification(BaseTestCaseDb):
             task_run=run,
             name="name",
             text="text",
-            kind=NotificationKindEnum.Email,
+            kind=NotificationKindEnum.EMAIL,
         )
         self.assertIsNone(notification.sending_date)
 

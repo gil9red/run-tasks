@@ -65,14 +65,14 @@ class TaskRunStatusEnum(enum.StrEnum):
 
 @enum.unique
 class LogKindEnum(enum.StrEnum):
-    Out = enum.auto()
-    Err = enum.auto()
+    OUT = enum.auto()
+    ERR = enum.auto()
 
 
 @enum.unique
 class NotificationKindEnum(enum.StrEnum):
-    Email = enum.auto()
-    Telegram = enum.auto()
+    EMAIL = enum.auto()
+    TELEGRAM = enum.auto()
 
 
 class BaseModel(Model):
@@ -394,10 +394,10 @@ class TaskRun(BaseModel):
         )
 
     def add_log_out(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogKindEnum.Out)
+        return self.add_log(text=text, kind=LogKindEnum.OUT)
 
     def add_log_err(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogKindEnum.Err)
+        return self.add_log(text=text, kind=LogKindEnum.ERR)
 
     def get_url(self, full: bool = True) -> str:
         uri: str = f"/task/{self.task.id}/run/{self.seq}"
