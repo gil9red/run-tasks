@@ -70,6 +70,7 @@ $(function() {
             // Сортировка по убыванию id
             [0, "desc"],
         ],
+        initComplete: tableInitComplete,
         language: LANG_DATATABLES,
     });
 });
