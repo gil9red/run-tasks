@@ -55,12 +55,12 @@ db = SqliteQueueDatabase(
 
 @enum.unique
 class TaskRunStatusEnum(enum.StrEnum):
-    Pending = enum.auto()
-    Running = enum.auto()
-    Finished = enum.auto()
-    Stopped = enum.auto()
-    Unknown = enum.auto()
-    Error = enum.auto()
+    PENDING = enum.auto()
+    RUNNING = enum.auto()
+    FINISHED = enum.auto()
+    STOPPED = enum.auto()
+    UNKNOWN = enum.auto()
+    ERROR = enum.auto()
 
 
 @enum.unique
@@ -154,7 +154,7 @@ class Task(BaseModel):
         return (
             self
             .runs
-            .where(TaskRun.status != TaskRunStatusEnum.Pending)
+            .where(TaskRun.status != TaskRunStatusEnum.PENDING)
             .order_by(TaskRun.id.desc())
             .first()
         )
@@ -262,7 +262,7 @@ class Task(BaseModel):
         return last_run
 
     def get_pending_run(self, scheduled_date: datetime = None) -> Optional["TaskRun"]:
-        for run in self.get_runs_by([TaskRunStatusEnum.Pending]):
+        for run in self.get_runs_by([TaskRunStatusEnum.PENDING]):
             if scheduled_date is None:
                 if run.scheduled_date is None:
                     return run
@@ -294,7 +294,7 @@ class Task(BaseModel):
         )
 
     def get_current_run(self) -> Optional["TaskRun"]:
-        items = self.get_runs_by([TaskRunStatusEnum.Running])
+        items = self.get_runs_by([TaskRunStatusEnum.RUNNING])
         return items[0] if items else None
 
 
@@ -302,7 +302,7 @@ class TaskRun(BaseModel):
     task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
     seq = IntegerField(default=1)
     command = TextField()
-    status = EnumField(choices=TaskRunStatusEnum, default=TaskRunStatusEnum.Pending)
+    status = EnumField(choices=TaskRunStatusEnum, default=TaskRunStatusEnum.PENDING)
     process_id = IntegerField(null=True)
     process_return_code = IntegerField(null=True)
     create_date = DateTimeField(default=datetime.now)
@@ -338,30 +338,30 @@ class TaskRun(BaseModel):
             )
 
         match value:
-            case TaskRunStatusEnum.Pending:
+            case TaskRunStatusEnum.PENDING:
                 raise_about_bad_status()
 
-            case TaskRunStatusEnum.Running:
-                if self.status != TaskRunStatusEnum.Pending:
+            case TaskRunStatusEnum.RUNNING:
+                if self.status != TaskRunStatusEnum.PENDING:
                     raise_about_bad_status()
 
                 self.start_date = datetime.now()
 
-            case TaskRunStatusEnum.Stopped:
-                if self.status not in [TaskRunStatusEnum.Pending, TaskRunStatusEnum.Running]:
+            case TaskRunStatusEnum.STOPPED:
+                if self.status not in [TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]:
                     raise_about_bad_status()
 
-            case TaskRunStatusEnum.Finished:
-                if self.status != TaskRunStatusEnum.Running:
+            case TaskRunStatusEnum.FINISHED:
+                if self.status != TaskRunStatusEnum.RUNNING:
                     raise_about_bad_status()
 
                 self.finish_date = datetime.now()
 
-            case TaskRunStatusEnum.Unknown:
-                if self.status != TaskRunStatusEnum.Running:
+            case TaskRunStatusEnum.UNKNOWN:
+                if self.status != TaskRunStatusEnum.RUNNING:
                     raise_about_bad_status()
 
-            case TaskRunStatusEnum.Error:
+            case TaskRunStatusEnum.ERROR:
                 # Ignore
                 pass
 
@@ -370,7 +370,7 @@ class TaskRun(BaseModel):
         self.save()
 
     def set_error(self, error_text: str):
-        self.set_status(TaskRunStatusEnum.Error)
+        self.set_status(TaskRunStatusEnum.ERROR)
         self.add_log_err(text=error_text)
 
     def is_scheduled_date_has_arrived(self) -> bool:

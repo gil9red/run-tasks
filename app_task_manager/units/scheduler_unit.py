@@ -33,7 +33,7 @@ class SchedulerUnit(BaseUnit):
             if task.cron:
                 scheduled_date = self._get_scheduled_date(task.cron)
             elif task.is_infinite and not task.get_runs_by(
-                [TaskRunStatusEnum.Running]
+                [TaskRunStatusEnum.RUNNING]
             ):
                 # Без запланированного времени
                 scheduled_date = None

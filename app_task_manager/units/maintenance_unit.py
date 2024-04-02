@@ -22,7 +22,7 @@ class MaintenanceUnit(BaseUnit):
             [
                 run.start_date
                 for run in task_runs
-                if run.get_actual_status() == TaskRunStatusEnum.Running
+                if run.get_actual_status() == TaskRunStatusEnum.RUNNING
             ],
             default=datetime.now(),
         )
@@ -31,7 +31,7 @@ class MaintenanceUnit(BaseUnit):
 
         # Разбирательства с "висячими" запусками
         for run in TaskRun.select().where(
-                TaskRun.status == TaskRunStatusEnum.Running,
+                TaskRun.status == TaskRunStatusEnum.RUNNING,
             TaskRun.start_date < min_start_date,
         ):
             log_prefix = f"[Задача #{run.task.id}, запуск {run.seq} (#{run.id})]"
@@ -59,15 +59,15 @@ class MaintenanceUnit(BaseUnit):
 
             self.log_info(
                 f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) "
-                f"статус {TaskRunStatusEnum.Unknown.value}"
+                f"статус {TaskRunStatusEnum.UNKNOWN.value}"
             )
-            run.set_status(TaskRunStatusEnum.Unknown)
+            run.set_status(TaskRunStatusEnum.UNKNOWN)
 
     def __removing_old_runs(self):
         date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
 
         for run in TaskRun.select().where(
-            TaskRun.status.not_in([TaskRunStatusEnum.Pending, TaskRunStatusEnum.Running]),
+            TaskRun.status.not_in([TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]),
             TaskRun.create_date < date,
         ):
             try:

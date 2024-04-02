@@ -142,7 +142,7 @@ class TestAppWeb(TestCase):
                 cron="* * * * *",
             )
             run_1 = task_1.add_or_get_run()
-            run_1.set_status(TaskRunStatusEnum.Running)
+            run_1.set_status(TaskRunStatusEnum.RUNNING)
 
             run_2 = task_1.add_or_get_run(datetime.datetime.now())
 
