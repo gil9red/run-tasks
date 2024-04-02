@@ -351,6 +351,19 @@ function send_ajax(url, method, json=null, css_selector_table=null, callback=nul
 }
 
 
+function tableInitComplete(settings, json) {
+    let api = this.api();
+
+    setInterval(
+        function () {
+            // Пользовательская пагинация не сбрасывается при обновлении
+            api.ajax.reload(null, false);
+        },
+        5000 // Каждые 5 секунд
+    );
+}
+
+
 $(document).on("click", "[data-url]", function() {
     let $this = $(this);
 

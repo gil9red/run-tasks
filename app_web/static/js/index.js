@@ -165,6 +165,7 @@ $(function() {
             // Сортировка по возрастанию id
             [2, "asc"],
         ],
+        initComplete: tableInitComplete,
         rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
             $(row).toggleClass("row-disabled", !data.is_enabled);
         },
