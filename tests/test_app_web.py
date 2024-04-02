@@ -15,7 +15,7 @@ from db import (
     Task,
     TaskRun,
     Notification,
-    TaskStatusEnum,
+    TaskRunStatusEnum,
     NotificationKindEnum,
 )
 
@@ -142,7 +142,7 @@ class TestAppWeb(TestCase):
                 cron="* * * * *",
             )
             run_1 = task_1.add_or_get_run()
-            run_1.set_status(TaskStatusEnum.Running)
+            run_1.set_status(TaskRunStatusEnum.Running)
 
             run_2 = task_1.add_or_get_run(datetime.datetime.now())
 

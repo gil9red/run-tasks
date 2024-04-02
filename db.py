@@ -54,7 +54,7 @@ db = SqliteQueueDatabase(
 
 
 @enum.unique
-class TaskStatusEnum(enum.StrEnum):
+class TaskRunStatusEnum(enum.StrEnum):
     Pending = enum.auto()
     Running = enum.auto()
     Finished = enum.auto()
@@ -154,7 +154,7 @@ class Task(BaseModel):
         return (
             self
             .runs
-            .where(TaskRun.status != TaskStatusEnum.Pending)
+            .where(TaskRun.status != TaskRunStatusEnum.Pending)
             .order_by(TaskRun.id.desc())
             .first()
         )
@@ -262,7 +262,7 @@ class Task(BaseModel):
         return last_run
 
     def get_pending_run(self, scheduled_date: datetime = None) -> Optional["TaskRun"]:
-        for run in self.get_runs_by([TaskStatusEnum.Pending]):
+        for run in self.get_runs_by([TaskRunStatusEnum.Pending]):
             if scheduled_date is None:
                 if run.scheduled_date is None:
                     return run
@@ -286,7 +286,7 @@ class Task(BaseModel):
             )
         return run
 
-    def get_runs_by(self, statuses: list[TaskStatusEnum]) -> list["TaskRun"]:
+    def get_runs_by(self, statuses: list[TaskRunStatusEnum]) -> list["TaskRun"]:
         return list(
             self.runs.where(
                 TaskRun.status.in_(statuses),
@@ -294,7 +294,7 @@ class Task(BaseModel):
         )
 
     def get_current_run(self) -> Optional["TaskRun"]:
-        items = self.get_runs_by([TaskStatusEnum.Running])
+        items = self.get_runs_by([TaskRunStatusEnum.Running])
         return items[0] if items else None
 
 
@@ -302,7 +302,7 @@ class TaskRun(BaseModel):
     task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
     seq = IntegerField(default=1)
     command = TextField()
-    status = EnumField(choices=TaskStatusEnum, default=TaskStatusEnum.Pending)
+    status = EnumField(choices=TaskRunStatusEnum, default=TaskRunStatusEnum.Pending)
     process_id = IntegerField(null=True)
     process_return_code = IntegerField(null=True)
     create_date = DateTimeField(default=datetime.now)
@@ -323,7 +323,7 @@ class TaskRun(BaseModel):
             seq=seq,
         )
 
-    def set_status(self, value: TaskStatusEnum):
+    def set_status(self, value: TaskRunStatusEnum):
         if value is None:
             raise ValueError(
                 f"Нельзя изменить статус {self.status.value!r} в {value!r}"
@@ -338,30 +338,30 @@ class TaskRun(BaseModel):
             )
 
         match value:
-            case TaskStatusEnum.Pending:
+            case TaskRunStatusEnum.Pending:
                 raise_about_bad_status()
 
-            case TaskStatusEnum.Running:
-                if self.status != TaskStatusEnum.Pending:
+            case TaskRunStatusEnum.Running:
+                if self.status != TaskRunStatusEnum.Pending:
                     raise_about_bad_status()
 
                 self.start_date = datetime.now()
 
-            case TaskStatusEnum.Stopped:
-                if self.status not in [TaskStatusEnum.Pending, TaskStatusEnum.Running]:
+            case TaskRunStatusEnum.Stopped:
+                if self.status not in [TaskRunStatusEnum.Pending, TaskRunStatusEnum.Running]:
                     raise_about_bad_status()
 
-            case TaskStatusEnum.Finished:
-                if self.status != TaskStatusEnum.Running:
+            case TaskRunStatusEnum.Finished:
+                if self.status != TaskRunStatusEnum.Running:
                     raise_about_bad_status()
 
                 self.finish_date = datetime.now()
 
-            case TaskStatusEnum.Unknown:
-                if self.status != TaskStatusEnum.Running:
+            case TaskRunStatusEnum.Unknown:
+                if self.status != TaskRunStatusEnum.Running:
                     raise_about_bad_status()
 
-            case TaskStatusEnum.Error:
+            case TaskRunStatusEnum.Error:
                 # Ignore
                 pass
 
@@ -370,7 +370,7 @@ class TaskRun(BaseModel):
         self.save()
 
     def set_error(self, error_text: str):
-        self.set_status(TaskStatusEnum.Error)
+        self.set_status(TaskRunStatusEnum.Error)
         self.add_log_err(text=error_text)
 
     def is_scheduled_date_has_arrived(self) -> bool:
@@ -383,7 +383,7 @@ class TaskRun(BaseModel):
         self.process_id = value
         self.save()
 
-    def get_actual_status(self) -> TaskStatusEnum:
+    def get_actual_status(self) -> TaskRunStatusEnum:
         return TaskRun.get_by_id(self.id).status
 
     def add_log(self, text: str, kind: LogKindEnum) -> "TaskRunLog":

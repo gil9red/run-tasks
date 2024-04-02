@@ -10,7 +10,7 @@ from datetime import datetime
 from cron_converter import Cron
 
 from app_task_manager.units.base_unit import BaseUnit
-from db import Task, TaskStatusEnum
+from db import Task, TaskRunStatusEnum
 from third_party.cron_converter__examples.from_jenkins import do_convert
 
 
@@ -33,7 +33,7 @@ class SchedulerUnit(BaseUnit):
             if task.cron:
                 scheduled_date = self._get_scheduled_date(task.cron)
             elif task.is_infinite and not task.get_runs_by(
-                [TaskStatusEnum.Running]
+                [TaskRunStatusEnum.Running]
             ):
                 # Без запланированного времени
                 scheduled_date = None

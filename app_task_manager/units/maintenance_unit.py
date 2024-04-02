@@ -12,7 +12,7 @@ from psutil import Process, NoSuchProcess, AccessDenied
 from app_task_manager.config import STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS
 from app_task_manager.utils import get_prefix_file_name_command, kill_proc_tree
 from app_task_manager.units.base_unit import BaseUnit
-from db import TaskRun, TaskStatusEnum
+from db import TaskRun, TaskRunStatusEnum
 
 
 class MaintenanceUnit(BaseUnit):
@@ -22,7 +22,7 @@ class MaintenanceUnit(BaseUnit):
             [
                 run.start_date
                 for run in task_runs
-                if run.get_actual_status() == TaskStatusEnum.Running
+                if run.get_actual_status() == TaskRunStatusEnum.Running
             ],
             default=datetime.now(),
         )
@@ -31,7 +31,7 @@ class MaintenanceUnit(BaseUnit):
 
         # Разбирательства с "висячими" запусками
         for run in TaskRun.select().where(
-            TaskRun.status == TaskStatusEnum.Running,
+                TaskRun.status == TaskRunStatusEnum.Running,
             TaskRun.start_date < min_start_date,
         ):
             log_prefix = f"[Задача #{run.task.id}, запуск {run.seq} (#{run.id})]"
@@ -59,15 +59,15 @@ class MaintenanceUnit(BaseUnit):
 
             self.log_info(
                 f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) "
-                f"статус {TaskStatusEnum.Unknown.value}"
+                f"статус {TaskRunStatusEnum.Unknown.value}"
             )
-            run.set_status(TaskStatusEnum.Unknown)
+            run.set_status(TaskRunStatusEnum.Unknown)
 
     def __removing_old_runs(self):
         date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
 
         for run in TaskRun.select().where(
-            TaskRun.status.not_in([TaskStatusEnum.Pending, TaskStatusEnum.Running]),
+            TaskRun.status.not_in([TaskRunStatusEnum.Pending, TaskRunStatusEnum.Running]),
             TaskRun.create_date < date,
         ):
             try:

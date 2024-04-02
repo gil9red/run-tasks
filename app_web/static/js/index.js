@@ -83,6 +83,12 @@ $(function() {
                     </a>
                 `,
             },
+            {
+                data: 'last_work_status',
+                render: work_status_task_render,
+                orderable: false,
+                title: 'Статус',
+            },
             { data: 'id', title: 'Ид.', },
             { data: 'name', title: 'Название', render: task_name_render, },
             { data: 'description', title: 'Описание', },

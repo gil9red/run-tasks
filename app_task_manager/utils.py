@@ -18,7 +18,7 @@ import psutil
 
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND
-from db import Task, TaskRun, TaskStatusEnum
+from db import Task, TaskRun, TaskRunStatusEnum
 from root_config import PROJECT_NAME
 
 
@@ -214,14 +214,14 @@ class TaskThread(threading.Thread):
     def stop(self):
         if (
             self.current_task_run
-            and self.current_task_run.status == TaskStatusEnum.Running
+            and self.current_task_run.status == TaskRunStatusEnum.Running
         ):
-            self.current_task_run.set_status(TaskStatusEnum.Stopped)
+            self.current_task_run.set_status(TaskRunStatusEnum.Stopped)
 
         self._is_stopped = True
 
     def _find_run(self, task: Task) -> TaskRun | None:
-        task_runs = task.get_runs_by([TaskStatusEnum.Pending])
+        task_runs = task.get_runs_by([TaskRunStatusEnum.Pending])
         if not task_runs:
             return None
 
@@ -267,13 +267,13 @@ class TaskThread(threading.Thread):
 
         def stop_on() -> bool:
             if not task.get_actual_is_enabled():
-                task_run.set_status(TaskStatusEnum.Stopped)
+                task_run.set_status(TaskRunStatusEnum.Stopped)
 
             status = task_run.get_actual_status()
             need_stop = status in [
-                TaskStatusEnum.Stopped,
-                TaskStatusEnum.Unknown,
-                TaskStatusEnum.Error,
+                TaskRunStatusEnum.Stopped,
+                TaskRunStatusEnum.Unknown,
+                TaskRunStatusEnum.Error,
             ]
             if need_stop:
                 log.debug(
@@ -288,7 +288,7 @@ class TaskThread(threading.Thread):
 
             self.current_task_run = task_run
 
-            task_run.set_status(TaskStatusEnum.Running)
+            task_run.set_status(TaskRunStatusEnum.Running)
 
             temp_file = create_temp_file(task, task_run)
 
@@ -315,8 +315,8 @@ class TaskThread(threading.Thread):
             final_status = task_run.get_actual_status()
 
             # Если текущий статус running
-            if final_status == TaskStatusEnum.Running:
-                final_status = TaskStatusEnum.Finished
+            if final_status == TaskRunStatusEnum.Running:
+                final_status = TaskRunStatusEnum.Finished
             task_run.set_status(final_status)
 
             task_run.save()
