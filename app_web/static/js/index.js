@@ -53,6 +53,68 @@ function actions_task_render(data, type, row, meta) {
 }
 
 
+function work_status_task_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+
+    let result = `<div class="text-bg-danger">${data}</div>`;
+
+    switch (data) {
+        case "no_runs": {
+            result = `
+                <div class="text-secondary-emphasis" title="Не было запусков">
+                    <i class="bi bi-slash-circle"></i>
+                </div>
+            `;
+            break;
+        }
+
+        case "in_processed": {
+            result = `
+                <div class="spinner-grow spinner-grow-sm text-primary" role="status" title="Выполняется запуск">
+                    <span class="visually-hidden">Выполняется запуск...</span>
+                </div>
+            `;
+            break;
+        }
+
+        case "successful": {
+            result = `
+                <div class="text-success" title="Последний запуск завершился успешно">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            `;
+            break;
+        }
+
+        case "failed": {
+            result = `
+                <div class="text-danger" title="Последний запуск завершился ошибкой">
+                    <i class="bi bi-x-circle"></i>
+                </div>
+            `;
+            break;
+        }
+
+        case "stopped": {
+            result = `
+                <div class="text-warning" title="Последний запуск был остановлен">
+                    <i class="bi bi-stop-circle"></i>
+                </div>
+            `;
+            break;
+        }
+    }
+
+    return `
+        <div class="d-flex justify-content-center">
+            ${result}
+        </div>
+    `;
+}
+
+
 function task_name_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
@@ -101,7 +163,7 @@ $(function() {
         ],
         order: [
             // Сортировка по возрастанию id
-            [1, "asc"],
+            [2, "asc"],
         ],
         rowCallback: function(row, data, displayNum, displayIndex, dataIndex) {
             $(row).toggleClass("row-disabled", !data.is_enabled);

@@ -64,6 +64,15 @@ class TaskRunStatusEnum(enum.StrEnum):
 
 
 @enum.unique
+class TaskWorkStatusEnum(enum.StrEnum):
+    NO_RUNS = enum.auto()
+    IN_PROCESSED = enum.auto()
+    SUCCESSFUL = enum.auto()
+    FAILED = enum.auto()
+    STOPPED = enum.auto()
+
+
+@enum.unique
 class LogKindEnum(enum.StrEnum):
     OUT = enum.auto()
     ERR = enum.auto()
@@ -181,6 +190,24 @@ class Task(BaseModel):
         run: TaskRun | None = self.get_last_started_run()
         return run.start_date if run else None
 
+    # TODO: test
+    @hybrid_property
+    def last_work_status(self) -> TaskWorkStatusEnum | None:
+        run: TaskRun | None = self.get_last_started_run()
+        if not run:
+            return TaskWorkStatusEnum.NO_RUNS
+
+        if run.status == TaskRunStatusEnum.RUNNING:
+            return TaskWorkStatusEnum.IN_PROCESSED
+
+        if run.status == TaskRunStatusEnum.STOPPED:
+            return TaskWorkStatusEnum.STOPPED
+
+        if run.status == TaskRunStatusEnum.FINISHED and run.process_return_code == 0:
+            return TaskWorkStatusEnum.SUCCESSFUL
+
+        return TaskWorkStatusEnum.FAILED
+
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(
             self,
@@ -189,6 +216,7 @@ class Task(BaseModel):
                 "number_of_runs",
                 "last_started_run_seq",
                 "last_started_run_start_date",
+                "last_work_status",
             ],
         )
 
