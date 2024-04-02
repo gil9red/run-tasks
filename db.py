@@ -203,7 +203,7 @@ class Task(BaseModel):
         if run.status == TaskRunStatusEnum.STOPPED:
             return TaskWorkStatusEnum.STOPPED
 
-        if run.status == TaskRunStatusEnum.FINISHED and run.process_return_code == 0:
+        if run.is_success:
             return TaskWorkStatusEnum.SUCCESSFUL
 
         return TaskWorkStatusEnum.FAILED
@@ -343,6 +343,11 @@ class TaskRun(BaseModel):
             # Уникальный индекс по ид. задачи и номеру запуска
             (("task_id", "seq"), True),
         )
+
+    # TODO: test
+    @hybrid_property
+    def is_success(self) -> bool:
+        return self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
 
     @classmethod
     def get_by_seq(cls, task_id: int, seq: int) -> Self:
