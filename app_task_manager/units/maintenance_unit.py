@@ -31,7 +31,7 @@ class MaintenanceUnit(BaseUnit):
 
         # Разбирательства с "висячими" запусками
         for run in TaskRun.select().where(
-                TaskRun.status == TaskRunStatusEnum.RUNNING,
+            TaskRun.status == TaskRunStatusEnum.RUNNING,
             TaskRun.start_date < min_start_date,
         ):
             log_prefix = f"[Задача #{run.task.id}, запуск {run.seq} (#{run.id})]"
@@ -67,7 +67,9 @@ class MaintenanceUnit(BaseUnit):
         date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
 
         for run in TaskRun.select().where(
-            TaskRun.status.not_in([TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]),
+            TaskRun.status.not_in(
+                [TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]
+            ),
             TaskRun.create_date < date,
         ):
             try:
