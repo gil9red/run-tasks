@@ -13,26 +13,32 @@ function actions_task_render(data, type, row, meta) {
         >
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
-        `,
         `
-        <button
-                class="btn text-success p-0"
-                title="Запуск задачи"
-                data-url="/api/task/${row.id}/action/run"
-                data-method="POST"
-        >
-            ▷
-        </button>
-        `,
     ];
+    if (row.is_enabled) {
+        tags.push(
+            `
+            <button
+                    class="btn text-success p-0"
+                    title="Запуск задачи"
+                    data-url="/api/task/${row.id}/action/run"
+                    data-method="POST"
+            >
+                ▷
+            </button>
+            `
+        );
+    }
     if (row.last_started_run_seq != null) {
         tags.push(
-            `<a
+            `
+            <a
                     href="/task/${row.id}/run/${row.last_started_run_seq}"
                     title="Страница последнего запуска"
             >
                 <i class="bi bi-terminal"></i>
-            </a>`
+            </a>
+            `
         );
     }
     tags.push(
