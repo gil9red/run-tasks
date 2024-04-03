@@ -30,13 +30,13 @@ class SchedulerUnit(BaseUnit):
 
     def process(self):
         for task in Task.select().where(Task.is_enabled == True):
-            if task.cron:
-                scheduled_date = self._get_scheduled_date(task.cron)
-            elif task.is_infinite and not task.get_runs_by(
+            if task.is_infinite and not task.get_runs_by(
                 [TaskRunStatusEnum.RUNNING]
             ):
                 # Без запланированного времени
                 scheduled_date = None
+            elif task.cron:
+                scheduled_date = self._get_scheduled_date(task.cron)
             else:
                 continue
 
