@@ -32,6 +32,7 @@
                 <img src="/favicon.ico" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">
                 {{ title }}
             </a>
+            {% if current_user.is_authenticated %}
             <div class="d-flex">
                 <a href="/notifications" class="icon-link icon-link-hover">
                     <i class="bi bi-send"></i>
@@ -43,6 +44,7 @@
                     Выйти
                 </a>
             </div>
+            {% endif %}
         </nav>
         <nav class="bg-light-subtle px-3" aria-label="breadcrumb">
             <ol class="breadcrumb">
