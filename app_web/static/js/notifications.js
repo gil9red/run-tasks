@@ -17,14 +17,37 @@ function kind_render(data, type, row, meta) {
 }
 
 
+function send_ajax_create_notification(url, method, data) {
+    $.ajax({
+        url: url,
+        method: method,  // HTTP метод, по умолчанию GET
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",  // Тип данных загружаемых с сервера
+        success: data => on_ajax_success(data, "#table-notifications", update_rows_table_by_response),
+        error: data => on_ajax_error(data, 'при создании уведомления'),
+    });
+}
+
+
 $(function() {
+    let $checkbox_all = $("#modal-create-notification-input-is-all");
+    let $select_kind = $("#modal-create-notification-input-kind");
+    $checkbox_all.on('change', function() {
+        let checked = $(this).is(':checked');
+        $select_kind.prop("disabled", checked);
+    });
+    $select_kind.prop(
+        "disabled",
+        $checkbox_all.is(":checked")
+    );
+
     // Создание уведомления
     let $modal_create_notification = $('#modal-create-notification');
 
     $modal_create_notification.find("form").submit(function() {
         $modal_create_notification.modal('hide');
 
-        let thisForm = this;
         let $this = $(this);
 
         let url = $this.attr("action");
@@ -33,20 +56,16 @@ $(function() {
             method = "get";
         }
 
-        $.ajax({
-            url: url,
-            method: method,  // HTTP метод, по умолчанию GET
-            data: JSON.stringify(convertFormToJSON(this)),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",  // Тип данных загружаемых с сервера
-            success: function(data) {
-                on_ajax_success(data, "#table-notifications", update_rows_table_by_response);
+        let data = convertFormToJSON(this);
 
-                // Очищение полей формы
-                thisForm.reset();
-            },
-            error: data => on_ajax_error(data, 'при создании уведомления'),
-        });
+        if ($checkbox_all.is(":checked")) {
+            for (let kind of ["telegram", "email"]) {
+                data.kind = kind;
+                send_ajax_create_notification(url, method, data);
+            }
+        } else {
+            send_ajax_create_notification(url, method, data);
+        }
 
         return false;
     });

@@ -31,15 +31,26 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="modal-create-notification-input-kind" class="form-label">Тип</label>
-                        <select
-                                class="form-select"
-                                id="modal-create-notification-input-kind"
-                                name="kind"
-                                required
-                        >
-                            <option value="telegram">Телеграм</option>
-                            <option value="email">Почта</option>
-                        </select>
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">
+                                <input
+                                        class="form-check-input"
+                                        id="modal-create-notification-input-is-all"
+                                        type="checkbox"
+                                        role="switch"
+                                >
+                                <label for="modal-create-notification-input-is-all" class="ms-1">Все</label>
+                            </span>
+                            <select
+                                    class="form-select"
+                                    id="modal-create-notification-input-kind"
+                                    name="kind"
+                                    required
+                            >
+                                <option value="telegram">Телеграм</option>
+                                <option value="email">Почта</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="modal-create-notification-input-name">Название</label>
