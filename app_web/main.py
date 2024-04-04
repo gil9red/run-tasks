@@ -18,7 +18,7 @@ from flask import (
 )
 
 from app_web import config
-from app_web.app import app, USERS
+from app_web.app import USERS, app, limiter
 from app_web.common import get_task, get_task_run, public_route
 from root_config import PROJECT_NAME
 
@@ -32,6 +32,7 @@ def index() -> str:
 
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("5/minute", methods=["POST"])
 @public_route
 def login() -> str | Response:
     error_text: str | None = None

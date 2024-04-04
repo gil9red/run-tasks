@@ -14,6 +14,9 @@ from werkzeug.exceptions import HTTPException
 
 import flask_login
 
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 from app_web import config
 from app_web.api.api import api_bp
 from app_web.common import StatusEnum, prepare_response
@@ -47,6 +50,12 @@ app.logger = logging.getLogger("web-server")
 app.secret_key = config.SECRET_KEY
 
 app.register_blueprint(api_bp, url_prefix="/api")
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    storage_uri="memory://",
+)
 
 login_manager = flask_login.LoginManager()
 login_manager.init_app(app)
