@@ -9,14 +9,14 @@ from datetime import datetime
 
 from app_task_manager.units.base_unit import BaseUnit
 from db import Task, TaskRunStatusEnum
-from root_common import get_scheduled_date_iter
+from root_common import get_scheduled_date_generator
 
 
 class SchedulerUnit(BaseUnit):
     @classmethod
     def _get_scheduled_date(cls, cron: str) -> datetime:
         return next(
-            get_scheduled_date_iter(cron)
+            get_scheduled_date_generator(cron)
         )
 
     def process(self):

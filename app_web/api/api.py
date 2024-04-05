@@ -11,7 +11,7 @@ from http import HTTPStatus
 
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
 from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
-from root_common import get_scheduled_date_iter
+from root_common import get_scheduled_date_generator
 
 
 api_bp = Blueprint("api", __name__)
@@ -160,7 +160,7 @@ def cron_get_next_dates() -> Response:
     # TODO: добавить проверку полей
     cron: str = request.args["cron"]
 
-    it = get_scheduled_date_iter(cron)
+    it = get_scheduled_date_generator(cron)
 
     return jsonify(
         prepare_response(

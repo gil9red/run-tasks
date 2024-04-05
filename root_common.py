@@ -48,7 +48,7 @@ def send_email(
         s.send_message(msg)
 
 
-def get_scheduled_date_iter(cron: str) -> Generator[datetime, None, None]:
+def get_scheduled_date_generator(cron: str) -> Generator[datetime, None, None]:
     cron = do_convert(cron)
 
     midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
