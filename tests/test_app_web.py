@@ -297,6 +297,8 @@ class TestAppWeb(TestCase):
 
         now: datetime = datetime.now()
 
+        # TODO: Проверить на результат при неправильном формате cron
+
         for cron in ["* * * * *", "0 * * * *"]:
             rs = self.client.get(uri, query_string=dict(cron=cron))
             self.assertEqual(rs.status_code, 200)
