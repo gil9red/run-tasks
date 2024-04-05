@@ -8,6 +8,12 @@
     {% endif %}
 {% endblock %}
 
+{% block custom_css %}
+.cron-examples code:hover {
+    cursor: pointer;
+}
+{% endblock %}
+
 {% block header %}
     <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
     {% if is_mode_edit %}
@@ -85,7 +91,7 @@
                     <span class="cron-result"></span>
                 </div>
             </div>
-            <div class="col">
+            <div class="col cron-examples">
                 Формат cron.
                 <div><code>H */1 * * *</code> - Каждый час</div>
                 <div><code>H */8 * * *</code> - Каждые 8 часов</div>

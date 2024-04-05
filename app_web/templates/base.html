@@ -24,6 +24,9 @@
     <script src="{{ url_for('static', filename='js/base.js') }}"></script>
 
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='base.css') }}">
+    <style>
+        {% block custom_css %}{% endblock %}
+    </style>
 </head>
 <body>
     <div class="sticky-top">

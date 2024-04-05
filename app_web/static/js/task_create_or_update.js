@@ -10,11 +10,16 @@ function process_cron() {
     $cron_result_error.text("");
     $cron_result.text("");
 
+    let cron = get_cron();
+    if (!cron) {
+        return;
+    }
+
     $.ajax({
         url: "/api/cron/get-next-dates",
         method: "GET",
         data: {
-            cron: get_cron(),
+            cron: cron,
         },
         contentType: "application/json; charset=utf-8",
         dataType: "json",  // Тип данных загружаемых с сервера
@@ -41,7 +46,13 @@ function process_cron() {
 
 $(function() {
     process_cron();
-    $("#cron").on("input", () => process_cron());
+    $("#cron").on("input change", () => process_cron());
+
+    $(".cron-examples code").click(function() {
+        $("#cron").val(
+            $(this).text()
+        ).change();
+    });
 
     $("form").submit(function() {
         let thisForm = this;
