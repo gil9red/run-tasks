@@ -4,7 +4,7 @@
 __author__ = "ipetrash"
 
 
-import datetime
+from datetime import datetime
 from unittest import TestCase
 from typing import Any
 
@@ -144,7 +144,7 @@ class TestAppWeb(TestCase):
             run_1 = task_1.add_or_get_run()
             run_1.set_status(TaskRunStatusEnum.RUNNING)
 
-            run_2 = task_1.add_or_get_run(datetime.datetime.now())
+            run_2 = task_1.add_or_get_run(datetime.now())
 
             run_3 = task_1.add_or_get_run()
 
@@ -291,6 +291,17 @@ class TestAppWeb(TestCase):
             self.assertEqual(rs_data["result"][0]["name"], data["name"])
             self.assertEqual(rs_data["result"][0]["kind"], data["kind"])
             self.assertEqual(rs_data["result"][0]["text"], data["text"])
+
+    def test_api_cron_get_next_dates(self):
+        uri: str = "/api/cron/get-next-dates"
+
+        now: datetime = datetime.now()
+
+        for cron in ["* * * * *", "0 * * * *"]:
+            rs = self.client.get(uri, query_string=dict(cron=cron))
+            self.assertEqual(rs.status_code, 200)
+            for obj in rs.json["result"]:
+                self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
     def test_favicon(self):
         uri: str = "/favicon.ico"

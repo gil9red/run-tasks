@@ -6,10 +6,14 @@ __author__ = "ipetrash"
 
 import smtplib
 import traceback
+from datetime import datetime
 from email.message import EmailMessage
-from typing import Any
+from typing import Any, Generator
+
+from cron_converter import Cron
 
 from root_config import CONFIG
+from third_party.cron_converter__examples.from_jenkins import do_convert
 
 
 CONFIG_EMAIL: dict[str, Any] = CONFIG["notification"]["email"]
@@ -42,3 +46,18 @@ def send_email(
     with smtplib.SMTP_SSL(host=host, port=port) as s:
         s.login(user=login, password=password)
         s.send_message(msg)
+
+
+def get_scheduled_date_iter(cron: str) -> Generator[datetime, None, None]:
+    cron = do_convert(cron)
+
+    midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    schedule = Cron(cron).schedule(midnight)
+
+    scheduled_date = schedule.next()
+    while scheduled_date < datetime.now():
+        scheduled_date = schedule.next()
+
+    while True:
+        yield scheduled_date
+        scheduled_date = schedule.next()

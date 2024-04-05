@@ -7,26 +7,17 @@ __author__ = "ipetrash"
 import time
 from datetime import datetime
 
-from cron_converter import Cron
-
 from app_task_manager.units.base_unit import BaseUnit
 from db import Task, TaskRunStatusEnum
-from third_party.cron_converter__examples.from_jenkins import do_convert
+from root_common import get_scheduled_date_iter
 
 
 class SchedulerUnit(BaseUnit):
     @classmethod
     def _get_scheduled_date(cls, cron: str) -> datetime:
-        cron = do_convert(cron)
-
-        midnight = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        schedule = Cron(cron).schedule(midnight)
-
-        scheduled_date = schedule.next()
-        while scheduled_date < datetime.now():
-            scheduled_date = schedule.next()
-
-        return scheduled_date
+        return next(
+            get_scheduled_date_iter(cron)
+        )
 
     def process(self):
         for task in Task.select().where(Task.is_enabled == True):

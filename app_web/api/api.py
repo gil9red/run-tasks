@@ -7,9 +7,11 @@ __author__ = "ipetrash"
 from typing import Any
 
 from flask import Blueprint, Response, jsonify, request
+from http import HTTPStatus
+
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
 from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
-from http import HTTPStatus
+from root_common import get_scheduled_date_iter
 
 
 api_bp = Blueprint("api", __name__)
@@ -20,7 +22,7 @@ def tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 
 
-@api_bp.route("/task/create", methods=["POST"])
+@api_bp.route("/task/create", methods=["POST"])  # TODO: в тесты
 def task_create() -> Response | tuple[Response, int]:
     data: dict[str, Any] = request.json
 
@@ -46,7 +48,7 @@ def task_create() -> Response | tuple[Response, int]:
     )
 
 
-@api_bp.route("/task/update", methods=["POST"])
+@api_bp.route("/task/update", methods=["POST"])  # TODO: в тесты
 def task_update() -> Response:
     data: dict[str, Any] = request.json
 
@@ -79,7 +81,7 @@ def task_update() -> Response:
     )
 
 
-@api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])
+@api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])  # TODO: в тесты
 def task_delete(task_id: int) -> Response:
     task: Task = get_task(task_id)
     task.delete_instance()
@@ -149,5 +151,20 @@ def notification_create() -> Response:
             status=StatusEnum.OK,
             text=f"Создано уведомление #{notification.id}",
             result=[notification.to_dict()],
+        ),
+    )
+
+
+@api_bp.route("/cron/get-next-dates")
+def cron_get_next_dates() -> Response:
+    # TODO: добавить проверку полей
+    cron: str = request.args["cron"]
+
+    it = get_scheduled_date_iter(cron)
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            result=[dict(date=next(it)) for _ in range(3)],
         ),
     )
