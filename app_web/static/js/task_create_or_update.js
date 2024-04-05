@@ -1,4 +1,48 @@
+function get_cron() {
+    return $.trim($("#cron").val());
+}
+
+
+function process_cron() {
+    let $cron_result_error = $(".cron-result-error");
+    let $cron_result = $(".cron-result");
+
+    $cron_result_error.text("");
+    $cron_result.text("");
+
+    $.ajax({
+        url: "/api/cron/get-next-dates",
+        method: "GET",
+        data: {
+            cron: get_cron(),
+        },
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",  // Тип данных загружаемых с сервера
+        success: function(data) {
+            let ok = data.status == 'ok';
+            if (ok) {
+                let items = [];
+                for (let item of data.result) {
+                    let date_str = get_date_from_utc(item.date);
+                    items.push(
+                        `<span class="text-primary-emphasis">${date_str}</span>`
+                    );
+                }
+                let result = items.join(", ");
+                $cron_result.html(`Даты планирования: ${result}`);
+            } else {
+                $cron_result_error.text(data.text);
+            }
+        },
+        error: data => on_ajax_error(data, "при запросе следующих дат")
+    });
+}
+
+
 $(function() {
+    process_cron();
+    $("#cron").on("input", () => process_cron());
+
     $("form").submit(function() {
         let thisForm = this;
         let $this = $(this);
@@ -37,7 +81,7 @@ $(function() {
                 // Очищение полей формы
                 thisForm.reset();
             },
-            error: data => on_ajax_error(data),
+            error: data => on_ajax_error(data), // TODO: заполнять reason в on_ajax_error
         });
 
         return false;

@@ -160,11 +160,20 @@ def cron_get_next_dates() -> Response:
     # TODO: добавить проверку полей
     cron: str = request.args["cron"]
 
-    it = get_scheduled_date_generator(cron)
+    status = StatusEnum.OK
+    text = None
+    try:
+        it = get_scheduled_date_generator(cron)
+        result = [dict(date=next(it)) for _ in range(3)]
+    except Exception:
+        status = StatusEnum.ERROR
+        text = "Неправильный формат"
+        result = None
 
     return jsonify(
         prepare_response(
-            status=StatusEnum.OK,
-            result=[dict(date=next(it)) for _ in range(3)],
+            status=status,
+            text=text,
+            result=result,
         ),
     )

@@ -253,12 +253,17 @@ LANG_DATATABLES = {
 }
 
 
+function get_date_from_utc(utc) {
+    return moment.utc(utc).format("DD/MM/YYYY HH:mm:ss");
+}
+
+
 function date_render(data, type, row, meta) {
     if (data == null) {
         return data;
     }
     if (type === 'display' || type === 'filter') {
-        return moment.utc(data).format("DD/MM/YYYY HH:mm:ss");
+        return get_date_from_utc(data);
     }
     return data;
 }
@@ -398,7 +403,7 @@ function send_ajax(url, method, json=null, css_selector_table=null, callback=nul
         contentType: "application/json; charset=utf-8",
         dataType: "json",  // Тип данных загружаемых с сервера
         success: data => on_ajax_success(data, css_selector_table, callback),
-        error: data => on_ajax_error(data),
+        error: data => on_ajax_error(data), // TODO: заполнять reason в on_ajax_error
     });
 }
 
