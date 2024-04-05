@@ -1,13 +1,7 @@
 {% extends 'base.html' %}
 
-{% set is_mode_view = task_view_mode == "view" %}
-{% set is_mode_edit = task_view_mode == "edit" %}
-{% set is_mode_create = task_view_mode == "create "%}
-
 {% block title %}
-    {% if is_mode_view %}
-        Задача "{{ task.name }}"
-    {% elif is_mode_edit %}
+    {% if is_mode_edit %}
         Редактирование задачи "{{ task.name }}"
     {% else %}
         Создание задачи
@@ -16,9 +10,7 @@
 
 {% block header %}
     <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
-    {% if is_mode_view %}
-        <li class="breadcrumb-item active" aria-current="page">{{ task.name }}</li>
-    {% elif is_mode_edit %}
+    {% if is_mode_edit %}
         <li class="breadcrumb-item"><a href="/task/{{ task.id }}">{{ task.name }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Редактирование</li>
     {% else %}
@@ -27,82 +19,6 @@
 {% endblock %}
 
 {% block content %}
-{% if is_mode_view %}
-<!-- TODO: -->
-<div class="mb-3">
-    <div class="d-flex">
-        <div class="fs-1 flex-fill">
-            <!-- TODO: спиннер тут мелкий -->
-            <span class="task_last_work_status"></span>
-            <span>{{ task.name }}</span>
-        </div>
-        <!-- TODO: Перенести в отдельные функции и использовать в index.js и тут -->
-<!--        TODO: кнопки получаются мелкими. Мб перенести их, например, в левую часть в список? -->
-        <div class="align-self-center">
-            <button
-                    class="btn text-success p-0"
-                    title="Запуск"
-                    data-url="/api/task/{{ task.id }}/action/run"
-                    data-method="POST"
-            >
-                <i class="bi bi-caret-right-square-fill"></i>
-            </button>
-            <a
-                    class="text-success-emphasis"
-                    href="/task/{{ task.id }}/edit"
-                    title="Редактировать"
-            >
-                <i class="bi bi-pencil-square"></i>
-            </a>
-        </div>
-    </div>
-
-    <div>{% if task.description %}{{ task.description | safe }}{% endif %}</div>
-
-    <div class="form-check form-switch">
-        <input
-                class="form-check-input"
-                id="is_enabled"
-                type="checkbox"
-                role="switch"
-                data-context-obj-id="{{ task.id }}"
-                data-context-obj-field="is_enabled"
-                data-url-update="/api/task/update"
-                {% if task.is_enabled %}checked{% endif %}
-        />
-        <label for="is_enabled" class="form-label">Активный</label>
-    </div>
-
-    <div class="form-check form-switch">
-        <input
-                class="form-check-input"
-                id="is_infinite"
-                type="checkbox"
-                role="switch"
-                data-context-obj-id="{{ task.id }}"
-                data-context-obj-field="is_infinite"
-                data-url-update="/api/task/update"
-                {% if task.is_infinite %}checked{% endif %}
-        />
-        <label for="is_infinite" class="form-label">Бесконечный</label>
-    </div>
-</div>
-
-<!-- TODO: -->
-<h3>Запуски</h3>
-
-<table id="table-task-runs" class="table"></table>
-
-<script>
-    // Для таблицы запусков
-    const TASK_ID = {{ task.id }};
-
-    const TASK_LAST_WORK_STATUS = "{{ task.last_work_status }}";
-</script>
-<script src="{{ url_for('static', filename='js/task.js') }}"></script>
-
-{% else %}
-
 <form
         method="post"
         {% if is_mode_edit %}
@@ -136,7 +52,11 @@
                     type="checkbox"
                     role="switch"
                     name="is_enabled"
-                    {% if is_mode_edit and task.is_enabled %}checked{% endif %}
+                    {% if is_mode_edit %}
+                    {% if task.is_enabled %}checked{% endif %}
+                    {% else %}
+                    checked
+                    {% endif %}
             />
             <label for="is_enabled" class="form-label">Активный</label>
         </div>
@@ -220,5 +140,4 @@
 
 <!-- TODO: -->
 <script src="{{ url_for('static', filename='js/task_create_or_update.js') }}"></script>
-{% endif %}
 {% endblock %}

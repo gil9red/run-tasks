@@ -75,35 +75,32 @@ def notifications() -> str:
     )
 
 
-# TODO: какой-нибудь enum.StrEnum для перечисления режимов отображения Task в task_view_mode
-
 @app.route("/task/<int:task_id>")
 def task(task_id: int) -> str:
     return render_template(
-        "task_base.html",
+        "task.html",
         title=PROJECT_NAME,
         task=get_task(task_id),
-        task_view_mode="view",  # TODO:
     )
 
 
 @app.route("/task/create")
 def task_create() -> str:
     return render_template(
-        "task_base.html",
+        "task_create_or_update.html",
         title=PROJECT_NAME,
         task=None,
-        task_view_mode="create",  # TODO:
+        is_mode_edit=False,
     )
 
 
 @app.route("/task/<int:task_id>/edit")
 def task_edit(task_id: int) -> str:
     return render_template(
-        "task_base.html",
+        "task_create_or_update.html",
         title=PROJECT_NAME,
         task=get_task(task_id),
-        task_view_mode="edit",  # TODO:
+        is_mode_edit=True,
     )
 
 
