@@ -74,6 +74,11 @@ function work_status_task_render(data, type, row, meta) {
     }
 
     let result = get_work_status_task_widget(data);
+
+    if (row.last_started_run_seq != null) {
+        result = `<a href="/task/${row.id}/run/${row.last_started_run_seq}">${result}</a>`;
+    }
+
     return `
         <div class="d-flex justify-content-center">
             ${result}
