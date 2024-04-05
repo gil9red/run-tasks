@@ -56,10 +56,36 @@
             </a>
         </div>
     </div>
+
     <div>{{ task.description | safe }}</div>
-<!--            TODO: для task_view_mode == "view" использовать особенные checkbox - которые сразу отправляют запрос -->
-    {{ task.is_enabled }}
-    {{ task.is_infinite }}
+
+    <div class="form-check form-switch">
+        <input
+                class="form-check-input"
+                id="is_enabled"
+                type="checkbox"
+                role="switch"
+                data-context-obj-id="{{ task.id }}"
+                data-context-obj-field="is_enabled"
+                data-url-update="/api/task/update"
+                {% if task.is_enabled %}checked{% endif %}
+        />
+        <label for="is_enabled" class="form-label">Активный</label>
+    </div>
+
+    <div class="form-check form-switch">
+        <input
+                class="form-check-input"
+                id="is_infinite"
+                type="checkbox"
+                role="switch"
+                data-context-obj-id="{{ task.id }}"
+                data-context-obj-field="is_infinite"
+                data-url-update="/api/task/update"
+                {% if task.is_infinite %}checked{% endif %}
+        />
+        <label for="is_infinite" class="form-label">Бесконечный</label>
+    </div>
 </div>
 
 <!-- TODO: -->
@@ -158,7 +184,6 @@
     </div>
     <div class="mb-3">
         <div class="form-check form-switch">
-<!--            TODO: для task_view_mode == "view" использовать особенные checkbox - которые сразу отправляют запрос -->
             <input
                     class="form-check-input"
                     id="is_infinite"

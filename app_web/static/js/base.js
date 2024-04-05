@@ -276,11 +276,9 @@ function bool_render(data, type, row, meta) {
                     role="switch"
                     data-context-obj-id="${row.id}"
                     data-context-obj-field="${meta.settings.aoColumns[meta.col].data}"
-                    data-context-row="${meta.row}"
-                    data-context-col="${meta.col}"
                     data-context-table-id="#${meta.settings.sTableId}"
                     ${data ? "checked" : ""}
-            >
+            />
         </div>
     `;
 }
@@ -438,21 +436,39 @@ $(document).on("click", "[data-url]", function() {
 });
 
 
-$(document).on("change", "[data-context-obj-id][type=checkbox]", function() {
+function get_context_obj($el, value) {
+    let field = $el.data("context-obj-field");
+
+    let obj = new Object();
+    obj["id"] = $el.data("context-obj-id");
+    obj[field] = value;
+
+    return obj;
+}
+
+
+$(document).on("change", "[data-context-obj-id][data-context-table-id][type=checkbox]", function() {
     let $this = $(this);
     let value = $this.is(':checked');
 
     let table_id = $this.data("context-table-id");
-    let $table = $(table_id);
-    let url = $table.data("url-update");
+    let url = $(table_id).data("url-update");
 
-    let field = $this.data("context-obj-field");
-
-    let obj = new Object();
-    obj["id"] = $this.data("context-obj-id");
-    obj[field] = value;
+    let obj = get_context_obj($this, value);
 
     send_ajax(url, "POST", obj, table_id, update_rows_table_by_response);
+});
+
+
+$(document).on("change", "[data-context-obj-id][data-url-update][type=checkbox]", function() {
+    let $this = $(this);
+    let value = $this.is(':checked');
+
+    let url = $this.data("url-update");
+
+    let obj = get_context_obj($this, value);
+
+    send_ajax(url, "POST", obj);
 });
 
 
