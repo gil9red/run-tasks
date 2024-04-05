@@ -13,6 +13,15 @@ function actions_task_render(data, type, row, meta) {
         >
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
+        `,
+        `
+        <a
+                class="text-success-emphasis"
+                href="/task/${row.id}/edit"
+                title="Редактировать"
+        >
+            <i class="bi bi-pencil-square"></i>
+        </a>
         `
     ];
     if (row.is_enabled) {
@@ -20,11 +29,11 @@ function actions_task_render(data, type, row, meta) {
             `
             <button
                     class="btn text-success p-0"
-                    title="Запуск задачи"
+                    title="Запуск"
                     data-url="/api/task/${row.id}/action/run"
                     data-method="POST"
             >
-                ▷
+                <i class="bi bi-caret-right-fill"></i>
             </button>
             `
         );
@@ -45,7 +54,7 @@ function actions_task_render(data, type, row, meta) {
         `
         <button
                 class="btn text-danger p-0"
-                title="Удаление задачи"
+                title="Удалить"
                 data-url="/api/task/${row.id}/delete"
                 data-method="DELETE"
                 data-confirm-text="Удалить задачу?"
@@ -64,55 +73,7 @@ function work_status_task_render(data, type, row, meta) {
         return null;
     }
 
-    let result = `<div class="text-bg-danger">${data}</div>`;
-
-    switch (data) {
-        case "no_runs": {
-            result = `
-                <div class="text-secondary-emphasis" title="Не было запусков">
-                    <i class="bi bi-slash-circle"></i>
-                </div>
-            `;
-            break;
-        }
-
-        case "in_processed": {
-            result = `
-                <div class="spinner-grow spinner-grow-sm text-primary" role="status" title="Выполняется запуск">
-                    <span class="visually-hidden">Выполняется запуск...</span>
-                </div>
-            `;
-            break;
-        }
-
-        case "successful": {
-            result = `
-                <div class="text-success" title="Последний запуск завершился успешно">
-                    <i class="bi bi-check-circle"></i>
-                </div>
-            `;
-            break;
-        }
-
-        case "failed": {
-            result = `
-                <div class="text-danger" title="Последний запуск завершился ошибкой">
-                    <i class="bi bi-x-circle"></i>
-                </div>
-            `;
-            break;
-        }
-
-        case "stopped": {
-            result = `
-                <div class="text-warning" title="Последний запуск был остановлен">
-                    <i class="bi bi-stop-circle"></i>
-                </div>
-            `;
-            break;
-        }
-    }
-
+    let result = get_work_status_task_widget(data);
     return `
         <div class="d-flex justify-content-center">
             ${result}

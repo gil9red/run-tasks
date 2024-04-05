@@ -11,6 +11,10 @@ function actions_task_run_render(data, type, row, meta) {
 
 
 $(function() {
+    $(".task_last_work_status").html(
+        get_work_status_task_widget(TASK_LAST_WORK_STATUS)
+    );
+
     new DataTable('#table-task-runs', {
         ajax: {
             url: `/api/task/${TASK_ID}/runs`,

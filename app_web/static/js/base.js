@@ -286,6 +286,113 @@ function bool_render(data, type, row, meta) {
 }
 
 
+function get_work_status_task_widget(data) {
+    let result = `<span class="text-bg-danger">${data}</span>`;
+
+    switch (data) {
+        case "no_runs": {
+            result = `
+                <span class="text-secondary-emphasis" title="Не было запусков">
+                    <i class="bi bi-slash-circle"></i>
+                </span>
+            `;
+            break;
+        }
+
+        case "in_processed": {
+            result = `
+                <span class="spinner-grow spinner-grow-sm text-primary" role="status" title="Выполняется запуск">
+                    <span class="visually-hidden">Выполняется запуск...</span>
+                </span>
+            `;
+            break;
+        }
+
+        case "successful": {
+            result = `
+                <span class="text-success" title="Последний запуск завершился успешно">
+                    <i class="bi bi-check-circle"></i>
+                </span>
+            `;
+            break;
+        }
+
+        case "failed": {
+            result = `
+                <span class="text-danger" title="Последний запуск завершился ошибкой">
+                    <i class="bi bi-x-circle"></i>
+                </span>
+            `;
+            break;
+        }
+
+        case "stopped": {
+            result = `
+                <span class="text-warning" title="Последний запуск был остановлен">
+                    <i class="bi bi-stop-circle"></i>
+                </span>
+            `;
+            break;
+        }
+    }
+
+    return result;
+}
+
+//function get_work_status_task_widget(data) {
+//    let result = `<div class="text-bg-danger">${data}</div>`;
+//
+//    switch (data) {
+//        case "no_runs": {
+//            result = `
+//                <div class="text-secondary-emphasis" title="Не было запусков">
+//                    <i class="bi bi-slash-circle"></i>
+//                </div>
+//            `;
+//            break;
+//        }
+//
+//        case "in_processed": {
+//            result = `
+//                <div class="spinner-grow spinner-grow-sm text-primary" role="status" title="Выполняется запуск">
+//                    <span class="visually-hidden">Выполняется запуск...</span>
+//                </div>
+//            `;
+//            break;
+//        }
+//
+//        case "successful": {
+//            result = `
+//                <div class="text-success" title="Последний запуск завершился успешно">
+//                    <i class="bi bi-check-circle"></i>
+//                </div>
+//            `;
+//            break;
+//        }
+//
+//        case "failed": {
+//            result = `
+//                <div class="text-danger" title="Последний запуск завершился ошибкой">
+//                    <i class="bi bi-x-circle"></i>
+//                </div>
+//            `;
+//            break;
+//        }
+//
+//        case "stopped": {
+//            result = `
+//                <div class="text-warning" title="Последний запуск был остановлен">
+//                    <i class="bi bi-stop-circle"></i>
+//                </div>
+//            `;
+//            break;
+//        }
+//    }
+//
+//    return result;
+//}
+
+
 function delete_table_row(css_selector_table, row_id) {
     let table = $(css_selector_table).DataTable();
     let row = table.row("#" + row_id);

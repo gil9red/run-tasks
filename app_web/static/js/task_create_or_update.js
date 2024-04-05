@@ -14,7 +14,7 @@ $(function() {
         // Чекбоксы при убранном флаге не добавляются в значение
         // и при установленном флаге будет значение "on"
         // Поэтому, нужно вручную это сделать
-        $this.find("input[type]").each((i, obj) => {
+        $this.find("input[type=checkbox]").each((i, obj) => {
             let $obj = $(obj);
             data[$obj.attr("name")] = $obj.prop("checked");
         });
@@ -37,7 +37,7 @@ $(function() {
                 // Очищение полей формы
                 thisForm.reset();
             },
-            error: data => on_ajax_error(data, 'при создании задачи'),
+            error: data => on_ajax_error(data),
         });
 
         return false;
