@@ -17,7 +17,7 @@ function actions_task_render(data, type, row, meta) {
         `
         <a
                 class="text-success-emphasis"
-                href="/task/${row.id}/edit"
+                href="/task/${row.id}/update"
                 title="Редактировать"
         >
             <i class="bi bi-pencil-square"></i>

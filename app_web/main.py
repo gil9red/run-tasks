@@ -94,8 +94,8 @@ def task_create() -> str:
     )
 
 
-@app.route("/task/<int:task_id>/edit")
-def task_edit(task_id: int) -> str:
+@app.route("/task/<int:task_id>/update")
+def task_update(task_id: int) -> str:
     return render_template(
         "task_create_or_update.html",
         title=PROJECT_NAME,
