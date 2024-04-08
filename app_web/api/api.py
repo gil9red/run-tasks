@@ -155,6 +155,16 @@ def notification_create() -> Response:
     )
 
 
+@api_bp.route("/notifications/get-number-of-unsent")  # TODO: в тест
+def notifications_get_number_of_unsent() -> Response:
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            result=[dict(number=len(Notification.get_unsent()))],
+        ),
+    )
+
+
 @api_bp.route("/cron/get-next-dates")
 def cron_get_next_dates() -> Response:
     # TODO: добавить проверку полей

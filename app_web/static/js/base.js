@@ -421,6 +421,32 @@ function tableInitComplete(settings, json) {
 }
 
 
+function check_notifications_get_number_of_unsent() {
+    send_ajax(
+        "/api/notifications/get-number-of-unsent",
+        "GET",
+        null, // json
+        null, // css_selector_table
+        (css_selector_table, rs) => {
+            let number = rs.result[0].number;
+
+            let $el = $("#unsent-notifications");
+            $el.text(number);
+            $el.toggleClass("d-none", number == 0);
+        }
+    );
+}
+
+
+$(function() {
+    check_notifications_get_number_of_unsent();
+    setInterval(
+        check_notifications_get_number_of_unsent,
+        5000 // Каждые 5 секунд
+    );
+});
+
+
 $(document).on("click", "[data-url]", function() {
     let $this = $(this);
 

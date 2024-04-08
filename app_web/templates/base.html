@@ -37,9 +37,11 @@
             </a>
             {% if current_user.is_authenticated %}
             <div class="d-flex">
-                <a href="/notifications" class="icon-link icon-link-hover">
+                <a href="/notifications" class="icon-link icon-link-hover position-relative">
                     <i class="bi bi-send"></i>
                     Уведомления
+                    <span id="unsent-notifications" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">
+                    </span>
                 </a>
                 <div class="vr mx-3"></div>
                 <a href="/logout" class="icon-link icon-link-hover">
