@@ -59,6 +59,12 @@ $(function() {
     process_description();
     $("#description").on("input change", () => process_description());
 
+    if ($("#show-description-preview").prop("checked")) {
+        bootstrap.Collapse
+        .getOrCreateInstance('#description-preview-collapse')
+        .show();
+    }
+
     $(".cron-examples code").click(function() {
         $("#cron").val(
             $(this).text()
