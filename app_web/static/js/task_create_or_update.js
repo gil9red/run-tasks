@@ -44,9 +44,20 @@ function process_cron() {
 }
 
 
+function process_description() {
+    let $description = $("#description");
+    let $description_preview = $("#description-preview");
+
+    $description_preview.html($description.val());
+}
+
+
 $(function() {
     process_cron();
     $("#cron").on("input change", () => process_cron());
+
+    process_description();
+    $("#description").on("input change", () => process_description());
 
     $(".cron-examples code").click(function() {
         $("#cron").val(
