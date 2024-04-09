@@ -5,7 +5,7 @@ function get_cron() {
 
 function process_cron() {
     let $cron_result_error = $(".cron-result-error");
-    let $cron_result = $(".cron-result");
+    let $cron_result = $("#next-dates");
 
     $cron_result_error.text("");
     $cron_result.text("");
@@ -30,11 +30,11 @@ function process_cron() {
                 for (let item of data.result) {
                     let date_str = get_date_from_utc(item.date);
                     items.push(
-                        `<span class="text-primary-emphasis">${date_str}</span>`
+                        `<div>${date_str}</div>`
                     );
                 }
-                let result = items.join(", ");
-                $cron_result.html(`Даты планирования: ${result}`);
+                let result = items.join("");
+                $cron_result.html(result);
             } else {
                 $cron_result_error.text(data.text);
             }
@@ -59,11 +59,19 @@ $(function() {
     process_description();
     $("#description").on("input change", () => process_description());
 
-    if ($("#show-description-preview").prop("checked")) {
-        bootstrap.Collapse
-        .getOrCreateInstance('#description-preview-collapse')
-        .show();
-    }
+    $('[type="checkbox"][data-bs-toggle="collapse"][data-bs-target]').each(
+        (i, item) => {
+            let $item = $(item);
+
+            if ($item.prop("checked")) {
+                bootstrap.Collapse
+                .getOrCreateInstance(
+                    $item.data("bs-target")
+                )
+                .show();
+            }
+        }
+    );
 
     $(".cron-examples code").click(function() {
         $("#cron").val(
