@@ -46,7 +46,7 @@ USERS: dict[str, User] = {
 app = Flask(__name__)
 app.debug = config.DEBUG
 app.json = UpdatedJSONProvider(app)
-app.logger = logging.getLogger("web-server")
+app.logger = logging.getLogger("werkzeug")
 app.secret_key = config.SECRET_KEY
 
 app.register_blueprint(api_bp, url_prefix="/api")
@@ -68,6 +68,8 @@ def user_loader(id: str) -> User | None:
 
 @app.errorhandler(HTTPException)
 def handle_bad_request(e):
+    app.logger.error(f"Handle bad request: {e}")
+
     # NOTE: request.blueprint не работает, поэтому другая проверка
     if request.path.startswith(f"/{api_bp.name}/"):
         return (
@@ -93,6 +95,8 @@ def check_route_access() -> Response | tuple[Response, int] | None:
         ]
     ):
         return  # Access granted
+
+    app.logger.warning(f"UNAUTHORIZED in {request} from {request.remote_addr}")
 
     if request.blueprint == api_bp.name:
         return (
