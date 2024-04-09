@@ -128,7 +128,7 @@ $(function() {
             { data: 'description', title: 'Описание', },
             { data: 'cron', title: 'Расписание', },
             { data: 'is_enabled', title: 'Активный', render: bool_render, },
-            { data: 'is_infinite', title: 'Бесконечный', render: bool_render, },
+            { data: 'is_infinite', title: '<i class="bi bi-infinity"></i>', render: bool_render, },
             { data: 'command', title: 'Команда', },
             { data: 'last_started_run_start_date', title: 'Последний запуск', render: date_render, },
             { data: 'number_of_runs', title: 'Запуски', },
