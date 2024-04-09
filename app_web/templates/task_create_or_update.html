@@ -170,7 +170,11 @@
         </button>
         <a
                 class="btn btn-secondary"
+                {% if is_mode_edit %}
                 href="/task/{{ task.id }}"
+                {% else %}
+                href="/"
+                {% endif %}
                 role="button"
         >
             <i class="bi bi-x-circle"></i>
