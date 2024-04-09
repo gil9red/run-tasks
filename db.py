@@ -64,8 +64,8 @@ class TaskRunStatusEnum(enum.StrEnum):
 
 
 @enum.unique
-class TaskWorkStatusEnum(enum.StrEnum):
-    NO_RUNS = enum.auto()
+class TaskRunWorkStatusEnum(enum.StrEnum):
+    NONE = enum.auto()
     IN_PROCESSED = enum.auto()
     SUCCESSFUL = enum.auto()
     FAILED = enum.auto()
@@ -192,21 +192,12 @@ class Task(BaseModel):
 
     # TODO: test
     @hybrid_property
-    def last_work_status(self) -> TaskWorkStatusEnum | None:
+    def last_work_status(self) -> TaskRunWorkStatusEnum:
         run: TaskRun | None = self.get_last_started_run()
         if not run:
-            return TaskWorkStatusEnum.NO_RUNS
+            return TaskRunWorkStatusEnum.NONE
 
-        if run.status == TaskRunStatusEnum.RUNNING:
-            return TaskWorkStatusEnum.IN_PROCESSED
-
-        if run.status == TaskRunStatusEnum.STOPPED:
-            return TaskWorkStatusEnum.STOPPED
-
-        if run.is_success:
-            return TaskWorkStatusEnum.SUCCESSFUL
-
-        return TaskWorkStatusEnum.FAILED
+        return run.work_status
 
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(
@@ -348,6 +339,32 @@ class TaskRun(BaseModel):
     @hybrid_property
     def is_success(self) -> bool:
         return self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
+
+    # TODO: test
+    @hybrid_property
+    def work_status(self) -> TaskRunWorkStatusEnum:
+        if self.status == TaskRunStatusEnum.PENDING:
+            return TaskRunWorkStatusEnum.NONE
+
+        if self.status == TaskRunStatusEnum.RUNNING:
+            return TaskRunWorkStatusEnum.IN_PROCESSED
+
+        if self.status == TaskRunStatusEnum.STOPPED:
+            return TaskRunWorkStatusEnum.STOPPED
+
+        if self.is_success:
+            return TaskRunWorkStatusEnum.SUCCESSFUL
+
+        return TaskRunWorkStatusEnum.FAILED
+
+    def to_dict(self) -> dict[str, Any]:
+        return model_to_dict(
+            self,
+            recurse=False,
+            extra_attrs=[
+                "work_status",
+            ],
+        )
 
     @classmethod
     def get_by_seq(cls, task_id: int, seq: int) -> Self:

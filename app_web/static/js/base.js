@@ -293,7 +293,7 @@ function get_work_status_task_widget(data) {
     let result = `<span class="text-bg-danger">${data}</span>`;
 
     switch (data) {
-        case "no_runs": {
+        case "none": {
             result = `
                 <span class="text-secondary-emphasis" title="Не было запусков">
                     <i class="bi bi-slash-circle"></i>

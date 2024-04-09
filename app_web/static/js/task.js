@@ -10,6 +10,20 @@ function actions_task_run_render(data, type, row, meta) {
 }
 
 
+function work_status_task_run_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+
+    let result = get_work_status_task_widget(data);
+    return `
+        <div class="d-flex justify-content-center">
+            ${result}
+        </div>
+    `;
+}
+
+
 $(function() {
     $(".task_last_work_status").html(
         get_work_status_task_widget(TASK_LAST_WORK_STATUS)
@@ -23,6 +37,12 @@ $(function() {
         rowId: 'id',
         columns: [
             { render: actions_task_run_render, orderable: false, },
+            {
+                data: 'work_status',
+                render: work_status_task_run_render,
+                orderable: false,
+                title: 'Статус',
+            },
             { data: 'id', title: 'Ид.', },
             { data: 'task', title: 'Задача', },
             { data: 'seq', title: '#', },
@@ -37,7 +57,7 @@ $(function() {
         ],
         order: [
             // Сортировка по убыванию id
-            [1, "desc"],
+            [2, "desc"],
         ],
         initComplete: tableInitComplete,
         language: LANG_DATATABLES,
