@@ -58,8 +58,6 @@ logging:
       handlers: ["console", "task-manager-file"]
       level: "DEBUG"
 
-    web-server: &web-server
+    werkzeug:
       handlers: ["console", "web-server-file"]
       level: "DEBUG"
-
-    werkzeug: *web-server
