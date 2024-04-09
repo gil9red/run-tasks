@@ -38,8 +38,7 @@ class User(flask_login.UserMixin):
 
 
 USERS: dict[str, User] = {
-    login: User(login, password)
-    for login, password in config.USERS.items()
+    login: User(login, password) for login, password in config.USERS.items()
 }
 
 
@@ -66,9 +65,11 @@ def user_loader(id: str) -> User | None:
     return USERS.get(id)
 
 
-@app.errorhandler(HTTPException)
+@app.errorhandler(Exception)
 def handle_bad_request(e):
-    app.logger.error(f"Handle bad request: {e}")
+    app.logger.error(f"Error: {e}", exc_info=e)
+
+    code: int = e.code if isinstance(e, HTTPException) else 500
 
     # NOTE: request.blueprint не работает, поэтому другая проверка
     if request.path.startswith(f"/{api_bp.name}/"):
@@ -79,10 +80,13 @@ def handle_bad_request(e):
                     text=str(e),
                 )
             ),
-            e.code
+            code,
         )
 
-    return e
+    if isinstance(e, HTTPException):
+        return e
+
+    raise e
 
 
 @app.before_request
