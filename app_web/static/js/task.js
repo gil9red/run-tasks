@@ -42,8 +42,8 @@ $(function() {
                 render: work_status_task_run_render,
                 orderable: false,
             },
-            { data: 'id', title: 'Ид.', },
-            { data: 'task', title: 'Задача', },
+            { data: 'id', title: 'Ид.', visible: false, },
+            { data: 'task', title: 'Задача', visible: false, },
             { data: 'seq', title: '#', },
             { data: 'command', title: 'Команда', },
             { data: 'status', title: 'Статус', },
@@ -55,8 +55,8 @@ $(function() {
             { data: 'scheduled_date', title: 'Запланировано', render: date_render, },
         ],
         order: [
-            // Сортировка по убыванию id
-            [2, "desc"],
+            // Сортировка по убыванию seq
+            [4, "desc"],
         ],
         initComplete: tableInitComplete,
         language: LANG_DATATABLES,
