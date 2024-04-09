@@ -41,7 +41,6 @@ $(function() {
                 data: 'work_status',
                 render: work_status_task_run_render,
                 orderable: false,
-                title: 'Статус',
             },
             { data: 'id', title: 'Ид.', },
             { data: 'task', title: 'Задача', },
