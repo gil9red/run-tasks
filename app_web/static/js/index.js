@@ -68,25 +68,6 @@ function actions_task_render(data, type, row, meta) {
 }
 
 
-function work_status_task_render(data, type, row, meta) {
-    if (type === 'filter') {
-        return null;
-    }
-
-    let result = get_work_status_task_widget(data);
-
-    if (row.last_started_run_seq != null) {
-        result = `<a href="/task/${row.id}/run/${row.last_started_run_seq}">${result}</a>`;
-    }
-
-    return `
-        <div class="d-flex justify-content-center">
-            ${result}
-        </div>
-    `;
-}
-
-
 function task_name_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
@@ -119,7 +100,7 @@ $(function() {
             },
             {
                 data: 'last_work_status',
-                render: work_status_task_render,
+                render: work_status_task_run_render,
                 orderable: false,
                 title: 'Статус',
             },

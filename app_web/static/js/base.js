@@ -343,6 +343,20 @@ function get_work_status_task_widget(data) {
 }
 
 
+function work_status_task_run_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+
+    let result = get_work_status_task_widget(data);
+    return `
+        <div class="d-flex justify-content-center">
+            ${result}
+        </div>
+    `;
+}
+
+
 function delete_table_row(css_selector_table, row_id) {
     let table = $(css_selector_table).DataTable();
     let row = table.row("#" + row_id);

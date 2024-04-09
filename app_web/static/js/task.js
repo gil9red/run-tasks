@@ -10,20 +10,6 @@ function actions_task_run_render(data, type, row, meta) {
 }
 
 
-function work_status_task_run_render(data, type, row, meta) {
-    if (type === 'filter') {
-        return null;
-    }
-
-    let result = get_work_status_task_widget(data);
-    return `
-        <div class="d-flex justify-content-center">
-            ${result}
-        </div>
-    `;
-}
-
-
 $(function() {
     $(".task_last_work_status").html(
         get_work_status_task_widget(TASK_LAST_WORK_STATUS)
