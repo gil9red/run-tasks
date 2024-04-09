@@ -174,7 +174,7 @@ def cron_get_next_dates() -> Response:
     text = None
     try:
         it = get_scheduled_date_generator(cron)
-        result = [dict(date=next(it)) for _ in range(3)]
+        result = [dict(date=next(it)) for _ in range(5)]
     except Exception:
         status = StatusEnum.ERROR
         text = "Неправильный формат"
