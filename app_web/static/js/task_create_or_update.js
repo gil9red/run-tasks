@@ -94,7 +94,7 @@ $(function() {
         // Чекбоксы при убранном флаге не добавляются в значение
         // и при установленном флаге будет значение "on"
         // Поэтому, нужно вручную это сделать
-        $this.find("input[type=checkbox]").each((i, obj) => {
+        $this.find("input[type=checkbox][name]").each((i, obj) => {
             let $obj = $(obj);
             data[$obj.attr("name")] = $obj.prop("checked");
         });
