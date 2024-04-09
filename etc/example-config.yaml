@@ -41,7 +41,7 @@ logging:
       stream: "ext://sys.stdout"
 
     task-manager-file: &task-manager-file
-      class: "logging.handlers.RotatingFileHandler"
+      class: "concurrent_log_handler.ConcurrentRotatingFileHandler"
       formatter: "default"
       filename: "task_manager.log"
       encoding: "utf-8"
