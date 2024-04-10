@@ -454,11 +454,13 @@ function check_notifications_get_number_of_unsent() {
 
 
 $(function() {
-    check_notifications_get_number_of_unsent();
-    setInterval(
-        check_notifications_get_number_of_unsent,
-        5000 // Каждые 5 секунд
-    );
+    if ($("#unsent-notifications").length) {
+        check_notifications_get_number_of_unsent();
+        setInterval(
+            check_notifications_get_number_of_unsent,
+            5000 // Каждые 5 секунд
+        );
+    }
 });
 
 
