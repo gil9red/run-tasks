@@ -402,8 +402,9 @@ function on_ajax_success(rs, css_selector_table=null, callback=null) {
 
 
 function on_ajax_error(rs, reason) {
+    let text = "На сервере произошла неожиданная ошибка";
     noty({
-        text: `На сервере произошла неожиданная ошибка ${reason}`,
+        text: reason ? `${text} ${reason}` : text,
         type: 'error',
     });
 }
