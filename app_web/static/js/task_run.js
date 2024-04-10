@@ -16,6 +16,7 @@ $(function() {
             // Сортировка по возрастанию id
             [0, "asc"],
         ],
+        initComplete: tableInitComplete,
         language: LANG_DATATABLES,
     });
 });
