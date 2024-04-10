@@ -386,6 +386,29 @@ function update_rows_table_by_response(css_selector_table, rs) {
 }
 
 
+function go_to_login_url() {
+    // Если сейчас страница логина
+    if (window.location.pathname.includes("/login")) {
+        return;
+    }
+
+    window.location = `${window.location.origin}/login?from=${window.location.pathname}`;
+}
+
+
+// SOURCE: https://stackoverflow.com/a/48332750/5909792
+$.fn.dataTable.ext.errMode = function (settings, tn, msg) {
+    // Редирект на страницу логина
+    if (settings && settings.jqXHR && settings.jqXHR.status == 401) {
+        console.log("Статус ответа 401 unauthorized");
+
+        go_to_login_url();
+        return;
+    }
+    alert(msg); // Alert for all other error types
+};
+
+
 function on_ajax_success(rs, css_selector_table=null, callback=null) {
     let ok = rs.status == 'ok';
     if (rs.text) {
@@ -402,6 +425,14 @@ function on_ajax_success(rs, css_selector_table=null, callback=null) {
 
 
 function on_ajax_error(rs, reason) {
+    // Редирект на страницу логина
+    if (rs.status == 401) {
+        console.log("Статус ответа 401 unauthorized");
+
+        go_to_login_url();
+        return;
+    }
+
     let text = "На сервере произошла неожиданная ошибка";
     noty({
         text: reason ? `${text} ${reason}` : text,
