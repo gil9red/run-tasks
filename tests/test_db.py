@@ -773,6 +773,22 @@ class TestTaskRun(BaseTestCaseDb):
 
         self.assertNotEqual(run.get_url(), run.get_url(full=False))
 
+    def test_is_success(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertFalse(run.is_success)
+
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertFalse(run.is_success)
+
+        run.process_return_code = 0
+        self.assertFalse(run.is_success)
+
+        run.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertTrue(run.is_success)
+
+        run.process_return_code = 404
+        self.assertFalse(run.is_success)
+
 
 class TestTaskRunLog(BaseTestCaseDb):
     def test_delete_cascade(self):

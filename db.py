@@ -334,7 +334,6 @@ class TaskRun(BaseModel):
             (("task_id", "seq"), True),
         )
 
-    # TODO: test
     @hybrid_property
     def is_success(self) -> bool:
         return self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
