@@ -353,6 +353,18 @@ class TestTask(BaseTestCaseDb):
         run.set_status(TaskRunStatusEnum.FINISHED)
         self.assertIsNone(task.get_current_run())
 
+    def test_number_of_runs(self):
+        task = Task.add(name="*", command="*")
+        self.assertEqual(0, task.number_of_runs)
+
+        items = []
+        for _ in range(5):
+            run = task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.STOPPED)
+            items.append(run)
+
+        self.assertEqual(len(items), task.number_of_runs)
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):

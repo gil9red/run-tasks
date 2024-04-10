@@ -153,7 +153,6 @@ class Task(BaseModel):
     cron = TextField(null=True)
     is_infinite = BooleanField(default=False)
 
-    # TODO: test
     @hybrid_property
     def number_of_runs(self) -> int:
         return self.runs.count()
