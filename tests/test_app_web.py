@@ -134,8 +134,7 @@ class TestAppWeb(TestCase):
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
-            # TODO:
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             task_1 = Task.add(
@@ -176,16 +175,14 @@ class TestAppWeb(TestCase):
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 405)
-            # TODO: ?
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/action/run"
 
             rs = self.client.post(uri)
             self.assertEqual(rs.status_code, 404)
-            # TODO:
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             task_1 = Task.add(
@@ -208,8 +205,7 @@ class TestAppWeb(TestCase):
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
-            # TODO:
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
             task_1 = Task.add(
                 name="1",
@@ -219,8 +215,7 @@ class TestAppWeb(TestCase):
             uri: str = f"/api/task/{task_1.id}/run/99999/logs"
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
-            # TODO:
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             task_2 = Task.add(
@@ -275,8 +270,7 @@ class TestAppWeb(TestCase):
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 405)
-            # TODO: ?
-            # self.assertEqual(rs.json, [])
+            self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             data = dict(
@@ -298,15 +292,23 @@ class TestAppWeb(TestCase):
     def test_api_cron_get_next_dates(self):
         uri: str = "/api/cron/get-next-dates"
 
-        now: datetime = datetime.now()
+        with self.subTest(msg="ERROR"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 400)
+            self.assertEqual(rs.json["status"], "error")
 
-        # TODO: Проверить на результат при неправильном формате cron
-
-        for cron in ["* * * * *", "0 * * * *"]:
-            rs = self.client.get(uri, query_string=dict(cron=cron))
+            rs = self.client.get(uri, query_string=dict(cron="FOO BAR"))
             self.assertEqual(rs.status_code, 200)
-            for obj in rs.json["result"]:
-                self.assertGreater(datetime.fromisoformat(obj["date"]), now)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest(msg="OK"):
+            now: datetime = datetime.now()
+
+            for cron in ["* * * * *", "0 * * * *"]:
+                rs = self.client.get(uri, query_string=dict(cron=cron))
+                self.assertEqual(rs.status_code, 200)
+                for obj in rs.json["result"]:
+                    self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
     def test_favicon(self):
         uri: str = "/favicon.ico"
