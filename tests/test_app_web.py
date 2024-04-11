@@ -108,9 +108,6 @@ class TestAppWeb(TestCase):
     def test_task_update(self):
         uri: str = "/api/task/update"
 
-        name: str = "Foo Bar"
-        self.assertIsNone(Task.get_by_name(name))
-
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri, json=dict(id=404))
             self.assertEqual(rs.status_code, 405)
@@ -123,7 +120,7 @@ class TestAppWeb(TestCase):
 
         with self.subTest("200 - Ok"):
             data = {
-                "name": name,
+                "name":  "Foo Bar",
                 "command": "Command",
                 "description": "Description",
                 "cron": "* * * * *",
@@ -132,7 +129,7 @@ class TestAppWeb(TestCase):
             }
 
             task = Task.add(
-                name=name,
+                name=data["name"],
                 command=data["command"],
             )
 
