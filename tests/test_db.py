@@ -434,6 +434,33 @@ class TestTask(BaseTestCaseDb):
         self.assertIsNotNone(run1.start_date)
         self.assertEqual(run1.start_date, task.last_started_run_start_date)
 
+    def test_last_work_status(self):
+        task = Task.add(name="*", command="*")
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.NONE)
+
+        run = task.add_or_get_run()
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.NONE)
+
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.IN_PROCESSED)
+
+        run.process_return_code = 0
+        run.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.SUCCESSFUL)
+
+        run.process_return_code = 404
+        run.save()
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.FAILED)
+
+        run = Task.add(name="*", command="*").add_or_get_run()
+        run.set_status(TaskRunStatusEnum.STOPPED)
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.STOPPED)
+
+        run = Task.add(name="*", command="*").add_or_get_run()
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        run.set_status(TaskRunStatusEnum.UNKNOWN)
+        self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.FAILED)
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):

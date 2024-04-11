@@ -186,7 +186,6 @@ class Task(BaseModel):
         run: TaskRun | None = self.get_last_started_run()
         return run.start_date if run else None
 
-    # TODO: test
     @hybrid_property
     def last_work_status(self) -> TaskRunWorkStatusEnum:
         run: TaskRun | None = self.get_last_started_run()
