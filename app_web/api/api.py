@@ -103,7 +103,6 @@ def task_runs(task_id: int) -> Response:
 @api_bp.route("/task/<int:task_id>/action/run", methods=["POST"])
 def task_action_run(task_id: int) -> Response:
     run = get_task(task_id).add_or_get_run()
-    # TODO: какой-нибудь общий метод для возврата ответа
     return jsonify(
         prepare_response(
             status=StatusEnum.OK,
