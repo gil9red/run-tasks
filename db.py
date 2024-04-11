@@ -157,7 +157,6 @@ class Task(BaseModel):
     def number_of_runs(self) -> int:
         return self.runs.count()
 
-    # TODO: test
     def get_last_started_run(self) -> Optional["TaskRun"]:
         return (
             self

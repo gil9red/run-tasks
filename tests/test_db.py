@@ -366,6 +366,50 @@ class TestTask(BaseTestCaseDb):
 
         self.assertEqual(len(items), task.number_of_runs)
 
+    def test_get_last_started_run(self):
+        task = Task.add(name="*", command="*")
+
+        run1 = task.add_or_get_run()
+        self.assertIsNone(task.get_last_started_run())
+
+        run1.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertEqual(run1, task.get_last_started_run())
+
+        run1.set_status(TaskRunStatusEnum.STOPPED)
+        self.assertEqual(run1, task.get_last_started_run())
+
+        run2 = task.add_or_get_run()
+        self.assertEqual(run2.status, TaskRunStatusEnum.PENDING)
+        self.assertEqual(run1, task.get_last_started_run())
+
+        run2.set_status(TaskRunStatusEnum.RUNNING)
+        run2.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertEqual(run2, task.get_last_started_run())
+
+        run3 = task.add_or_get_run()
+        self.assertEqual(run3.status, TaskRunStatusEnum.PENDING)
+        self.assertEqual(run2, task.get_last_started_run())
+
+        run3.set_status(TaskRunStatusEnum.RUNNING)
+        run3.set_status(TaskRunStatusEnum.STOPPED)
+        self.assertEqual(run3, task.get_last_started_run())
+
+        run4 = task.add_or_get_run()
+        self.assertEqual(run4.status, TaskRunStatusEnum.PENDING)
+        self.assertEqual(run3, task.get_last_started_run())
+
+        run4.set_status(TaskRunStatusEnum.RUNNING)
+        run4.set_status(TaskRunStatusEnum.ERROR)
+        self.assertEqual(run4, task.get_last_started_run())
+
+        run5 = task.add_or_get_run()
+        self.assertEqual(run5.status, TaskRunStatusEnum.PENDING)
+        self.assertEqual(run4, task.get_last_started_run())
+
+        run5.set_status(TaskRunStatusEnum.RUNNING)
+        run5.set_status(TaskRunStatusEnum.UNKNOWN)
+        self.assertEqual(run5, task.get_last_started_run())
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):
