@@ -22,6 +22,11 @@ third_party.add_notify_telegram.URL = CONFIG["notification"]["telegram"][
 
 
 class NotificationUnit(BaseUnit):
+    def __init__(self, owner: "TaskManager"):
+        super().__init__(owner)
+
+        self._process_iter_delay_secs = 5
+
     def process(self):
         for notify in Notification.get_unsent():
             try:
@@ -61,5 +66,3 @@ class NotificationUnit(BaseUnit):
                     notify.task_run.add_log_err(f"{text}:\n{get_full_exception(e)}")
 
                 time.sleep(60)
-
-        time.sleep(5)

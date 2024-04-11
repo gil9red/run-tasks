@@ -4,6 +4,7 @@
 __author__ = "ipetrash"
 
 
+import time
 from abc import ABC, abstractmethod
 from logging import Logger
 from threading import Thread
@@ -19,8 +20,9 @@ class BaseUnit(Thread, ABC):
         self.owner = owner
         self.log: Logger = log_manager
 
-        # TODO:
         self._is_stopped: bool = False
+
+        self._process_iter_delay_secs: int = 5
 
         self._log_prefix: str = f"[{type(self).__name__}]"
 
@@ -50,5 +52,6 @@ class BaseUnit(Thread, ABC):
 
         while not self._is_stopped:
             self.process()
+            time.sleep(self._process_iter_delay_secs)
 
         self.log_info("Финиш")

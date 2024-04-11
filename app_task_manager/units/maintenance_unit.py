@@ -4,7 +4,6 @@
 __author__ = "ipetrash"
 
 
-import time
 from datetime import datetime, timedelta
 
 from psutil import Process, NoSuchProcess, AccessDenied
@@ -16,6 +15,11 @@ from db import TaskRun, TaskRunStatusEnum
 
 
 class MaintenanceUnit(BaseUnit):
+    def __init__(self, owner: "TaskManager"):
+        super().__init__(owner)
+
+        self._process_iter_delay_secs = 60
+
     def __processing_hanging_runs(self):
         task_runs: list[TaskRun] = self.owner.get_current_task_runs()
         min_start_date: datetime = min(
@@ -81,5 +85,3 @@ class MaintenanceUnit(BaseUnit):
     def process(self):
         self.__processing_hanging_runs()
         self.__removing_old_runs()
-
-        time.sleep(60)

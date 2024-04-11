@@ -4,7 +4,6 @@
 __author__ = "ipetrash"
 
 
-import time
 from datetime import datetime
 
 from app_task_manager.units.base_unit import BaseUnit
@@ -13,6 +12,11 @@ from root_common import get_scheduled_date_generator
 
 
 class SchedulerUnit(BaseUnit):
+    def __init__(self, owner: "TaskManager"):
+        super().__init__(owner)
+
+        self._process_iter_delay_secs = 5
+
     @classmethod
     def _get_scheduled_date(cls, cron: str) -> datetime:
         return next(
@@ -39,5 +43,3 @@ class SchedulerUnit(BaseUnit):
                     f"    Задача: {task}\n"
                     f"    Запуск: {run}"
                 )
-
-        time.sleep(5)

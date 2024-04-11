@@ -17,6 +17,8 @@ class ExecutorUnit(BaseUnit):
     def __init__(self, owner: "TaskManager", encoding: str = ENCODING):
         super().__init__(owner)
 
+        self._process_iter_delay_secs = 1
+
         self.encoding = encoding
         self.timeout_on_stopping_secs: int = 5
         self.tasks: dict[str, TaskThread] = dict()
@@ -47,8 +49,6 @@ class ExecutorUnit(BaseUnit):
             if not self.tasks[name].is_alive():
                 self.log_info(f"Удаление потока задачи #{task.id} {name!r}")
                 self.tasks.pop(name)
-
-        time.sleep(0.1)  # TODO:
 
     def stop(self):
         super().stop()
