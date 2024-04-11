@@ -368,6 +368,7 @@ class TestTask(BaseTestCaseDb):
 
     def test_get_last_started_run(self):
         task = Task.add(name="*", command="*")
+        self.assertIsNone(task.get_last_started_run())
 
         run1 = task.add_or_get_run()
         self.assertIsNone(task.get_last_started_run())
