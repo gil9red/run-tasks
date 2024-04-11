@@ -23,7 +23,7 @@ def tasks() -> Response:
     return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
 
 
-@api_bp.route("/task/create", methods=["POST"])  # TODO: в тесты
+@api_bp.route("/task/create", methods=["POST"])
 def task_create() -> Response | tuple[Response, int]:
     data: dict[str, Any] = request.json
 
