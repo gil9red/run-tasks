@@ -105,6 +105,55 @@ class TestAppWeb(TestCase):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
+    def test_task_update(self):
+        uri: str = "/api/task/update"
+
+        name: str = "Foo Bar"
+        self.assertIsNone(Task.get_by_name(name))
+
+        with self.subTest("405 - Method Not Allowed"):
+            rs = self.client.get(uri, json=dict(id=404))
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("404 - Not Found"):
+            rs = self.client.post(uri, json=dict(id=404))
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            data = {
+                "name": name,
+                "command": "Command",
+                "description": "Description",
+                "cron": "* * * * *",
+                "is_enabled": False,
+                "is_infinite": True,
+            }
+
+            task = Task.add(
+                name=name,
+                command=data["command"],
+            )
+
+            data["id"] = task.id
+
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(rs.json["result"][0]["name"], data["name"])
+
+            task = Task.get_by_id(rs.json["result"][0]["id"])
+            self.assertEqual(task.name, data["name"])
+
+            task = Task.get_by_name(rs.json["result"][0]["name"])
+            self.assertEqual(task.name, data["name"])
+            self.assertEqual(task.command, data["command"])
+            self.assertEqual(task.description, data["description"])
+            self.assertEqual(task.cron, data["cron"])
+            self.assertEqual(task.is_enabled, data["is_enabled"])
+            self.assertEqual(task.is_infinite, data["is_infinite"])
+
     def test_task_run(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"

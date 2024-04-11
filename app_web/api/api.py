@@ -49,7 +49,7 @@ def task_create() -> Response | tuple[Response, int]:
     )
 
 
-@api_bp.route("/task/update", methods=["POST"])  # TODO: в тесты
+@api_bp.route("/task/update", methods=["POST"])
 def task_update() -> Response:
     data: dict[str, Any] = request.json
 
