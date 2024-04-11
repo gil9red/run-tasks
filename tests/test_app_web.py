@@ -24,6 +24,19 @@ from app_web.main import app
 
 
 class TestAppWeb(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        app.testing = True
+        cls.client = app.test_client()
+
+        login: str = list(USERS.keys())[0]
+        password: str = USERS[login]
+        cls.client.post("/login", data=dict(login=login, password=password))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.client.get("/logout")
+
     def setUp(self):
         self.models = BaseModel.get_inherited_models()
         self.test_db = SqliteExtDatabase(
@@ -35,16 +48,6 @@ class TestAppWeb(TestCase):
         self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
         self.test_db.connect()
         self.test_db.create_tables(self.models)
-
-        app.testing = True
-        self.client = app.test_client()
-
-        login: str = list(USERS.keys())[0]
-        password: str = USERS[login]
-        self.client.post("/login", data=dict(login=login, password=password))
-
-    def tearDown(self):
-        self.client.get("/logout")
 
     def test_index(self):
         uri: str = "/"
@@ -311,7 +314,9 @@ class TestAppWeb(TestCase):
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_task_run_get_full_url(self):
+    def test_task_run_get_url(self):
         run = Task.add(name="*", command="*").add_or_get_run()
-        rs = self.client.get(run.get_url())
+
+        # NOTE: Полный путь не работает с тестовым клиентом
+        rs = self.client.get(run.get_url(full=False))
         self.assertEqual(rs.status_code, 200)
