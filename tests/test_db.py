@@ -394,6 +394,25 @@ class TestTask(BaseTestCaseDb):
         run4 = _check_run(run3, TaskRunStatusEnum.ERROR)
         _check_run(run4, TaskRunStatusEnum.UNKNOWN)
 
+    def test_last_started_run_seq(self):
+        task = Task.add(name="*", command="*")
+        self.assertIsNone(task.last_started_run_seq)
+
+        run = task.add_or_get_run()
+        self.assertIsNone(task.last_started_run_seq)
+
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertEqual(run.seq, task.last_started_run_seq)
+
+        run.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertEqual(run.seq, task.last_started_run_seq)
+
+        run1 = task.add_or_get_run()
+        self.assertEqual(run.seq, task.last_started_run_seq)
+
+        run1.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertEqual(run1.seq, task.last_started_run_seq)
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):

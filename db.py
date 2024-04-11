@@ -176,7 +176,6 @@ class Task(BaseModel):
             .first()
         )
 
-    # TODO: test
     @hybrid_property
     def last_started_run_seq(self) -> int | None:
         run: TaskRun | None = self.get_last_started_run()
