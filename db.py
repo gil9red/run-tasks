@@ -181,7 +181,6 @@ class Task(BaseModel):
         run: TaskRun | None = self.get_last_started_run()
         return run.seq if run else None
 
-    # TODO: test
     @hybrid_property
     def last_started_run_start_date(self) -> datetime | None:
         run: TaskRun | None = self.get_last_started_run()

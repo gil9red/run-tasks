@@ -413,6 +413,27 @@ class TestTask(BaseTestCaseDb):
         run1.set_status(TaskRunStatusEnum.RUNNING)
         self.assertEqual(run1.seq, task.last_started_run_seq)
 
+    def test_last_started_run_start_date(self):
+        task = Task.add(name="*", command="*")
+        self.assertIsNone(task.last_started_run_start_date)
+
+        run = task.add_or_get_run()
+        self.assertIsNone(task.last_started_run_start_date)
+
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertIsNotNone(run.start_date)
+        self.assertEqual(run.start_date, task.last_started_run_start_date)
+
+        run.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertEqual(run.start_date, task.last_started_run_start_date)
+
+        run1 = task.add_or_get_run()
+        self.assertEqual(run.start_date, task.last_started_run_start_date)
+
+        run1.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertIsNotNone(run1.start_date)
+        self.assertEqual(run1.start_date, task.last_started_run_start_date)
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):
