@@ -18,6 +18,7 @@ from db import (
     TaskRunLog,
     Notification,
     TaskRunStatusEnum,
+    TaskRunWorkStatusEnum,
     LogKindEnum,
     NotificationKindEnum,
 )
@@ -788,6 +789,29 @@ class TestTaskRun(BaseTestCaseDb):
 
         run.process_return_code = 404
         self.assertFalse(run.is_success)
+
+    def test_work_status(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.NONE)
+
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.IN_PROCESSED)
+
+        run.process_return_code = 0
+        run.set_status(TaskRunStatusEnum.FINISHED)
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.SUCCESSFUL)
+
+        run.process_return_code = 404
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.FAILED)
+
+        run = Task.add(name="*", command="*").add_or_get_run()
+        run.set_status(TaskRunStatusEnum.STOPPED)
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.STOPPED)
+
+        run = Task.add(name="*", command="*").add_or_get_run()
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        run.set_status(TaskRunStatusEnum.UNKNOWN)
+        self.assertEqual(run.work_status, TaskRunWorkStatusEnum.FAILED)
 
 
 class TestTaskRunLog(BaseTestCaseDb):

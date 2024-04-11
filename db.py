@@ -338,7 +338,6 @@ class TaskRun(BaseModel):
     def is_success(self) -> bool:
         return self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
 
-    # TODO: test
     @hybrid_property
     def work_status(self) -> TaskRunWorkStatusEnum:
         if self.status == TaskRunStatusEnum.PENDING:
