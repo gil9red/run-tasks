@@ -80,7 +80,7 @@ def task_update() -> Response:
     )
 
 
-@api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])  # TODO: в тесты
+@api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])
 def task_delete(task_id: int) -> Response:
     task: Task = get_task(task_id)
     task.delete_instance()

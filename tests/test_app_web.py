@@ -154,6 +154,34 @@ class TestAppWeb(TestCase):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
+    def test_task_delete(self):
+        uri: str = f"/api/task/404/delete"
+
+        with self.subTest("405 - Method Not Allowed"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("404 - Not Found"):
+            rs = self.client.delete(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            task = Task.add(
+                name="name",
+                command="command",
+            )
+            uri: str = f"/api/task/{task.id}/delete"
+
+            rs = self.client.delete(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertIsNone(task.get_by_name(task.name))
+
     def test_task_run(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
