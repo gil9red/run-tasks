@@ -74,8 +74,6 @@ def task_update() -> Response:
     return jsonify(
         prepare_response(
             status=StatusEnum.OK,
-            # TODO: Нужно ли?
-            # text=f"Создано уведомление #{notification.id}",
             result=[task.to_dict()],
         ),
     )
