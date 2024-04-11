@@ -4,10 +4,11 @@
 __author__ = "ipetrash"
 
 
+from http import HTTPStatus
 from typing import Any
 
 from flask import Blueprint, Response, jsonify, request
-from http import HTTPStatus
+from werkzeug.exceptions import BadRequest
 
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
 from db import Task, TaskRun, TaskRunLog, Notification, NotificationKindEnum
@@ -165,7 +166,9 @@ def notifications_get_number_of_unsent() -> Response:
 
 @api_bp.route("/cron/get-next-dates")
 def cron_get_next_dates() -> Response:
-    # TODO: добавить проверку полей
+    if "cron" not in request.args:
+        raise BadRequest('Отсутствует параметр "cron"')
+
     cron: str = request.args["cron"]
 
     status = StatusEnum.OK
