@@ -378,37 +378,20 @@ class TestTask(BaseTestCaseDb):
         run1.set_status(TaskRunStatusEnum.STOPPED)
         self.assertEqual(run1, task.get_last_started_run())
 
-        run2 = task.add_or_get_run()
-        self.assertEqual(run2.status, TaskRunStatusEnum.PENDING)
-        self.assertEqual(run1, task.get_last_started_run())
+        def _check_run(prev: TaskRun, status: TaskRunStatusEnum):
+            run = task.add_or_get_run()
+            self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
+            self.assertEqual(prev, task.get_last_started_run())
 
-        run2.set_status(TaskRunStatusEnum.RUNNING)
-        run2.set_status(TaskRunStatusEnum.FINISHED)
-        self.assertEqual(run2, task.get_last_started_run())
+            run.set_status(TaskRunStatusEnum.RUNNING)
+            run.set_status(status)
+            self.assertEqual(run, task.get_last_started_run())
+            return run
 
-        run3 = task.add_or_get_run()
-        self.assertEqual(run3.status, TaskRunStatusEnum.PENDING)
-        self.assertEqual(run2, task.get_last_started_run())
-
-        run3.set_status(TaskRunStatusEnum.RUNNING)
-        run3.set_status(TaskRunStatusEnum.STOPPED)
-        self.assertEqual(run3, task.get_last_started_run())
-
-        run4 = task.add_or_get_run()
-        self.assertEqual(run4.status, TaskRunStatusEnum.PENDING)
-        self.assertEqual(run3, task.get_last_started_run())
-
-        run4.set_status(TaskRunStatusEnum.RUNNING)
-        run4.set_status(TaskRunStatusEnum.ERROR)
-        self.assertEqual(run4, task.get_last_started_run())
-
-        run5 = task.add_or_get_run()
-        self.assertEqual(run5.status, TaskRunStatusEnum.PENDING)
-        self.assertEqual(run4, task.get_last_started_run())
-
-        run5.set_status(TaskRunStatusEnum.RUNNING)
-        run5.set_status(TaskRunStatusEnum.UNKNOWN)
-        self.assertEqual(run5, task.get_last_started_run())
+        run2 = _check_run(run1, TaskRunStatusEnum.FINISHED)
+        run3 = _check_run(run2, TaskRunStatusEnum.STOPPED)
+        run4 = _check_run(run3, TaskRunStatusEnum.ERROR)
+        _check_run(run4, TaskRunStatusEnum.UNKNOWN)
 
 
 class TestTaskRun(BaseTestCaseDb):
