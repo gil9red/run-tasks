@@ -5,6 +5,7 @@ __author__ = "ipetrash"
 
 
 import logging.config
+import shutil
 
 from pathlib import Path
 from typing import Any
@@ -24,7 +25,14 @@ DB_FILE_NAME: Path = DB_DIR_NAME / "db.sqlite"
 
 CONFIG_FILE_NAME: Path = DIR / "config.yaml"
 if not CONFIG_FILE_NAME.exists():
-    raise FileNotFoundError(CONFIG_FILE_NAME)
+    print(f"Не найден файл конфига {CONFIG_FILE_NAME}")
+
+    config_file_example_name: Path = DIR / "etc" / "example-config.yaml"
+    if not config_file_example_name.exists():
+        raise FileNotFoundError(config_file_example_name)
+
+    print(f"Файл конфига скопирован из примера {config_file_example_name}")
+    shutil.copy(config_file_example_name, CONFIG_FILE_NAME)
 
 CONFIG: dict[str, Any] = yaml.safe_load(CONFIG_FILE_NAME.read_text("utf-8"))
 
