@@ -100,8 +100,8 @@ def task_runs(task_id: int) -> Response:
     )
 
 
-@api_bp.route("/task/<int:task_id>/action/run", methods=["POST"])
-def task_action_run(task_id: int) -> Response:
+@api_bp.route("/task/<int:task_id>/do-run", methods=["POST"])
+def task_do_run(task_id: int) -> Response:
     run = get_task(task_id).add_or_get_run()
     return jsonify(
         prepare_response(

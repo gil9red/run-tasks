@@ -280,14 +280,14 @@ class TestAppWeb(TestCase):
 
     def test_api_task_action_run(self):
         with self.subTest("405 - Method Not Allowed"):
-            uri: str = "/api/task/99999/action/run"
+            uri: str = "/api/task/99999/do-run"
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 405)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
-            uri: str = "/api/task/99999/action/run"
+            uri: str = "/api/task/99999/do-run"
 
             rs = self.client.post(uri)
             self.assertEqual(rs.status_code, 404)
@@ -300,7 +300,7 @@ class TestAppWeb(TestCase):
             )
             self.assertIsNone(task_1.get_last_run())
 
-            uri: str = f"/api/task/{task_1.id}/action/run"
+            uri: str = f"/api/task/{task_1.id}/do-run"
 
             rs = self.client.post(uri)
             self.assertEqual(rs.status_code, 200)

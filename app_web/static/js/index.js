@@ -30,7 +30,7 @@ function actions_task_render(data, type, row, meta) {
             <button
                     class="btn text-success p-0"
                     title="Запуск"
-                    data-url="/api/task/${row.id}/action/run"
+                    data-url="/api/task/${row.id}/do-run"
                     data-method="POST"
             >
                 <i class="bi bi-caret-right-square-fill"></i>
