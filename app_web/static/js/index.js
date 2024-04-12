@@ -38,6 +38,20 @@ function actions_task_render(data, type, row, meta) {
             `
         );
     }
+    if (row.last_work_status == "in_processed") {
+        tags.push(
+            `
+            <button
+                    class="btn text-warning p-0"
+                    title="Остановить"
+                    data-url="/api/task/${row.id}/run/${row.last_started_run_seq}/do-stop"
+                    data-method="POST"
+            >
+                <i class="bi bi-stop-circle"></i>
+            </button>
+            `
+        );
+    }
     if (row.last_started_run_seq != null) {
         tags.push(
             `
