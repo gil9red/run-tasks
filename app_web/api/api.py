@@ -135,7 +135,6 @@ def notifications() -> Response:
 
 @api_bp.route("/notification/create", methods=["POST"])
 def notification_create() -> Response:
-    # TODO: добавить проверку полей
     data: dict[str, Any] = request.json
 
     notification = Notification.add(
@@ -153,7 +152,7 @@ def notification_create() -> Response:
     )
 
 
-@api_bp.route("/notifications/get-number-of-unsent")  # TODO: в тест
+@api_bp.route("/notifications/get-number-of-unsent")
 def notifications_get_number_of_unsent() -> Response:
     return jsonify(
         prepare_response(

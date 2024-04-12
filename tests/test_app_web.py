@@ -397,6 +397,48 @@ class TestAppWeb(TestCase):
             self.assertEqual(rs_data["result"][0]["kind"], data["kind"])
             self.assertEqual(rs_data["result"][0]["text"], data["text"])
 
+    def test_api_notifications_get_number_of_unsent(self):
+        uri: str = "/api/notifications/get-number-of-unsent"
+
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.json["status"], "ok")
+        self.assertEqual(rs.json["result"][0]["number"], 0)
+
+        notification1 = Notification.add(
+            kind=NotificationKindEnum.EMAIL,
+            name="Title",
+            text="Test\nТест",
+            task_run=None,
+        )
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.json["status"], "ok")
+        self.assertEqual(rs.json["result"][0]["number"], 1)
+
+        notification2 = Notification.add(
+            kind=NotificationKindEnum.EMAIL,
+            name="Title",
+            text="Test\nТест",
+            task_run=None,
+        )
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.json["status"], "ok")
+        self.assertEqual(rs.json["result"][0]["number"], 2)
+
+        notification1.set_as_send()
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.json["status"], "ok")
+        self.assertEqual(rs.json["result"][0]["number"], 1)
+
+        notification2.set_as_send()
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.json["status"], "ok")
+        self.assertEqual(rs.json["result"][0]["number"], 0)
+
     def test_api_cron_get_next_dates(self):
         uri: str = "/api/cron/get-next-dates"
 
