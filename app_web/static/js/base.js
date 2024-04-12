@@ -532,7 +532,7 @@ function get_url_update($src_url_update, $this) {
 }
 
 
-$(document).on("change", "[data-context-obj-id][data-context-table-id][type=checkbox]", function() {
+$(document).on("change", "[data-context-obj-field][data-context-table-id][type=checkbox]", function() {
     let $this = $(this);
 
     let table_id = $this.data("context-table-id");
@@ -544,7 +544,7 @@ $(document).on("change", "[data-context-obj-id][data-context-table-id][type=chec
 });
 
 
-$(document).on("change", "[data-context-obj-id][data-url-update][type=checkbox]", function() {
+$(document).on("change", "[data-context-obj-field][data-url-update][type=checkbox]", function() {
     let $this = $(this);
 
     let url = get_url_update($this, $this);

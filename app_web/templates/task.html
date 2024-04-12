@@ -47,7 +47,6 @@
                 id="is_enabled"
                 type="checkbox"
                 role="switch"
-                data-context-obj-id="{{ task.id }}"
                 data-context-obj-field="is_enabled"
                 data-url-update="/api/task/{{ task.id }}/update"
                 {% if task.is_enabled %}checked{% endif %}
@@ -61,7 +60,6 @@
                 id="is_infinite"
                 type="checkbox"
                 role="switch"
-                data-context-obj-id="{{ task.id }}"
                 data-context-obj-field="is_infinite"
                 data-url-update="/api/task/{{ task.id }}/update"
                 {% if task.is_infinite %}checked{% endif %}
