@@ -277,7 +277,7 @@ class TestAppWeb(TestCase):
                 [get_common_view(obj.to_dict()) for obj in [run_1, run_2, run_3]],
             )
 
-    def test_api_task_action_run(self):
+    def test_api_task_do_run(self):
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/do-run"
 
