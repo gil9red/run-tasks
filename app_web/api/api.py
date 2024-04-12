@@ -49,11 +49,11 @@ def task_create() -> Response | tuple[Response, int]:
     )
 
 
-@api_bp.route("/task/update", methods=["POST"])
-def task_update() -> Response:
-    data: dict[str, Any] = request.json
+@api_bp.route("/task/<int:task_id>/update", methods=["POST"])
+def task_update(task_id: int) -> Response:
+    task: Task = get_task(task_id)
 
-    task: Task = get_task(data["id"])
+    data: dict[str, Any] = request.json
 
     if "command" in data:
         task.command = data["command"]

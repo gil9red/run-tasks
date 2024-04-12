@@ -28,14 +28,11 @@
 <form
         method="post"
         {% if is_mode_edit %}
-        action="/api/task/update"
+        action="/api/task/{{ task.id }}/update"
         {% else %}
         action="/api/task/create"
         {% endif %}
 >
-    {% if is_mode_edit %}
-    <input type="hidden" name="id" value="{{ task.id }}" />
-    {% endif %}
     <div class="mb-3">
         <label for="name" class="form-label">Название</label>
         <input

@@ -515,25 +515,30 @@ $(document).on("click", "[data-url]", function() {
 });
 
 
-function get_context_obj($el, value) {
-    let field = $el.data("context-obj-field");
+function get_context_obj_field($this) {
+    let field = $this.data("context-obj-field");
 
     let obj = new Object();
-    obj["id"] = $el.data("context-obj-id");
-    obj[field] = value;
+    obj[field] = $this.is(':checked');
 
     return obj;
 }
 
 
+function get_url_update($src_url_update, $this) {
+    return $src_url_update.data("url-update")
+        .replace("{context_obj_id}", $this.data("context-obj-id"))
+    ;
+}
+
+
 $(document).on("change", "[data-context-obj-id][data-context-table-id][type=checkbox]", function() {
     let $this = $(this);
-    let value = $this.is(':checked');
 
     let table_id = $this.data("context-table-id");
-    let url = $(table_id).data("url-update");
 
-    let obj = get_context_obj($this, value);
+    let url = get_url_update($(table_id), $this);
+    let obj = get_context_obj_field($this);
 
     send_ajax(url, "POST", obj, table_id, update_rows_table_by_response);
 });
@@ -541,11 +546,9 @@ $(document).on("change", "[data-context-obj-id][data-context-table-id][type=chec
 
 $(document).on("change", "[data-context-obj-id][data-url-update][type=checkbox]", function() {
     let $this = $(this);
-    let value = $this.is(':checked');
 
-    let url = $this.data("url-update");
-
-    let obj = get_context_obj($this, value);
+    let url = get_url_update($this, $this);
+    let obj = get_context_obj_field($this);
 
     send_ajax(url, "POST", obj);
 });

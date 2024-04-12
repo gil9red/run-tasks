@@ -49,7 +49,7 @@
                 role="switch"
                 data-context-obj-id="{{ task.id }}"
                 data-context-obj-field="is_enabled"
-                data-url-update="/api/task/update"
+                data-url-update="/api/task/{{ task.id }}/update"
                 {% if task.is_enabled %}checked{% endif %}
         />
         <label for="is_enabled" class="form-label">Активный</label>
@@ -63,7 +63,7 @@
                 role="switch"
                 data-context-obj-id="{{ task.id }}"
                 data-context-obj-field="is_infinite"
-                data-url-update="/api/task/update"
+                data-url-update="/api/task/{{ task.id }}/update"
                 {% if task.is_infinite %}checked{% endif %}
         />
         <label for="is_infinite" class="form-label">Бесконечный</label>

@@ -106,15 +106,15 @@ class TestAppWeb(TestCase):
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
     def test_task_update(self):
-        uri: str = "/api/task/update"
-
         with self.subTest("405 - Method Not Allowed"):
-            rs = self.client.get(uri, json=dict(id=404))
+            uri: str = "/api/task/404/update"
+            rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 405)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
-            rs = self.client.post(uri, json=dict(id=404))
+            uri: str = "/api/task/404/update"
+            rs = self.client.post(uri)
             self.assertEqual(rs.status_code, 404)
             self.assertEqual(rs.json["status"], "error")
 
@@ -132,8 +132,7 @@ class TestAppWeb(TestCase):
                 name=data["name"],
                 command=data["command"],
             )
-
-            data["id"] = task.id
+            uri: str = f"/api/task/{task.id}/update"
 
             rs = self.client.post(uri, json=data)
             self.assertEqual(rs.status_code, 200)
