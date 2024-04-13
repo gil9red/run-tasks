@@ -43,7 +43,7 @@ function actions_task_render(data, type, row, meta) {
             `
             <button
                     class="btn text-warning p-0"
-                    title="Остановить"
+                    title="Остановить запуск #${row.last_started_run_seq}"
                     data-url="/api/task/${row.id}/run/${row.last_started_run_seq}/do-stop"
                     data-method="POST"
             >
