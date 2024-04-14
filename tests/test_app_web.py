@@ -29,9 +29,13 @@ class TestAppWeb(TestCase):
         app.testing = True
         cls.client = app.test_client()
 
+        rs = cls.client.get("/login")
+        assert rs.status_code == 200
+
         login: str = list(USERS.keys())[0]
         password: str = USERS[login]
         cls.client.post("/login", data=dict(login=login, password=password))
+        assert rs.status_code == 200
 
     @classmethod
     def tearDownClass(cls):
