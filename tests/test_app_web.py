@@ -23,7 +23,7 @@ from app_web.config import USERS
 from app_web.main import app
 
 
-class TestAppWeb(TestCase):
+class TestBaseAppWeb(TestCase):
     @classmethod
     def setUpClass(cls):
         app.testing = True
@@ -53,6 +53,8 @@ class TestAppWeb(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
+
+class TestAppWeb(TestBaseAppWeb):
     def test_index(self):
         uri: str = "/"
 
@@ -213,6 +215,21 @@ class TestAppWeb(TestCase):
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
+    def test_favicon(self):
+        uri: str = "/favicon.ico"
+
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+
+    def test_task_run_get_url(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        # NOTE: Полный путь не работает с тестовым клиентом
+        rs = self.client.get(run.get_url(full=False))
+        self.assertEqual(rs.status_code, 200)
+
+
+class TestAppApiWeb(TestBaseAppWeb):
     def test_api_tasks(self):
         uri: str = "/api/tasks"
 
@@ -504,16 +521,3 @@ class TestAppWeb(TestCase):
                 self.assertEqual(rs.status_code, 200)
                 for obj in rs.json["result"]:
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
-
-    def test_favicon(self):
-        uri: str = "/favicon.ico"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-
-    def test_task_run_get_url(self):
-        run = Task.add(name="*", command="*").add_or_get_run()
-
-        # NOTE: Полный путь не работает с тестовым клиентом
-        rs = self.client.get(run.get_url(full=False))
-        self.assertEqual(rs.status_code, 200)
