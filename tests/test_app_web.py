@@ -76,6 +76,28 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
+    def test_task_create(self):
+        uri: str = "/task/create"
+
+        rs = self.client.get(uri)
+        self.assertEqual(rs.status_code, 200)
+
+    def test_task_update(self):
+        with self.subTest("404 - Not Found"):
+            uri: str = "/task/99999/update"
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+
+        with self.subTest("200 - Ok"):
+            task = Task.add(
+                name="200",
+                command="ping 127.0.0.1",
+            )
+            uri: str = f"/task/{task.id}/update"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+
     def test_task_run(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
