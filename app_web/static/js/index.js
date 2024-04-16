@@ -116,6 +116,7 @@ $(function() {
                     </li>
                     `
                 ]),
+                width: '70px',
             },
             {
                 data: 'last_work_status',
