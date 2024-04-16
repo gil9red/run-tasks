@@ -99,17 +99,47 @@ $(function() {
         rowId: 'id',
         columns: [
             {
+                data: null, // Явно указываем, что тут нет источника данных
                 render: actions_task_render,
                 orderable: false,
                 title: `
-                    <a
-                            class="btn btn-success btn-sm"
-                            title="Создать задачу"
-                            href="/task/create"
-                            role="button"
-                    >
-                        <i class="bi bi-plus-lg"></i>
-                    </a>
+                    <div class="btn-group">
+                        <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li class="ps-3">
+                                <a
+                                        class="btn btn-success btn-sm"
+                                        title="Создать задачу"
+                                        href="/task/create"
+                                        role="button"
+                                >
+                                    <i class="bi bi-plus-lg"></i>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <div class="dropdown dropend">
+                                    <a
+                                            class="dropdown-item dropdown-toggle icon-link icon-link-hover"
+                                            href="#"
+                                            id="dropdown-layouts"
+                                            data-bs-toggle="dropdown"
+                                            data-bs-auto-close="outside"
+                                            aria-haspopup="true"
+                                            aria-expanded="false"
+                                    >
+                                        <i class="bi bi-eye-slash"></i>
+                                        Видимость столбцов
+                                    </a>
+                                    <div id="table-visible-columns" class="dropdown-menu" aria-labelledby="dropdown-layouts">
+                                        <!-- Заполнение из js -->
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
                 `,
             },
             {

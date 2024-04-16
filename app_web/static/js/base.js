@@ -454,6 +454,67 @@ function send_ajax(url, method, json=null, css_selector_table=null, callback=nul
 }
 
 
+function get_column_by_data_src(api, data_src) {
+    if (data_src == null) {
+        return null;
+    }
+
+    for (let i = 0; i < api.context[0].aoColumns.length; i++) {
+        if (data_src == api.column(i).dataSrc()) {
+            return api.column(i);
+        }
+    }
+
+    return null;
+}
+
+
+function load_tables_columns_visible() {
+    let tables_columns_visible = null;
+    if (localStorage.tables_columns_visible == null) {
+        tables_columns_visible = {};
+    } else {
+        tables_columns_visible = JSON.parse(localStorage.tables_columns_visible);
+    }
+    return tables_columns_visible;
+}
+
+
+function save_tables_columns_visible(tables_columns_visible) {
+    localStorage.tables_columns_visible = JSON.stringify(tables_columns_visible);
+}
+
+
+function set_value_tables_columns_visible(table_id, column_data_src, value) {
+    let tables_columns_visible = load_tables_columns_visible();
+
+    if (tables_columns_visible[table_id] == null) {
+        tables_columns_visible[table_id] = {};
+    }
+    tables_columns_visible[table_id][column_data_src] = value;
+
+    save_tables_columns_visible(tables_columns_visible);
+}
+
+
+function get_value_tables_columns_visible(table_id, column_data_src) {
+    let tables_columns_visible = load_tables_columns_visible();
+    if (tables_columns_visible[table_id] == null) {
+        return null;
+    }
+    return tables_columns_visible[table_id][column_data_src];
+}
+
+
+function table_set_visible_column(api, dataSrc, value) {
+    // TODO: Надо ли пересчитывать размеры таблицы? Если заголовков мало, то странно выглядит
+    let column = get_column_by_data_src(api, dataSrc);
+    if (column != null) {
+        column.visible(value);
+    }
+}
+
+
 function tableInitComplete(settings, json) {
     let api = this.api();
 
@@ -485,6 +546,69 @@ function check_notifications_get_number_of_unsent() {
 
 
 $(function() {
+    $(document).on('preInit.dt', function (e, settings) {
+        let api = new DataTable.Api(settings);
+
+        let $table_visible_columns = $("#table-visible-columns");
+        if ($table_visible_columns.length) {
+            let items = [];
+
+            let context = api.context[0];
+
+            let context_table_id = `#${context.sTableId}`;
+
+            let aoColumns = context.aoColumns;
+
+            for (let i = 0; i < aoColumns.length; i++) {
+                let aoColumn = context.aoColumns[i];
+
+                let dataSrc = aoColumn.data;
+                if (dataSrc == null) {
+                    continue;
+                }
+
+                let value = get_value_tables_columns_visible(context_table_id, dataSrc)
+                if (value == null) {
+                    // Инициализация полей
+                    set_value_tables_columns_visible(context_table_id, dataSrc, api.column(i).visible());
+                } else {
+                    // Применение значения
+                    table_set_visible_column(api, dataSrc, value);
+                }
+
+                items.push(`
+                    <div class="dropdown-item">
+                        <div class="form-check">
+                            <input
+                                    class="form-check-input column-visible"
+                                    type="checkbox"
+                                    id="cb_visible_column_${i}"
+                                    data-context-table-id="${context_table_id}"
+                                    data-context-table-column-data-src="${dataSrc}"
+                                    ${api.column(i).visible() ? "checked" : ""}
+                            >
+                            <label class="form-check-label w-100" for="cb_visible_column_${i}">
+                                ${aoColumn.title}
+                            </label>
+                        </div>
+                    </div>
+                `);
+            }
+            $table_visible_columns.html(
+                items.join("")
+            );
+
+            $('.column-visible').on('change', function (e) {
+                let $this = $(this);
+                let dataSrc = $this.data('context-table-column-data-src');
+                let value = $this.prop("checked");
+
+                set_value_tables_columns_visible(context_table_id, dataSrc, value);
+                table_set_visible_column(api, dataSrc, value);
+            });
+        }
+    });
+
     if ($("#unsent-notifications").length) {
         check_notifications_get_number_of_unsent();
         setInterval(
