@@ -22,7 +22,11 @@ $(function() {
         },
         rowId: 'id',
         columns: [
-            { render: actions_task_run_render, orderable: false, },
+            {
+                data: null, // Явное указание, что тут нет источника данных
+                render: actions_task_run_render,
+                orderable: false,
+            },
             {
                 data: 'work_status',
                 render: work_status_task_run_render,

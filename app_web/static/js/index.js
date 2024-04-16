@@ -99,7 +99,7 @@ $(function() {
         rowId: 'id',
         columns: [
             {
-                data: null, // Явно указываем, что тут нет источника данных
+                data: null, // Явное указание, что тут нет источника данных
                 render: actions_task_render,
                 orderable: false,
                 title: `
