@@ -6,6 +6,13 @@ $(function() {
         },
         rowId: 'id',
         columns: [
+            {
+                data: null, // Явное указание, что тут нет источника данных
+                render: () => null,
+                orderable: false,
+                title: getTableHeaderTitleWithMenu(), // TODO: Перенести кнопку создания?
+                width: '0px',
+            },
             { data: 'id', title: 'Ид.', },
             { data: 'task_run', title: 'Запуск', },
             { data: 'kind', title: 'Тип', },
@@ -14,7 +21,7 @@ $(function() {
         ],
         order: [
             // Сортировка по возрастанию id
-            [0, "asc"],
+            [1, "asc"],
         ],
         initComplete: tableInitComplete,
         language: LANG_DATATABLES,

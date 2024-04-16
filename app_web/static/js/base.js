@@ -528,6 +528,39 @@ function tableInitComplete(settings, json) {
 }
 
 
+function getTableHeaderTitleWithMenu(appendActions=[]) {
+    return `
+        <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                <i class="bi bi-list"></i>
+            </button>
+            <ul class="dropdown-menu">
+                ${appendActions.length ? appendActions.join("") + '<li><hr class="dropdown-divider"></li>' : ''}
+                <li>
+                    <div class="dropdown dropend">
+                        <a
+                                class="dropdown-item dropdown-toggle icon-link icon-link-hover"
+                                href="#"
+                                id="dropdown-layouts"
+                                data-bs-toggle="dropdown"
+                                data-bs-auto-close="outside"
+                                aria-haspopup="true"
+                                aria-expanded="false"
+                        >
+                            <i class="bi bi-eye-slash"></i>
+                            Видимость столбцов
+                        </a>
+                        <div id="table-visible-columns" class="dropdown-menu" aria-labelledby="dropdown-layouts">
+                            <!-- Заполнение из js -->
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    `;
+}
+
+
 function check_notifications_get_number_of_unsent() {
     send_ajax(
         "/api/notifications/get-number-of-unsent",
