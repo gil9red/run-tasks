@@ -32,6 +32,9 @@ class BaseUnit(Thread, ABC):
     def log_info(self, text: str):
         self.log.info(f"{self._log_prefix} {text}")
 
+    def log_warn(self, text: str):
+        self.log.warning(f"{self._log_prefix} {text}")
+
     def log_exception(self, text: str, e: BaseException):
         self.log.error(f"{self._log_prefix} {text}:\n{get_full_exception(e)}")
 

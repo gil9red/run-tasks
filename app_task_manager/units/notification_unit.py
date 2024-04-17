@@ -5,6 +5,7 @@ __author__ = "ipetrash"
 
 
 import time
+from typing import Any
 
 from app_task_manager.units.base_unit import BaseUnit
 from db import Notification, NotificationKindEnum
@@ -15,10 +16,10 @@ import third_party.add_notify_telegram
 from third_party.add_notify_telegram import add_notify
 
 
+CONFIG_NOTIFICATION: dict[str, Any] = CONFIG["notification"]
+
 # Установка адреса сервера, через который отправляются уведомления
-third_party.add_notify_telegram.URL = CONFIG["notification"]["telegram"][
-    "add_notify_url"
-]
+third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notify_url"]
 
 
 class NotificationUnit(BaseUnit):
@@ -29,6 +30,11 @@ class NotificationUnit(BaseUnit):
 
     def process(self):
         for notify in Notification.get_unsent():
+            if not CONFIG_NOTIFICATION["enabled"]:
+                self.log_warn("Отправка уведомления отключена")
+                time.sleep(60)  # Побольше задержка, чтобы не спамить в логах
+                return
+
             try:
                 self.log_info(
                     f"Отправка уведомления #{notify.id} в {notify.kind.value}"
@@ -66,3 +72,6 @@ class NotificationUnit(BaseUnit):
                     notify.task_run.add_log_err(f"{text}:\n{get_full_exception(e)}")
 
                 time.sleep(60)
+
+            finally:
+                time.sleep(1)
