@@ -6,6 +6,7 @@ __author__ = "ipetrash"
 
 from jinja2.sandbox import SandboxedEnvironment
 from db import TaskRun
+from root_config import CONFIG
 
 
 env = SandboxedEnvironment()
@@ -17,14 +18,14 @@ print(run)
 print("\n" + "-" * 50 + "\n")
 
 TEMPLATE_SUBJECT = """
-Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}!
+[{{ config.project_name }}] Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}!
 """.strip()
-print(env.from_string(TEMPLATE_SUBJECT).render(run=run))
+print(env.from_string(TEMPLATE_SUBJECT).render(run=run, config=CONFIG))
 
 print("\n" + "-" * 50 + "\n")
 
 TEMPLATE_CONTENT = """
-Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}:
+[{{ config.project_name }}] Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}:
 
 {%- for log in run.logs -%}
 {{ log.text }}
@@ -32,4 +33,4 @@ Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize(
 
 Check console output at {{ run.get_url() }} to view the results.
 """.strip()
-print(env.from_string(TEMPLATE_CONTENT).render(run=run))
+print(env.from_string(TEMPLATE_CONTENT).render(run=run, config=CONFIG))
