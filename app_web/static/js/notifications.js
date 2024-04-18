@@ -96,7 +96,6 @@ $(function() {
             // Сортировка по убыванию id
             [1, "desc"],
         ],
-        initComplete: tableInitComplete,
-        language: LANG_DATATABLES,
+        ...COMMON_PROPS_DATA_TABLE,
     });
 });

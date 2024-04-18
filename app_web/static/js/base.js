@@ -528,6 +528,12 @@ function tableInitComplete(settings, json) {
 }
 
 
+COMMON_PROPS_DATA_TABLE = {
+    initComplete: tableInitComplete,
+    language: LANG_DATATABLES,
+}
+
+
 function getTableHeaderTitleWithMenu(appendActions=[]) {
     return `
         <div class="btn-group">

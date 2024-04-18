@@ -23,7 +23,6 @@ $(function() {
             // Сортировка по возрастанию id
             [1, "asc"],
         ],
-        initComplete: tableInitComplete,
-        language: LANG_DATATABLES,
+        ...COMMON_PROPS_DATA_TABLE,
     });
 });

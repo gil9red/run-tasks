@@ -51,7 +51,6 @@ $(function() {
             // Сортировка по убыванию seq
             [4, "desc"],
         ],
-        initComplete: tableInitComplete,
-        language: LANG_DATATABLES,
+        ...COMMON_PROPS_DATA_TABLE,
     });
 });
