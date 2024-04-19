@@ -74,15 +74,18 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
         task_run=task_run,
     )
 
+    suffix = ".bat" if IS_WIN else ".sh"
+    file_content = f"{task_run.command}\nexit {'%ERRORLEVEL%' if IS_WIN else '$?'}"
+
     # NOTE: Пример названия файла "run-tasks_job4_run163__cx6w_2zk.bat"
     temp_file = NamedTemporaryFile(
         mode="w",
         prefix=f"{file_name_command}__",
-        suffix=".bat" if IS_WIN else ".sh",
+        suffix=suffix,
         encoding="UTF-8",
         delete_on_close=False,
     )
-    temp_file.write(task_run.command)
+    temp_file.write(file_content)
     temp_file.flush()
 
     return temp_file
@@ -318,6 +321,9 @@ class TaskThread(threading.Thread):
             if final_status == TaskRunStatusEnum.RUNNING:
                 final_status = TaskRunStatusEnum.FINISHED
             task_run.set_status(final_status)
+
+            task_run.add_log_out(f"Process return code: {task_run.process_return_code}")
+            task_run.add_log_out(f"Finished: {task_run.work_status.value}")
 
             task_run.save()
 
