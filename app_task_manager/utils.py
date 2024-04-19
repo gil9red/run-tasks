@@ -322,8 +322,8 @@ class TaskThread(threading.Thread):
                 final_status = TaskRunStatusEnum.FINISHED
             task_run.set_status(final_status)
 
-            task_run.add_log_out(f"Process return code: {task_run.process_return_code}")
-            task_run.add_log_out(f"Finished: {task_run.work_status.value}")
+            task_run.add_log_out(f"\nProcess return code: {task_run.process_return_code}")
+            task_run.add_log_out(f"\nFinished: {task_run.work_status.value}")
 
             task_run.save()
 
