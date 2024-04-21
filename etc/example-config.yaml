@@ -35,9 +35,9 @@ notification:
 
     template:
       name: |-
-        [{{ config.project_name }}] Задача "{{ run.task.name }}"
+        Задача "{{ run.task.name }}" [{{ config.project_name }}]
       text: |-
-        [{{ config.project_name }}] Задача "{{ run.task.name }}" - запуск #{{ run.seq }} - {{ run.work_status }}
+        Задача "{{ run.task.name }}" - запуск #{{ run.seq }} - {{ run.work_status }}
 
 web:
   host: "0.0.0.0"
