@@ -4,33 +4,51 @@
 __author__ = "ipetrash"
 
 
-from jinja2.sandbox import SandboxedEnvironment
-from db import TaskRun
-from root_config import CONFIG
+# pip install PyYAML
+import yaml
 
+from jinja2.sandbox import SandboxedEnvironment
+
+from db import TaskRun, TaskRunStatusEnum
+from root_config import DIR
+
+
+CONFIG: dict = yaml.safe_load((DIR / "etc/example-config.yaml").read_text("utf-8"))
+
+email_template_name = CONFIG["notification"]["email"]["template"]["name"]
+email_template_text = CONFIG["notification"]["email"]["template"]["text"]
+
+tg_template_name = CONFIG["notification"]["telegram"]["template"]["name"]
+tg_template_text = CONFIG["notification"]["telegram"]["template"]["text"]
+
+run: TaskRun = (
+    TaskRun
+    .select()
+    .where(TaskRun.status != TaskRunStatusEnum.PENDING)
+    .order_by(TaskRun.id.desc())
+    .first()
+)
+run = TaskRun.get_by_seq(1, 11841)
+print(run)
+print("-" * 10)
 
 env = SandboxedEnvironment()
 
-# TODO:
-run = TaskRun.get_by_seq(5, 79)
-print(run)
+print(env.from_string(email_template_name).render(run=run, config=CONFIG))
 
-print("\n" + "-" * 50 + "\n")
+print("-" * 10)
 
-TEMPLATE_SUBJECT = """
-[{{ config.project_name }}] Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}!
-""".strip()
-print(env.from_string(TEMPLATE_SUBJECT).render(run=run, config=CONFIG))
+print(env.from_string(email_template_text).render(run=run, config=CONFIG))
 
-print("\n" + "-" * 50 + "\n")
+print("-" * 10)
 
-TEMPLATE_CONTENT = """
-[{{ config.project_name }}] Task "{{ run.task.name }}" - run #{{ run.seq }} - {{ run.work_status.capitalize() }}:
+print(env.from_string(tg_template_name).render(run=run, config=CONFIG))
 
-{%- for log in run.logs -%}
-{{ log.text }}
-{%- endfor %}
+print("-" * 10)
 
-Check console output at {{ run.get_url() }} to view the results.
-""".strip()
-print(env.from_string(TEMPLATE_CONTENT).render(run=run, config=CONFIG))
+print(env.from_string(tg_template_text).render(run=run, config=CONFIG))
+
+print("-" * 10)
+
+for log in run.logs:
+    print(repr(log.text))

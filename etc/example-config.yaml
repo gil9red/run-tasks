@@ -18,8 +18,26 @@ notification:
     login: "ilya.petrash@inbox.ru"
     password: "<password>"
 
+    template:
+      name: |-
+        [{{ config.project_name }}] Задача "{{ run.task.name }}" - запуск #{{ run.seq }} - {{ run.work_status }}!
+      text: |-
+        [{{ config.project_name }}] Задача "{{ run.task.name }}" - запуск #{{ run.seq }} - {{ run.work_status }}:
+
+        {% for log in run.logs -%}
+        {{ log.text }}
+        {%- endfor %}
+        
+        Результат запуска {{ run.get_url() }}.
+
   telegram:
     add_notify_url: "http://127.0.0.1:10016/add_notify"
+
+    template:
+      name: |-
+        [{{ config.project_name }}] Задача "{{ run.task.name }}"
+      text: |-
+        [{{ config.project_name }}] Задача "{{ run.task.name }}" - запуск #{{ run.seq }} - {{ run.work_status }}
 
 web:
   host: "0.0.0.0"
