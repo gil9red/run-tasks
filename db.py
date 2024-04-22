@@ -450,8 +450,8 @@ class TaskRun(BaseModel):
 
         for kind in NotificationKindEnum:
             template: dict[str, str] = CONFIG_NOTIFICATION[kind.value]["template"]
-            template_name = template["name"]
-            template_text = template["text"]
+            template_name: str = template["name"]
+            template_text: str = template["text"]
 
             name: str = env.from_string(template_name).render(variables)
             text: str = env.from_string(template_text).render(variables)
