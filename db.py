@@ -10,6 +10,8 @@ from datetime import datetime
 from typing import Type, Iterable, Self, Optional, Any
 from urllib.parse import urljoin
 
+from jinja2.sandbox import SandboxedEnvironment
+
 # pip install peewee
 from peewee import (
     Model,
@@ -24,7 +26,7 @@ from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
-from root_config import DB_FILE_NAME, CONFIG
+from root_config import DB_FILE_NAME, CONFIG, CONFIG_NOTIFICATION
 from third_party.db_enum_field import EnumField
 from third_party.shorten import shorten
 
@@ -442,11 +444,30 @@ class TaskRun(BaseModel):
     def add_log_err(self, text: str) -> "TaskRunLog":
         return self.add_log(text=text, kind=LogKindEnum.ERR)
 
+    def send_notifications(self):  # TODO: В тесты
+        variables: dict[str, Any] = dict(run=self, config=CONFIG)
+        env = SandboxedEnvironment()
+
+        for kind in NotificationKindEnum:
+            template: dict[str, str] = CONFIG_NOTIFICATION[kind.value]["template"]
+            template_name = template["name"]
+            template_text = template["text"]
+
+            name: str = env.from_string(template_name).render(variables)
+            text: str = env.from_string(template_text).render(variables)
+
+            Notification.add(
+                task_run=self,
+                name=name,
+                text=text,
+                kind=kind,
+            )
+
     def get_url(self, full: bool = True) -> str:
         uri: str = f"/task/{self.task.id}/run/{self.seq}"
         if not full:
             return uri
-        return urljoin(CONFIG["notification"]["base_url"], uri)
+        return urljoin(CONFIG_NOTIFICATION["base_url"], uri)
 
 
 class TaskRunLog(BaseModel):

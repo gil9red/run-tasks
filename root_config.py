@@ -35,7 +35,9 @@ if not CONFIG_FILE_NAME.exists():
     print(f"Файл конфига скопирован из примера {CONFIG_EXAMPLE_FILE_NAME}")
     shutil.copy(CONFIG_EXAMPLE_FILE_NAME, CONFIG_FILE_NAME)
 
-CONFIG: dict[str, Any] = yaml.safe_load(CONFIG_FILE_NAME.read_text("utf-8"))
+CONFIG: dict[str, Any] = yaml.safe_load(
+    CONFIG_FILE_NAME.read_text("utf-8")
+)
 CONFIG_EXAMPLE: dict[str, Any] = yaml.safe_load(
     CONFIG_EXAMPLE_FILE_NAME.read_text("utf-8")
 )
@@ -78,3 +80,4 @@ for handler in CONFIG["logging"]["handlers"].values():
 logging.config.dictConfig(CONFIG["logging"])
 
 PROJECT_NAME: str = CONFIG["project_name"]
+CONFIG_NOTIFICATION: dict[str, Any] = CONFIG["notification"]

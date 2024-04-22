@@ -5,18 +5,15 @@ __author__ = "ipetrash"
 
 
 import time
-from typing import Any
 
 from app_task_manager.units.base_unit import BaseUnit
 from db import Notification, NotificationKindEnum
 from root_common import get_full_exception, send_email
-from root_config import CONFIG
+from root_config import CONFIG_NOTIFICATION
 
 import third_party.add_notify_telegram
 from third_party.add_notify_telegram import add_notify
 
-
-CONFIG_NOTIFICATION: dict[str, Any] = CONFIG["notification"]
 
 # Установка адреса сервера, через который отправляются уведомления
 third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notify_url"]
@@ -52,7 +49,7 @@ class NotificationUnit(BaseUnit):
                             url=(
                                 notify.task_run.get_url()
                                 if notify.task_run
-                                else CONFIG["notification"]["base_url"]
+                                else CONFIG_NOTIFICATION["base_url"]
                             ),
                             has_delete_button=True,
                         )

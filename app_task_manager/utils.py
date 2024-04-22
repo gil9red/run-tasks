@@ -327,6 +327,10 @@ class TaskThread(threading.Thread):
 
             task_run.save()
 
+            if not task_run.is_success:
+                # TODO: Добавить логи в TaskRunLog
+                task_run.send_notifications()
+
             self.current_task_run = None
 
         except Exception:
