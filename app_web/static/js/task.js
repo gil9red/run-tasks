@@ -6,6 +6,14 @@ function actions_task_run_render(data, type, row, meta) {
         <a href="/task/${row.task}/run/${row.seq}">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
+        <button
+                class="btn text-danger p-0"
+                title="Отправить уведомления запуска #${row.seq}"
+                data-url="/api/task/${row.task}/run/${row.seq}/do-send-notifications"
+                data-method="POST"
+        >
+            <i class="bi bi-send"></i>
+        </button>
     `;
 }
 

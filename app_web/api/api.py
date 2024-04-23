@@ -129,6 +129,20 @@ def task_do_stop(task_id: int, task_run_seq: int) -> Response:
     )
 
 
+# TODO: Добавить тест
+@api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-send-notifications", methods=["POST"])
+def task_do_send_notifications(task_id: int, task_run_seq: int) -> Response:
+    run: TaskRun = get_task_run(task_id, task_run_seq)
+    run.send_notifications()
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            text="Выполнена отправка уведомлений",
+        ),
+    )
+
+
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/logs")
 def task_run_logs(task_id: int, task_run_seq: int) -> Response:
     return jsonify(
