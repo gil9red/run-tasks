@@ -843,6 +843,13 @@ class TestTaskRun(BaseTestCaseDb):
         run.delete_instance()
         self.assertEqual(0, run.logs.count())
 
+    def test_send_notifications(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertEqual(run.notifications.count(), 0)
+
+        run.send_notifications()
+        self.assertNotEqual(run.notifications.count(), 0)
+
     def test_delete_cascade(self):
         task = Task.add(name="*", command="*")
 
