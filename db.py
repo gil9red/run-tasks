@@ -444,7 +444,7 @@ class TaskRun(BaseModel):
     def add_log_err(self, text: str) -> "TaskRunLog":
         return self.add_log(text=text, kind=LogKindEnum.ERR)
 
-    def send_notifications(self):  # TODO: В тесты
+    def send_notifications(self):
         variables: dict[str, Any] = dict(run=self, config=CONFIG)
         env = SandboxedEnvironment()
 
