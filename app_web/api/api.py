@@ -129,7 +129,6 @@ def task_do_stop(task_id: int, task_run_seq: int) -> Response:
     )
 
 
-# TODO: Добавить тест
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-send-notifications", methods=["POST"])
 def task_do_send_notifications(task_id: int, task_run_seq: int) -> Response:
     run: TaskRun = get_task_run(task_id, task_run_seq)

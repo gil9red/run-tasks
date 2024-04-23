@@ -391,6 +391,47 @@ class TestAppApiWeb(TestBaseAppWeb):
             run_1 = run_1.get_new()
             self.assertEqual(run_1.status, TaskRunStatusEnum.STOPPED)
 
+    def test_api_task_do_send_notifications(self):
+        with self.subTest("405 - Method Not Allowed"):
+            uri: str = "/api/task/99999/run/99999/do-send-notifications"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("404 - Not Found"):
+            uri: str = "/api/task/99999/run/99999/do-send-notifications"
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+            task_1 = Task.add(
+                name="1",
+                command="ping 127.0.0.1",
+            )
+
+            uri: str = f"/api/task/{task_1.id}/run/99999/do-send-notifications"
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            task_2 = Task.add(
+                name="2",
+                command="ping 127.0.0.1",
+            )
+            run_1 = task_2.add_or_get_run()
+            self.assertEqual(run_1.notifications.count(), 0)
+
+            uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/do-send-notifications"
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+
+            self.assertNotEqual(run_1.notifications.count(), 0)
+
     def test_api_task_run_logs(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/run/99999/logs"
