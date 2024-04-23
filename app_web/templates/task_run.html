@@ -9,6 +9,19 @@
 {% endblock %}
 
 {% block content %}
+<div class="btn-toolbar" role="toolbar">
+    <div class="btn-group" role="group">
+        <button
+                class="btn btn-danger"
+                title="Отправить уведомления запуска #{{ task_run.seq }}"
+                data-url="/api/task/{{ task_run.task.id }}/run/{{ task_run.seq }}/do-send-notifications"
+                data-method="POST"
+        >
+            <i class="bi bi-send"></i>
+        </button>
+    </div>
+</div>
+
 <table id="table-task-run-logs" class="table"></table>
 
 <script>
