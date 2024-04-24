@@ -287,7 +287,15 @@ class TaskThread(threading.Thread):
 
         log_prefix = f"[Задача #{task.id}, запуск {task_run.seq} (#{task_run.id})]"
         try:
-            log.info(f"{log_prefix} Старт запуска задачи")
+            if task_run.task.is_infinite:
+                start_reason = " по бесконечному запуску задачи"
+            elif task_run.scheduled_date:
+                start_reason = " по расписанию"
+            else:
+                start_reason = " по ручному запуску"
+
+            log.info(f"{log_prefix} Старт запуска задачи{start_reason}")
+            task_run.add_log_out(f"Старт запуска задачи{start_reason}\n")
 
             self.current_task_run = task_run
 
@@ -328,7 +336,7 @@ class TaskThread(threading.Thread):
             task_run.save()
 
             if not task_run.is_success:
-                task_run.add_log_out("Sending notifications\n")
+                task_run.add_log_out("Отправка уведомлений\n")
                 task_run.send_notifications()
 
             self.current_task_run = None
