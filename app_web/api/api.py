@@ -49,6 +49,16 @@ def task_create() -> Response | tuple[Response, int]:
     )
 
 
+@api_bp.route("/task/<int:task_id>")
+def task_get(task_id: int) -> Response:
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            result=[get_task(task_id).to_dict()],
+        ),
+    )
+
+
 @api_bp.route("/task/<int:task_id>/update", methods=["POST"])
 def task_update(task_id: int) -> Response:
     task: Task = get_task(task_id)
@@ -116,8 +126,18 @@ def task_do_run(task_id: int) -> Response:
     )
 
 
+@api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>")
+def task_run_get(task_id: int, task_run_seq: int) -> Response:
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            result=[get_task_run(task_id, task_run_seq).to_dict()],
+        ),
+    )
+
+
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-stop", methods=["POST"])
-def task_do_stop(task_id: int, task_run_seq: int) -> Response:
+def task_run_do_stop(task_id: int, task_run_seq: int) -> Response:
     run: TaskRun = get_task_run(task_id, task_run_seq)
     run.set_status(TaskRunStatusEnum.STOPPED)
 
@@ -130,7 +150,7 @@ def task_do_stop(task_id: int, task_run_seq: int) -> Response:
 
 
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-send-notifications", methods=["POST"])
-def task_do_send_notifications(task_id: int, task_run_seq: int) -> Response:
+def task_run_do_send_notifications(task_id: int, task_run_seq: int) -> Response:
     run: TaskRun = get_task_run(task_id, task_run_seq)
     run.send_notifications()
 

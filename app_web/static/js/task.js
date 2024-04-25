@@ -18,9 +18,38 @@ function actions_task_run_render(data, type, row, meta) {
 }
 
 
-$(function() {
+function check_update_task() {
+    send_ajax(
+        `/api/task/${TASK_ID}`,
+        "GET",
+        null, // json
+        null, // css_selector_table
+        (css_selector_table, rs) => {
+            update_task(rs.result[0]);
+        }
+    );
+}
+
+
+function update_task(task=null) {
+    // TODO: Больше полей проверять/обновлять
+
+    let last_work_status = task == null
+        ? TASK_LAST_WORK_STATUS
+        : task.last_work_status
+    ;
+
     $(".task_last_work_status").html(
-        get_work_status_task_widget(TASK_LAST_WORK_STATUS)
+        get_work_status_task_widget(last_work_status)
+    );
+}
+
+
+$(function() {
+    update_task();
+    setInterval(
+        check_update_task,
+        1000 // Каждая секунда
     );
 
     new DataTable('#table-task-runs', {

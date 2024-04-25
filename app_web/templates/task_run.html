@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block content %}
+<div class="fs-1 flex-fill">
+    <!-- TODO: спиннер тут мелкий -->
+    <span class="task_run_work_status"></span>
+</div>
+
 <div class="btn-toolbar" role="toolbar">
     <div class="btn-group" role="group">
         <button
@@ -27,6 +32,7 @@
 <script>
     const TASK_ID = {{ task_run.task.id }};
     const TASK_RUN_SEQ = {{ task_run.seq }};
+    const TASK_RUN_WORK_STATUS = "{{ task_run.work_status }}";
 </script>
 <script src="{{ url_for('static', filename='js/task_run.js') }}"></script>
 {% endblock %}
