@@ -122,11 +122,45 @@
                     ></div>
                 </div>
             </div>
+            <div class="col">
+                Формат cron:
+                <div>
+                    <p><code>MINUTE HOUR DOM MONTH DOW</code></p>
+                    <p>
+                        <table>
+                            <tbody>
+                                <tr><td><code>MINUTE</code></td><td>Минуты в часе (0–59)</td></tr>
+                                <tr><td><code>HOUR</code></td><td>Суточный час (0–23)</td></tr>
+                                <tr><td><code>DOM</code></td><td>День месяца (1–31)</td></tr>
+                                <tr><td><code>MONTH</code></td><td>Месяц (1–12)</td></tr>
+                                <tr><td><code>DOW</code></td><td>День недели (0–7), где 0 и 7 это воскресенье.</td></tr>
+                            </tbody>
+                        </table>
+                    </p>
+                    <p>Задание нескольких значений для полей, возможны через следующие операторы:</p>
+                    <ul>
+                        <li><code>*</code> задает все разрешенные значения</li>
+                        <li><code>M-N</code> задает диапазон значений</li>
+                        <li><code>M-N/X</code> или <code>*/X</code> шаги интервала <code>X</code> через заданный диапазон или целый валидный диапазон</li>
+                        <li><code>A,B,...,Z</code> перечисление нескольких значений</li>
+                    </ul>
+                </div>
+            </div>
             <div class="col cron-examples">
-                Формат cron. Примеры:
-                <div><code>H */1 * * *</code> - Каждый час</div>
-                <div><code>H */8 * * *</code> - Каждые 8 часов</div>
-                <div><code>H 0 * * *</code> - Раз в сутки</div>
+                Примеры:
+                <ul>
+                    <li><code>0 */1 * * *</code> - каждый час</li>
+                    <li><code>0 */8 * * *</code> - каждые 8 часов</li>
+                    <li><code>0 0 * * *</code> - раз в сутки</li>
+                </ul>
+                Псевдонимы:
+                <ul>
+                    <li><code>@hourly</code> - каждый час</li>
+                    <li><code>@daily</code> и <code>@midnight</code> - раз в сутки</li>
+                    <li><code>@weekly</code> - каждую неделю</li>
+                    <li><code>@monthly</code> - каждый месяц</li>
+                    <li><code>@yearly</code> и <code>@annually</code> - каждый год</li>
+                </ul>
             </div>
         </div>
     </div>
