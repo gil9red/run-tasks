@@ -123,8 +123,20 @@
                 </div>
             </div>
             <div class="col">
-                Формат cron:
-                <div>
+                <div class="form-check form-switch">
+                    <input
+                            id="show-cron-description"
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#cron-description-collapse"
+                            aria-expanded="false"
+                            aria-controls="cron-description-collapse"
+                    />
+                    <label for="show-cron-description" class="form-label text-secondary-emphasis">Формат</label>
+                </div>
+                <div id="cron-description-collapse" class="collapse">
                     <p><code>MINUTE HOUR DOM MONTH DOW</code></p>
                     <p>
                         <table class="table">
@@ -149,21 +161,37 @@
                     </ul>
                 </div>
             </div>
-            <div class="col cron-examples">
-                Примеры:
-                <ul>
-                    <li><code>0 */1 * * *</code> - каждый час</li>
-                    <li><code>0 */8 * * *</code> - каждые 8 часов</li>
-                    <li><code>0 0 * * *</code> - раз в сутки</li>
-                </ul>
-                Псевдонимы:
-                <ul>
-                    <li><code>@hourly</code> - каждый час</li>
-                    <li><code>@daily</code> и <code>@midnight</code> - раз в сутки</li>
-                    <li><code>@weekly</code> - каждую неделю</li>
-                    <li><code>@monthly</code> - каждый месяц</li>
-                    <li><code>@yearly</code> и <code>@annually</code> - каждый год</li>
-                </ul>
+            <div class="col">
+                <div class="form-check form-switch">
+                    <input
+                            id="show-cron-examples"
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#cron-examples-collapse"
+                            aria-expanded="false"
+                            aria-controls="cron-examples-collapse"
+                    />
+                    <label for="show-cron-examples" class="form-label text-secondary-emphasis">Примеры</label>
+                </div>
+                <div id="cron-examples-collapse" class="collapse">
+                    <div class="cron-examples">
+                        <ul>
+                            <li><code>0 */1 * * *</code> - каждый час</li>
+                            <li><code>0 */8 * * *</code> - каждые 8 часов</li>
+                            <li><code>0 0 * * *</code> - раз в сутки</li>
+                        </ul>
+                        Псевдонимы:
+                        <ul>
+                            <li><code>@hourly</code> - каждый час</li>
+                            <li><code>@daily</code> и <code>@midnight</code> - раз в сутки</li>
+                            <li><code>@weekly</code> - каждую неделю</li>
+                            <li><code>@monthly</code> - каждый месяц</li>
+                            <li><code>@yearly</code> и <code>@annually</code> - каждый год</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
