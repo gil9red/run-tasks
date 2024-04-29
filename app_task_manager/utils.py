@@ -335,7 +335,8 @@ class TaskThread(threading.Thread):
 
             task_run.save()
 
-            if not task_run.is_success:
+            # При неуспешном завершении, но не для остановленных
+            if not task_run.is_success and task_run.status != TaskRunStatusEnum.STOPPED:
                 task_run.add_log_out("Отправка уведомлений\n")
                 task_run.send_notifications()
 
