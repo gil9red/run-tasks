@@ -2,10 +2,14 @@ function actions_task_run_render(data, type, row, meta) {
     if (type === 'filter') {
         return null;
     }
-    return `
+
+    let tags = [
+        `
         <a href="/task/${row.task}/run/${row.seq}">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
+        `,
+        `
         <button
                 class="btn text-danger p-0"
                 title="Отправить уведомления запуска #${row.seq}"
@@ -14,7 +18,23 @@ function actions_task_run_render(data, type, row, meta) {
         >
             <i class="bi bi-send"></i>
         </button>
-    `;
+        `
+    ];
+    if (row.work_status == "in_processed") {
+        let tag = `
+            <button
+                    class="btn text-warning p-0"
+                    title="Остановить запуск #${row.seq}"
+                    data-url="/api/task/${row.task}/run/${row.seq}/do-stop"
+                    data-method="POST"
+            >
+                <i class="bi bi-stop-circle"></i>
+            </button>
+        `;
+        tags.push(tag);
+        $("#btn-stop").html(tag);
+    }
+    return tags.join("");
 }
 
 
@@ -42,6 +62,7 @@ function update_task(task=null) {
     $(".task_last_work_status").html(
         get_work_status_task_widget(last_work_status)
     );
+    $("#btn-stop").toggleClass("d-none", last_work_status != "in_processed");
 }
 
 
