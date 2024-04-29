@@ -530,7 +530,7 @@ COMMON_PROPS_DATA_TABLE = {
 
 function getTableHeaderTitleWithMenu(appendActions=[]) {
     return `
-        <div class="btn-group">
+        <div>
             <button class="btn btn-secondary btn-sm" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                 <i class="bi bi-list"></i>
             </button>
