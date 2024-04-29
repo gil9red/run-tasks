@@ -24,6 +24,15 @@
         >
             <i class="bi bi-send"></i>
         </button>
+        <button
+                id="btn-stop"
+                class="btn btn-warning d-none"
+                title="Остановить запуск #{{ task_run.seq }}"
+                data-url="/api/task/{{ task_run.task.id }}/run/{{ task_run.seq }}/do-stop"
+                data-method="POST"
+        >
+            <i class="bi bi-stop-circle"></i>
+        </button>
     </div>
 </div>
 

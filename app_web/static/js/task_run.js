@@ -33,6 +33,7 @@ function update_task_run(task_run=null) {
     $(".task_run_work_status").html(
         get_work_status_task_widget(work_status)
     );
+    $("#btn-stop").toggleClass("d-none", work_status != "in_processed");
 }
 
 
