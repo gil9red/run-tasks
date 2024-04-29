@@ -5,7 +5,7 @@ function actions_task_run_render(data, type, row, meta) {
 
     let tags = [
         `
-        <a href="/task/${row.task}/run/${row.seq}">
+        <a class="icon-link" href="/task/${row.task}/run/${row.seq}">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
         `,

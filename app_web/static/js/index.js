@@ -8,6 +8,7 @@ function actions_task_render(data, type, row, meta) {
     let tags = [
         `
         <a
+                class="icon-link"
                 href="/task/${row.id}"
                 title="Страница задачи"
         >
@@ -16,7 +17,7 @@ function actions_task_render(data, type, row, meta) {
         `,
         `
         <a
-                class="text-success-emphasis"
+                class="icon-link text-success-emphasis"
                 href="/task/${row.id}/update"
                 title="Редактировать"
         >
@@ -56,6 +57,7 @@ function actions_task_render(data, type, row, meta) {
         tags.push(
             `
             <a
+                    class="icon-link"
                     href="/task/${row.id}/run/${row.last_started_run_seq}"
                     title="Страница последнего запуска"
             >
