@@ -631,6 +631,11 @@ $(function() {
                 items.join("")
             );
 
+            // Прокидывание клика на чекбокс
+            $('.dropdown-item:has(.column-visible)').on('click', function (e) {
+                $(this).find(".column-visible").trigger("click");
+            });
+
             $('.column-visible').on('change', function (e) {
                 let $this = $(this);
                 let dataSrc = $this.data('context-table-column-data-src');
