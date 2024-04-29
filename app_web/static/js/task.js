@@ -97,13 +97,13 @@ $(function() {
             { data: 'task', title: 'Задача', visible: false, },
             { data: 'seq', title: '#', },
             { data: 'command', title: 'Команда', },
-            { data: 'status', title: 'Статус БД', },
-            { data: 'process_id', title: 'Ид. процесса', },
-            { data: 'process_return_code', title: 'Код возврата процесса', },
-            { data: 'create_date', title: 'Создано', render: date_render, },
+            { data: 'status', title: 'Статус БД', visible: false, },
+            { data: 'process_id', title: 'Ид. процесса', visible: false, },
+            { data: 'process_return_code', title: 'Код возврата процесса', visible: false, },
+            { data: 'create_date', title: 'Создано', render: date_render, visible: false, },
             { data: 'start_date', title: 'Запущено', render: date_render, },
             { data: 'finish_date', title: 'Завершено', render: date_render, },
-            { data: 'scheduled_date', title: 'Запланировано', render: date_render, },
+            { data: 'scheduled_date', title: 'Запланировано', render: date_render, visible: false, },
         ],
         order: [
             // Сортировка по убыванию seq
