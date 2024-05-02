@@ -431,18 +431,18 @@ class TaskRun(BaseModel):
     def get_actual_status(self) -> TaskRunStatusEnum:
         return TaskRun.get_by_id(self.id).status
 
-    def add_log(self, text: str, kind: LogKindEnum) -> "TaskRunLog":
+    def add_log(self, text: str, kind: LogKindEnum, end: str = "\n") -> "TaskRunLog":
         return TaskRunLog.create(
             task_run=self,
-            text=text,
+            text=text + end,
             kind=kind,
         )
 
-    def add_log_out(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogKindEnum.OUT)
+    def add_log_out(self, text: str, end: str = "\n") -> "TaskRunLog":
+        return self.add_log(text=text, kind=LogKindEnum.OUT, end=end)
 
-    def add_log_err(self, text: str) -> "TaskRunLog":
-        return self.add_log(text=text, kind=LogKindEnum.ERR)
+    def add_log_err(self, text: str, end: str = "\n") -> "TaskRunLog":
+        return self.add_log(text=text, kind=LogKindEnum.ERR, end=end)
 
     def send_notifications(self):
         variables: dict[str, Any] = dict(run=self, config=CONFIG)

@@ -766,7 +766,7 @@ class TestTaskRun(BaseTestCaseDb):
             .order_by(TaskRunLog.date.desc())
             .first()
         ).text
-        self.assertEqual(last_err_log, text)
+        self.assertEqual(last_err_log, text + "\n")
 
     def test_is_scheduled_date_has_arrived(self):
         run = Task.add(name="*", command="*").add_or_get_run()
@@ -807,41 +807,71 @@ class TestTaskRun(BaseTestCaseDb):
         self.assertEqual(run.status, run_clone.get_actual_status())
 
     def test_add_log(self):
-        run = Task.add(name="*", command="*").add_or_get_run()
+        with self.subTest(msg="Common"):
+            run = Task.add(name="*", command="*").add_or_get_run()
 
-        items = []
-        for i in range(5):
-            items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.OUT))
-            items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.ERR))
+            items = []
+            for i in range(5):
+                items.append(run.add_log(f"add_log {i + 1}, out", kind=LogKindEnum.OUT))
+                items.append(run.add_log(f"add_log {i + 1}, err", kind=LogKindEnum.ERR))
 
-        self.assertEqual(len(items), run.logs.count())
+            self.assertEqual(len(items), run.logs.count())
 
-        run.delete_instance()
-        self.assertEqual(0, run.logs.count())
+            run.delete_instance()
+            self.assertEqual(0, run.logs.count())
+
+        with self.subTest(msg="Checking argument 'end'"):
+            run = Task.add(name="*", command="*").add_or_get_run()
+
+            log1 = run.add_log("1234", kind=LogKindEnum.OUT)
+            self.assertEqual(log1.text, "1234\n")
+
+            log2 = run.add_log("1234", kind=LogKindEnum.OUT, end="")
+            self.assertEqual(log2.text, "1234")
 
     def test_add_log_out(self):
-        run = Task.add(name="*", command="*").add_or_get_run()
+        with self.subTest(msg="Common"):
+            run = Task.add(name="*", command="*").add_or_get_run()
 
-        items = []
-        for i in range(5):
-            items.append(run.add_log_out(f"add_log_out {i + 1}"))
+            items = []
+            for i in range(5):
+                items.append(run.add_log_out(f"add_log_out {i + 1}"))
 
-        self.assertEqual(len(items), run.logs.count())
+            self.assertEqual(len(items), run.logs.count())
 
-        run.delete_instance()
-        self.assertEqual(0, run.logs.count())
+            run.delete_instance()
+            self.assertEqual(0, run.logs.count())
+
+        with self.subTest(msg="Checking argument 'end'"):
+            run = Task.add(name="*", command="*").add_or_get_run()
+
+            log1 = run.add_log_out("1234")
+            self.assertEqual(log1.text, "1234\n")
+
+            log2 = run.add_log_out("1234", end="")
+            self.assertEqual(log2.text, "1234")
 
     def test_add_log_err(self):
-        run = Task.add(name="*", command="*").add_or_get_run()
+        with self.subTest(msg="Common"):
+            run = Task.add(name="*", command="*").add_or_get_run()
 
-        items = []
-        for i in range(5):
-            items.append(run.add_log_err(f"add_log_err {i + 1}"))
+            items = []
+            for i in range(5):
+                items.append(run.add_log_err(f"add_log_err {i + 1}"))
 
-        self.assertEqual(len(items), run.logs.count())
+            self.assertEqual(len(items), run.logs.count())
 
-        run.delete_instance()
-        self.assertEqual(0, run.logs.count())
+            run.delete_instance()
+            self.assertEqual(0, run.logs.count())
+
+        with self.subTest(msg="Checking argument 'end'"):
+            run = Task.add(name="*", command="*").add_or_get_run()
+
+            log1 = run.add_log_err("1234")
+            self.assertEqual(log1.text, "1234\n")
+
+            log2 = run.add_log_err("1234", end="")
+            self.assertEqual(log2.text, "1234")
 
     def test_send_notifications(self):
         run = Task.add(name="*", command="*").add_or_get_run()

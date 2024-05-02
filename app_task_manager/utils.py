@@ -295,7 +295,7 @@ class TaskThread(threading.Thread):
                 start_reason = " по ручному запуску"
 
             log.info(f"{log_prefix} Старт запуска задачи{start_reason}")
-            task_run.add_log_out(f"Старт запуска задачи{start_reason}\n")
+            task_run.add_log_out(f"Старт запуска задачи{start_reason}")
 
             self.current_task_run = task_run
 
@@ -330,14 +330,14 @@ class TaskThread(threading.Thread):
                 final_status = TaskRunStatusEnum.FINISHED
             task_run.set_status(final_status)
 
-            task_run.add_log_out(f"\nProcess return code: {task_run.process_return_code}\n")
-            task_run.add_log_out(f"Finished: {task_run.work_status.value}\n")
+            task_run.add_log_out(f"\nProcess return code: {task_run.process_return_code}")
+            task_run.add_log_out(f"Finished: {task_run.work_status.value}")
 
             task_run.save()
 
             # При неуспешном завершении, но не для остановленных
             if not task_run.is_success and task_run.status != TaskRunStatusEnum.STOPPED:
-                task_run.add_log_out("Отправка уведомлений\n")
+                task_run.add_log_out("Отправка уведомлений")
                 task_run.send_notifications()
 
             self.current_task_run = None
