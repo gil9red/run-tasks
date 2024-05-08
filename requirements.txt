@@ -7,3 +7,4 @@ psutil==5.9.8
 cron-converter==1.0.2
 PyYAML==6.0.1
 requests==2.31.0
+beautifulsoup4==4.12.3

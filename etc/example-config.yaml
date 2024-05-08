@@ -6,6 +6,11 @@ manager:
   storage_period:
     task_run_in_days: 100
 
+  external_task_storage:
+    gist:
+      url: "https://gist.github.com/gil9red/74fff6072fa2bf19a0a9a0cae8201938"
+      file_name: "run-tasks.yaml"
+
 notification:
   enabled: true
 
@@ -60,7 +65,7 @@ logging:
       formatter: "default"
       stream: "ext://sys.stdout"
 
-    task-manager-file: &task-manager-file
+    task_manager_file: &task_manager_file
       class: "concurrent_log_handler.ConcurrentRotatingFileHandler"
       formatter: "default"
       filename: "task_manager.log"
@@ -69,15 +74,23 @@ logging:
       maxBytes: 10000000
       delay: true
 
-    web-server-file:
-      <<: *task-manager-file
+    web_server_file:
+      <<: *task_manager_file
       filename: "web.log"
 
+    external_task_storage_file:
+      <<: *task_manager_file
+      filename: "external_task_storage_file.log"
+
   loggers:
-    task-manager:
-      handlers: ["console", "task-manager-file"]
+    task_manager:
+      handlers: ["console", "task_manager_file"]
       level: "DEBUG"
 
     werkzeug:
-      handlers: ["console", "web-server-file"]
+      handlers: ["console", "web_server_file"]
+      level: "DEBUG"
+
+    external_task_storage:
+      handlers: ["console", "external_task_storage_file"]
       level: "DEBUG"
