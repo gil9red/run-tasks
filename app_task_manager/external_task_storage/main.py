@@ -15,7 +15,7 @@ from db import Task
 from third_party.get_gist_file import get_gist_file
 
 
-CONFIG_EXTERNAL_TASK_STORAGE_GIST: dict[str, Any] = CONFIG["manager"]["external_task_storage"]["gist"]
+CONFIG_GIST: dict[str, Any] = CONFIG["manager"]["external_task_storage"]["gist"]
 
 
 log = logging.getLogger("external_task_storage")
@@ -84,8 +84,8 @@ def process(tasks: dict[str, dict[str, Any]]):
 def download_and_process():
     log.info("Обработка задач из внешнего хранилища")
 
-    gist_url = CONFIG_EXTERNAL_TASK_STORAGE_GIST["url"]
-    file_name = CONFIG_EXTERNAL_TASK_STORAGE_GIST["file_name"]
+    gist_url = CONFIG_GIST["url"]
+    file_name = CONFIG_GIST["file_name"]
 
     log.info(f"Адрес: {gist_url!r}, файл: {file_name!r}")
 
