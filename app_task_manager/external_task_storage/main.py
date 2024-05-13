@@ -76,7 +76,8 @@ def process(tasks: dict[str, dict[str, Any]]):
             task.is_infinite = is_infinite
 
         if task.is_dirty():
-            log.info("Обновление задачи")
+            fields: list[str] = [f.name for f in task.dirty_fields]
+            log.info(f"Обновление задачи. Измененные поля: {', '.join(fields)}")
             updated += 1
             task.save()
         else:
