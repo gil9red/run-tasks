@@ -36,12 +36,19 @@ class TestRemoteUpdateCreateTasks(TestCase):
     def test_process(self):
         self.assertEqual(0, Task.count())
 
-        def _create_data(command, description, cron, root_dir="") -> dict:
+        def _create_data(
+                command: str,
+                description: str,
+                cron: str,
+                is_enabled: bool = True,
+                is_infinite: bool = False,
+        ) -> dict:
             return dict(
                 command=command,
                 description=description,
                 cron=cron,
-                root_dir=root_dir,
+                is_enabled=is_enabled,
+                is_infinite=is_infinite,
             )
 
         tasks = {
@@ -94,3 +101,11 @@ class TestRemoteUpdateCreateTasks(TestCase):
             data["cron"] = data["cron"][::-1]
             process(tasks)
             self.assertEqual(data["cron"], Task.get_by_name(name).cron)
+
+            data["is_enabled"] = not data["is_enabled"]
+            process(tasks)
+            self.assertEqual(data["is_enabled"], Task.get_by_name(name).is_enabled)
+
+            data["is_infinite"] = not data["is_infinite"]
+            process(tasks)
+            self.assertEqual(data["is_infinite"], Task.get_by_name(name).is_infinite)
