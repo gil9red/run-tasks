@@ -34,8 +34,12 @@ def process(tasks: dict[str, dict[str, Any]]):
         log.info("")
         log.info(f"Обработка задачи {name!r}")
 
-        description = data["description"]
-        cron = data["cron"]
+        description: str = data["description"]
+        cron: str = data["cron"]
+
+        is_enabled: bool = data["is_enabled"]
+        is_infinite: bool = data["is_infinite"]
+
         command = data["command"].format(
             root_dir=data["root_dir"],
             name=name,
@@ -51,6 +55,8 @@ def process(tasks: dict[str, dict[str, Any]]):
                 command=command,
                 description=description,
                 cron=cron,
+                is_enabled=is_enabled,
+                is_infinite=is_infinite,
             )
             continue
 
@@ -62,6 +68,12 @@ def process(tasks: dict[str, dict[str, Any]]):
 
         if task.cron != cron:
             task.cron = cron
+
+        if task.is_enabled != is_enabled:
+            task.is_enabled = is_enabled
+
+        if task.is_infinite != is_infinite:
+            task.is_infinite = is_infinite
 
         if task.is_dirty():
             log.info("Обновление задачи")
