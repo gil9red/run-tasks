@@ -34,16 +34,14 @@ def process(tasks: dict[str, dict[str, Any]]):
         log.info("")
         log.info(f"Обработка задачи {name!r}")
 
+        # Для возможности обращаться через this[name]
+        data["name"] = name
+
         description: str = data["description"]
         cron: str = data["cron"]
-
         is_enabled: bool = data["is_enabled"]
         is_infinite: bool = data["is_infinite"]
-
-        command = data["command"].format(
-            root_dir=data["root_dir"],
-            name=name,
-        )
+        command: str = data["command"].format(this=data)
 
         task = Task.get_by_name(name)
         if not task:
