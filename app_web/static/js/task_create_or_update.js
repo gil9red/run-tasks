@@ -44,9 +44,6 @@ $(function() {
                         window.location.href = `/task/${rs.result[0].id}`;
                     }
                 );
-
-                // Очищение полей формы
-                thisForm.reset();
             },
             error: data => on_ajax_error(data), // TODO: заполнять reason в on_ajax_error
         });
