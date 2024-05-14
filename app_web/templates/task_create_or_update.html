@@ -63,6 +63,17 @@
             />
             <label for="is_enabled" class="form-label">Активный</label>
         </div>
+        <div class="form-check form-switch">
+            <input
+                    class="form-check-input"
+                    id="is_infinite"
+                    type="checkbox"
+                    role="switch"
+                    name="is_infinite"
+                    {% if is_mode_edit and task.is_infinite %}checked{% endif %}
+            />
+            <label for="is_infinite" class="form-label">Бесконечный</label>
+        </div>
     </div>
     <div class="mb-3">
         <label for="description" class="form-label">Описание</label>
@@ -204,19 +215,6 @@
                 name="command"
                 required
         >{% if is_mode_edit and task.command %}{{ task.command | e }}{% endif %}</textarea>
-    </div>
-    <div class="mb-3">
-        <div class="form-check form-switch">
-            <input
-                    class="form-check-input"
-                    id="is_infinite"
-                    type="checkbox"
-                    role="switch"
-                    name="is_infinite"
-                    {% if is_mode_edit and task.is_infinite %}checked{% endif %}
-            />
-            <label for="is_infinite" class="form-label">Бесконечный</label>
-        </div>
     </div>
     <div class="pb-2 sticky-bottom">
         <button
