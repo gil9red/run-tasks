@@ -40,7 +40,9 @@
         </div>
     </div>
 
-    <div>{% if task.description %}{{ task.description | safe }}{% endif %}</div>
+    <div class="mb-3">
+        <div>{% if task.description %}{{ task.description | safe }}{% endif %}</div>
+    </div>
 
     <div class="form-check form-switch">
         <input
@@ -66,6 +68,17 @@
                 {% if task.is_infinite %}checked{% endif %}
         />
         <label for="is_infinite" class="form-label">Бесконечный</label>
+    </div>
+
+    <div class="mb-3">
+        <label for="command" class="form-label">Команда</label>
+        <textarea
+                class="form-control font-monospace"
+                id="command"
+                rows="3"
+                name="command"
+                disabled
+        >{% if task.command %}{{ task.command | e }}{% endif %}</textarea>
     </div>
 </div>
 
