@@ -72,7 +72,6 @@
         </div>
     </div>
 
-
     <div class="mb-3">
         <label for="command" class="form-label">Команда</label>
         <textarea
@@ -82,6 +81,59 @@
                 name="command"
                 disabled
         >{% if task.command %}{{ task.command | e }}{% endif %}</textarea>
+    </div>
+
+    <div class="mb-3">
+        <div class="row">
+            <div class="col">
+                <label for="cron" class="form-label">Расписание</label>
+                <textarea
+                        class="form-control font-monospace"
+                        id="cron"
+                        rows="1"
+                        name="cron"
+                        disabled
+                >{% if task.cron %}{{ task.cron | e }}{% endif %}</textarea>
+                <div class="form-text">
+                    <span class="cron-result-error text-danger"></span>
+                </div>
+            </div>
+            {% if task.cron %}
+            <div class="col">
+                <div class="form-check form-switch">
+                    <input
+                            id="show-next-dates"
+                            class="form-check-input"
+                            type="checkbox"
+                            role="switch"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#next-dates-collapse"
+                            aria-expanded="false"
+                            aria-controls="next-dates-collapse"
+                    />
+                    <label for="show-next-dates" class="form-label text-secondary-emphasis">Даты планирования</label>
+                </div>
+                {# TODO: Показывать информации по запланированным запускам #}
+                <div id="next-dates-collapse" class="collapse">
+                    <div
+                            id="next-dates"
+                            class="vstack font-monospace text-primary-emphasis"
+                    ></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Последний запуск</label>
+        {# TODO: Заполнять из js #}
+        <input
+                type="text"
+                class="form-control"
+                value="{% if task.last_started_run_start_date %}{{ task.last_started_run_start_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                disabled
+        >
     </div>
 </div>
 
@@ -94,5 +146,6 @@
     const TASK_ID = {{ task.id }};
     const TASK_LAST_WORK_STATUS = "{{ task.last_work_status }}";
 </script>
+<script src="{{ url_for('static', filename='js/task_base.js') }}"></script>
 <script src="{{ url_for('static', filename='js/task.js') }}"></script>
 {% endblock %}
