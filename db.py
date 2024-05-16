@@ -277,13 +277,14 @@ class Task(BaseModel):
 
         return last_run
 
-    def get_pending_run(self, scheduled_date: datetime = None) -> Optional["TaskRun"]:
+    def get_pending_run(self, has_scheduled_date: bool = False) -> Optional["TaskRun"]:
         for run in self.get_runs_by([TaskRunStatusEnum.PENDING]):
-            if scheduled_date is None:
-                if run.scheduled_date is None:
+            # Если нужно вернуть запуск с запланированной датой
+            if has_scheduled_date:
+                if run.scheduled_date is not None:
                     return run
             else:
-                if run.scheduled_date is not None:
+                if run.scheduled_date is None:
                     return run
 
         return None
@@ -291,7 +292,7 @@ class Task(BaseModel):
     def add_or_get_run(self, scheduled_date: datetime = None) -> "TaskRun":
         # Ограничение количества запусков в ожидании, максимум 2: без запланированной даты и с ней
         # Возврат уже ранее добавленного запуска
-        run = self.get_pending_run(scheduled_date)
+        run = self.get_pending_run(has_scheduled_date=scheduled_date is not None)
         if not run:
             last_run = self.get_last_run()
             run = TaskRun.create(

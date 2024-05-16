@@ -35,7 +35,7 @@ class SchedulerUnit(BaseUnit):
             else:
                 continue
 
-            run = task.get_pending_run(scheduled_date=scheduled_date)
+            run = task.get_pending_run(has_scheduled_date=scheduled_date is not None)
             if not run:
                 run = task.add_or_get_run(scheduled_date=scheduled_date)
                 self.log_info(

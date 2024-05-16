@@ -245,17 +245,11 @@ class TestTask(BaseTestCaseDb):
         self.assertEqual(task_run_1, task.get_pending_run())
 
         scheduled_date = datetime.now()
-        task_run_2 = task.get_pending_run(scheduled_date=scheduled_date)
+        task_run_2 = task.get_pending_run(has_scheduled_date=scheduled_date is not None)
         self.assertIsNone(task_run_2)
-        task_run_2 = task.add_or_get_run(scheduled_date=scheduled_date)
+        task_run_2 = task.add_or_get_run(scheduled_date)
         self.assertEqual(
-            task_run_2, task.get_pending_run(scheduled_date=scheduled_date)
-        )
-
-        # Только один запуск с scheduled_date разрешен
-        self.assertEqual(
-            task_run_2,
-            task.get_pending_run(scheduled_date=datetime.now() + timedelta(minutes=1)),
+            task_run_2, task.get_pending_run(has_scheduled_date=scheduled_date is not None)
         )
 
     def test_add_or_get_run(self):
@@ -294,7 +288,7 @@ class TestTask(BaseTestCaseDb):
             task_run.set_status(TaskRunStatusEnum.STOPPED)
 
         with self.subTest(
-                msg="Проверка ограничения количества TaskRun по scheduled_date"
+                msg="Проверка ограничения количества TaskRun по has_scheduled_date"
         ):
             task_run_1 = task.add_or_get_run()
             self.assertIsNotNone(task_run_1)
@@ -307,7 +301,7 @@ class TestTask(BaseTestCaseDb):
                 task_run_2, task.add_or_get_run(scheduled_date=scheduled_date)
             )
 
-            # Только один запуск с scheduled_date разрешен
+            # Только один запуск с has_scheduled_date разрешен
             self.assertEqual(
                 task_run_2,
                 task.add_or_get_run(
