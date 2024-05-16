@@ -352,6 +352,14 @@ class TestTask(BaseTestCaseDb):
         task = Task.add(name="*", command="*")
         self.assertEqual(0, task.number_of_runs)
 
+        # Запуск с Pending не считаются
+        run = task.add_or_get_run()
+        self.assertEqual(0, task.number_of_runs)
+
+        run.set_status(TaskRunStatusEnum.STOPPED)
+        self.assertEqual(1, task.number_of_runs)
+        run.delete_instance()
+
         items = []
         for _ in range(5):
             run = task.add_or_get_run()

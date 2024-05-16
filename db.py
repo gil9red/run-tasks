@@ -157,7 +157,7 @@ class Task(BaseModel):
 
     @hybrid_property
     def number_of_runs(self) -> int:
-        return self.runs.count()
+        return self.runs.where(TaskRun.status != TaskRunStatusEnum.PENDING).count()
 
     def get_last_started_run(self) -> Optional["TaskRun"]:
         return (
