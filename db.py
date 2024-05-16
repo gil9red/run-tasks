@@ -189,6 +189,11 @@ class Task(BaseModel):
         return run.start_date if run else None
 
     @hybrid_property
+    def next_scheduled_date(self) -> datetime | None:
+        run = self.get_pending_run(has_scheduled_date=True)
+        return run.scheduled_date if run else None
+
+    @hybrid_property
     def last_work_status(self) -> TaskRunWorkStatusEnum:
         run: TaskRun | None = self.get_last_started_run()
         if not run:
@@ -204,6 +209,7 @@ class Task(BaseModel):
                 "number_of_runs",
                 "last_started_run_seq",
                 "last_started_run_start_date",
+                "next_scheduled_date",
                 "last_work_status",
             ],
         )

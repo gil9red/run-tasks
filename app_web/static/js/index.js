@@ -134,6 +134,7 @@ $(function() {
             { data: 'is_infinite', title: '<i class="bi bi-infinity"></i>', render: bool_render, },
             { data: 'command', title: 'Команда', visible: false, },
             { data: 'last_started_run_start_date', title: 'Последний запуск', render: date_render, },
+            { data: 'next_scheduled_date', title: 'Следующий запуск', visible: false, render: date_render, },
             { data: 'number_of_runs', title: 'Запуски', },
         ],
         order: [
