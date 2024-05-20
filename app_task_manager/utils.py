@@ -92,6 +92,26 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
     return temp_file
 
 
+def get_env_for_children_process() -> dict:
+    # TODO: Хорошо бы, обойтись без костылей и получать переменные окружения из ОС
+    # Дочерние процессы получают переменные окружение родителя
+    # и это иногда вызывает проблемы
+    env = os.environ.copy()
+
+    # Восстановление пути, измененного venv
+    if "_OLD_VIRTUAL_PATH" in env:
+        env["PATH"] = env.pop("_OLD_VIRTUAL_PATH")
+    if "_OLD_VIRTUAL_PROMPT" in env:
+        env["PROMPT"] = env.pop("_OLD_VIRTUAL_PROMPT")
+
+    # Удаление переменных окружения
+    env.pop("PYTHONIOENCODING", None)
+    env.pop("PYTHONUNBUFFERED", None)
+    env.pop("PYTHONPATH", None)
+
+    return env
+
+
 # SOURCE: https://stackoverflow.com/a/66292378/5909792
 class RaisingThread(threading.Thread):
     def run(self):
@@ -151,6 +171,7 @@ class ThreadRunProcess(threading.Thread):
                 stream.close()
 
             log.info(f"Запуск: {self.command}")
+
             self.process = psutil.Popen(
                 self.command,
                 stdout=subprocess.PIPE,
@@ -158,6 +179,7 @@ class ThreadRunProcess(threading.Thread):
                 text=True,
                 encoding=self.encoding,
                 cwd=Path.home(),
+                env=get_env_for_children_process(),
             )
             self.on_start_callback(self.process)
 
