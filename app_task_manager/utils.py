@@ -93,16 +93,19 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
 
 
 def get_env_for_children_process() -> dict:
-    # TODO: Хорошо бы, обойтись без костылей и получать переменные окружения из ОС
+    # TODO: Хорошо бы, обойтись без костылей и получать переменные окружения из ОС на момент запуска дочернего процесса
+
     # Дочерние процессы получают переменные окружение родителя
     # и это иногда вызывает проблемы
     env = os.environ.copy()
 
     # Восстановление пути, измененного venv
-    if "_OLD_VIRTUAL_PATH" in env:
-        env["PATH"] = env.pop("_OLD_VIRTUAL_PATH")
-    if "_OLD_VIRTUAL_PROMPT" in env:
-        env["PROMPT"] = env.pop("_OLD_VIRTUAL_PROMPT")
+    venv_prefix = "_OLD_VIRTUAL_"
+    venv_vars = [k for k in env.keys() if k.startswith(venv_prefix)]
+    for k in venv_vars:
+        # "_OLD_VIRTUAL_PATH" -> "PATH"
+        real_key = k.split(venv_prefix)[-1]
+        env[real_key] = env.pop(k)
 
     # Удаление переменных окружения
     env.pop("PYTHONIOENCODING", None)
