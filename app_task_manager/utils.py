@@ -11,6 +11,7 @@ import sys
 import threading
 import traceback
 import time
+from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Callable, IO, AnyStr
 
@@ -156,6 +157,7 @@ class ThreadRunProcess(threading.Thread):
                 stderr=subprocess.PIPE,
                 text=True,
                 encoding=self.encoding,
+                cwd=Path.home(),
             )
             self.on_start_callback(self.process)
 
