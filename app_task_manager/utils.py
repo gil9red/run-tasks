@@ -94,6 +94,8 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
 
 def get_env_for_children_process() -> dict:
     # TODO: Хорошо бы, обойтись без костылей и получать переменные окружения из ОС на момент запуска дочернего процесса
+    #       Для Windows:
+    #       https://stackoverflow.com/questions/23728250/start-new-subprocess-with-default-environment-variables
 
     # Дочерние процессы получают переменные окружение родителя
     # и это иногда вызывает проблемы
