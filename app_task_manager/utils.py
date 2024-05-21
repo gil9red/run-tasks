@@ -110,9 +110,8 @@ def get_env_for_children_process() -> dict:
         env[real_key] = env.pop(k)
 
     # Удаление переменных окружения
-    env.pop("PYTHONIOENCODING", None)
-    env.pop("PYTHONUNBUFFERED", None)
-    env.pop("PYTHONPATH", None)
+    for var in ["PYTHONIOENCODING", "PYTHONUNBUFFERED", "PYTHONPATH"]:
+        env.pop(var, None)
 
     return env
 
