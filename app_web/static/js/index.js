@@ -25,7 +25,7 @@ function actions_task_render(data, type, row, meta) {
         </a>
         `
     ];
-    if (row.is_enabled) {
+    if (row.is_enabled && row.last_work_status != "in_processed") {
         tags.push(
             `
             <button

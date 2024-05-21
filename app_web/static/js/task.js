@@ -62,6 +62,10 @@ function update_task(task=null) {
     $(".task_last_work_status").html(
         get_work_status_task_widget(last_work_status)
     );
+
+    // Не показывать кнопку запуска задачи, если она запущена
+    $("#btn-do-run").toggleClass("d-none", last_work_status == "in_processed");
+
     $("#btn-stop").toggleClass("d-none", last_work_status != "in_processed");
 }
 
