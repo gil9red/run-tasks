@@ -128,16 +128,25 @@
         </div>
     </div>
 
+    {% if task.last_started_run_start_date %}
     <div class="mb-3">
-        <label class="form-label">Последний запуск</label>
+        <label class="form-label">
+            <a
+                    href="/task/{{ task.id }}/run/last"
+                    title="Последний запуск"
+            >
+                Последний запуск
+            </a>
+        </label>
         {# TODO: Заполнять из js #}
         <input
                 type="text"
                 class="form-control"
-                value="{% if task.last_started_run_start_date %}{{ task.last_started_run_start_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                value="{{ task.last_started_run_start_date.strftime('%d/%m/%Y %H:%M:%S') }}"
                 disabled
         >
     </div>
+    {% endif %}
 </div>
 
 <!-- TODO: -->
