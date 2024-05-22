@@ -98,6 +98,40 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
+    def test_task_run_last(self):
+        with self.subTest("404 - Not Found"):
+            uri: str = "/task/99999/run/last"
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+
+            task = Task.add(
+                name="404",
+                command="ping 127.0.0.1",
+            )
+            uri: str = f"/task/{task.id}/run/last"
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+
+            run = task.add_or_get_run()
+            self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
+
+            uri: str = f"/task/{task.id}/run/last"
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+
+        with self.subTest("200 - Ok"):
+            task = Task.add(
+                name="200",
+                command="ping 127.0.0.1",
+            )
+            run = task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.RUNNING)
+
+            uri: str = f"/task/{task.id}/run/last"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+
     def test_task_run(self):
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
