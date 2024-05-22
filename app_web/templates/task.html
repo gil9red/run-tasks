@@ -130,7 +130,7 @@
 
     {% if task.last_started_run_start_date %}
     <div class="mb-3">
-        <label class="form-label">
+        <label for="last_started_run_start_date" class="form-label">
             <a
                     href="/task/{{ task.id }}/run/last"
                     title="Последний запуск"
@@ -140,6 +140,7 @@
         </label>
         {# TODO: Заполнять из js #}
         <input
+                id="last_started_run_start_date"
                 type="text"
                 class="form-control"
                 value="{{ task.last_started_run_start_date.strftime('%d/%m/%Y %H:%M:%S') }}"
