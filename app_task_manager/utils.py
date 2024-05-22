@@ -207,7 +207,7 @@ class ThreadRunProcess(threading.Thread):
                         log.info(f"Нужно остановить процесс #{self.process.pid}")
                         kill_proc_tree(self.process.pid)
 
-                    self.process_return_code = self.process.wait(timeout=0)
+                    self.process_return_code = self.process.wait(timeout=1)
                     break
 
                 except psutil.TimeoutExpired:
