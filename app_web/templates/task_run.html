@@ -36,6 +36,117 @@
     </div>
 </div>
 
+<div class="mb-3">
+    <label for="command" class="form-label">Команда</label>
+    <textarea
+            class="form-control font-monospace"
+            id="command"
+            rows="3"
+            disabled
+    >{% if task_run.command %}{{ task_run.command | e }}{% endif %}</textarea>
+</div>
+
+<div class="mb-3">
+    <label for="status" class="form-label">
+        Статус БД
+    </label>
+    {# TODO: Заполнять из js #}
+    <input
+            id="status"
+            type="text"
+            class="form-control"
+            value="{{ task_run.status }}"
+            disabled
+    >
+</div>
+
+<div class="mb-3 row">
+    <div class="col">
+        <label for="process_id" class="form-label">
+            Ид. процесса
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="process_id"
+                type="text"
+                class="form-control"
+                value="{{ task_run.process_id }}"
+                disabled
+        >
+    </div>
+    <div class="col">
+        <label for="process_return_code" class="form-label">
+            Код возврата процесса
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="process_return_code"
+                type="text"
+                class="form-control"
+                value="{{ task_run.process_return_code }}"
+                disabled
+        >
+    </div>
+</div>
+
+<div class="mb-3 row">
+    <div class="col">
+        <label for="create_date" class="form-label">
+            Создано
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="create_date"
+                type="text"
+                class="form-control"
+                value="{% if task_run.create_date %}{{ task_run.create_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                disabled
+        >
+    </div>
+    <div class="col">
+        <label for="scheduled_date" class="form-label">
+            Запланировано
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="scheduled_date"
+                type="text"
+                class="form-control"
+                value="{% if task_run.scheduled_date %}{{ task_run.scheduled_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                disabled
+        >
+    </div>
+</div>
+
+<div class="mb-3 row">
+    <div class="col">
+        <label for="start_date" class="form-label">
+            Запущено
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="start_date"
+                type="text"
+                class="form-control"
+                value="{% if task_run.start_date %}{{ task_run.start_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                disabled
+        >
+    </div>
+    <div class="col">
+        <label for="finish_date" class="form-label">
+            Завершено
+        </label>
+        {# TODO: Заполнять из js #}
+        <input
+                id="finish_date"
+                type="text"
+                class="form-control"
+                value="{% if task_run.finish_date %}{{ task_run.finish_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                disabled
+        >
+    </div>
+</div>
+
 <table id="table-task-run-logs" class="table"></table>
 
 <script>
