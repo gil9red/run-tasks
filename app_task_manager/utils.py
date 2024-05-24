@@ -182,6 +182,7 @@ class ThreadRunProcess(threading.Thread):
                 stderr=subprocess.PIPE,
                 text=True,
                 encoding=self.encoding,
+                errors="replace",
                 cwd=Path.home(),
                 env=get_env_for_children_process(),
             )
