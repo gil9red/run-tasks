@@ -70,7 +70,7 @@
                 id="process_id"
                 type="text"
                 class="form-control"
-                value="{{ task_run.process_id }}"
+                value="{% if task_run.process_id is not none %}{{ task_run.process_id }}{% endif %}"
                 disabled
         >
     </div>
@@ -83,7 +83,7 @@
                 id="process_return_code"
                 type="text"
                 class="form-control"
-                value="{{ task_run.process_return_code }}"
+                value="{% if task_run.process_return_code is not none %}{{ task_run.process_return_code }}{% endif %}"
                 disabled
         >
     </div>
