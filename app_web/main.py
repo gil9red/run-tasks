@@ -126,7 +126,10 @@ def task_run(task_id: int, task_run_seq: int) -> str:
 @app.route("/favicon.ico")
 @public_route
 def favicon() -> Response:
-    return send_from_directory(Path(app.root_path) / "static/images", "avatar-256.png")
+    return send_from_directory(
+        Path(app.root_path) / "static/images",
+        "avatar-256.png",
+    )
 
 
 if __name__ == "__main__":
