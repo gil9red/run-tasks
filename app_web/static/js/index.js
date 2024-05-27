@@ -93,7 +93,9 @@ function task_name_render(data, type, row, meta) {
 
 
 $(function() {
-    new DataTable(TABLE_ID, {
+    let cb_visible_disabled_tasks = "cb_visible_disabled_tasks";
+
+    let table = new DataTable(TABLE_ID, {
         ajax: {
             url: '/api/tasks',
             dataSrc: '',
@@ -116,7 +118,21 @@ $(function() {
                             <i class="bi bi-plus-lg"></i>
                         </a>
                     </li>
+                    `,
                     `
+                    <div class="dropdown-item">
+                        <div class="form-check">
+                            <input
+                                    class="form-check-input column-visible"
+                                    type="checkbox"
+                                    id="${cb_visible_disabled_tasks}"
+                            >
+                            <label class="form-check-label w-100" for="${cb_visible_disabled_tasks}">
+                                Показывать неактивные задачи
+                            </label>
+                        </div>
+                    </div>
+                    `,
                 ]),
                 width: '70px',
             },
@@ -145,5 +161,26 @@ $(function() {
             $(row).toggleClass("row-disabled", !data.is_enabled);
         },
         ...COMMON_PROPS_DATA_TABLE,
+    });
+
+    let $cb_visible_disabled_tasks = $(`#${cb_visible_disabled_tasks}`);
+    $cb_visible_disabled_tasks.prop(
+        'checked',
+        localStorage.getItem(cb_visible_disabled_tasks) == "true"
+    );
+
+    table.search.fixed(cb_visible_disabled_tasks, function (searchStr, data, index) {
+        let checked = $cb_visible_disabled_tasks.prop("checked");
+        localStorage.setItem(cb_visible_disabled_tasks, checked);
+
+        // Если задача не активная и флаг не убран
+        if (!data.is_enabled && !checked) {
+            return false;
+        }
+        return true;
+    });
+
+    $cb_visible_disabled_tasks.on('change', function (e) {
+        table.draw();
     });
 });
