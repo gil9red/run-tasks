@@ -164,9 +164,12 @@ $(function() {
     });
 
     let $cb_visible_disabled_tasks = $(`#${cb_visible_disabled_tasks}`);
+    let value_cb_visible_disabled_tasks = localStorage.getItem(cb_visible_disabled_tasks);
     $cb_visible_disabled_tasks.prop(
         'checked',
-        localStorage.getItem(cb_visible_disabled_tasks) == "true"
+        // Значение по-умолчанию true
+        value_cb_visible_disabled_tasks === null
+        || value_cb_visible_disabled_tasks == "true"
     );
 
     table.search.fixed(cb_visible_disabled_tasks, function (searchStr, data, index) {
