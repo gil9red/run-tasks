@@ -267,6 +267,10 @@ function bool_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
     }
+    if (type === 'sort') {
+        // Сортировка по bool не работает
+        return data.toString();
+    }
     return `
         <div class="form-check form-switch d-flex justify-content-center">
             <input
