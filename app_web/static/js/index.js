@@ -167,7 +167,7 @@ $(function() {
     let value_cb_visible_disabled_tasks = localStorage.getItem(cb_visible_disabled_tasks);
     $cb_visible_disabled_tasks.prop(
         'checked',
-        // Значение по-умолчанию true
+        // Значение, по-умолчанию, true
         value_cb_visible_disabled_tasks === null
         || value_cb_visible_disabled_tasks == "true"
     );
