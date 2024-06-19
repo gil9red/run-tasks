@@ -21,17 +21,21 @@ class MaintenanceUnit(BaseUnit):
         self._process_iter_delay_secs = 60
 
     def __processing_hanging_runs(self):
+        # Текущие запущенные задачи в менеджере
         task_runs: list[TaskRun] = self.owner.get_current_task_runs()
+
+        # Минимальная дата запуска из запущенных
         min_start_date: datetime = min(
             [
                 run.start_date
                 for run in task_runs
                 if run.get_actual_status() == TaskRunStatusEnum.RUNNING
             ],
-            default=datetime.now(),
+            default=self.owner.create_time,
         )
+
         # Небольшая фора
-        min_start_date -= timedelta(seconds=10)
+        min_start_date -= timedelta(minutes=1)
 
         # Разбирательства с "висячими" запусками
         for run in TaskRun.select().where(

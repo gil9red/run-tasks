@@ -8,6 +8,7 @@ import atexit
 import sys
 import time
 import traceback
+from datetime import datetime
 
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING
@@ -47,20 +48,21 @@ class TaskManager:
             NotificationUnit(owner=self),
         ]
 
+        self.create_time: datetime = datetime.now()
+
         self._has_atexit_callback: bool = False
 
         self._is_stopped: bool = False
 
     def get_current_task_runs(self) -> list[TaskRun]:
+        items = []
         for unit in self.units:
             if isinstance(unit, ExecutorUnit):
-                return [
-                    thread.current_task_run
-                    for thread in unit.tasks.values()
-                    if thread.current_task_run
-                ]
+                for thread in unit.tasks.values():
+                    if thread.current_task_run:
+                        items.append(thread.current_task_run)
 
-        return []
+        return items
 
     def start_all(self):
         if self._is_stopped:
