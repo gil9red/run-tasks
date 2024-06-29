@@ -82,6 +82,10 @@ logging:
       <<: *task_manager_file
       filename: "external_task_storage_file.log"
 
+  filters:
+    filter_remove_date_from_werkzeug_logs:
+      (): third_party.filter_remove_date_from_werkzeug_logs.FilterRemoveDateFromWerkzeugLogs
+
   loggers:
     task_manager:
       handlers: ["console", "task_manager_file"]
@@ -90,6 +94,7 @@ logging:
     werkzeug:
       handlers: ["console", "web_server_file"]
       level: "DEBUG"
+      filters: ["filter_remove_date_from_werkzeug_logs"]
 
     external_task_storage:
       handlers: ["console", "external_task_storage_file"]
