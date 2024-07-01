@@ -113,6 +113,7 @@ if __name__ == "__main__":
 
     run_with_lock(
         file_name=Path(__file__).resolve(),
+        on_duplicated_text="Обнаружен запуск второго приложения. Завершение работы",
         func=main,
         loop=True,
     )
