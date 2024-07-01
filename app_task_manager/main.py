@@ -19,7 +19,6 @@ from app_task_manager.units.scheduler_unit import SchedulerUnit
 from app_task_manager.units.notification_unit import NotificationUnit
 
 from db import TaskRun
-from third_party.use_filelock import run_with_lock
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
@@ -110,6 +109,7 @@ def main(loop: bool = False):
 
 if __name__ == "__main__":
     from pathlib import Path
+    from third_party.use_filelock import run_with_lock
 
     run_with_lock(
         file_name=Path(__file__).resolve(),
