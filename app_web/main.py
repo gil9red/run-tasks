@@ -133,6 +133,14 @@ def favicon() -> Response:
 
 
 if __name__ == "__main__":
+    import sys
+    from third_party.is_free_port import is_free_port
+
+    # Режим отладки использует перезагрузку скриптов, а оно не сочетается с is_free_port
+    if not app.debug and not is_free_port(config.PORT):
+        print(f"Порт {config.PORT} занят. Завершение работы")
+        sys.exit(1)
+
     app.run(
         host=config.HOST,
         port=config.PORT,
