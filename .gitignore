@@ -163,3 +163,4 @@ cython_debug/
 database/
 logs/
 config.yaml
+*.lock

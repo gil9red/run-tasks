@@ -19,6 +19,7 @@ from app_task_manager.units.scheduler_unit import SchedulerUnit
 from app_task_manager.units.notification_unit import NotificationUnit
 
 from db import TaskRun
+from third_party.use_filelock import run_with_lock
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
@@ -90,19 +91,28 @@ class TaskManager:
             time.sleep(0.1)
 
 
-def main():
-    task_manager = TaskManager()
-    task_manager.start_all()
-    task_manager.wait_all()
-
-
-if __name__ == "__main__":
+def main(loop: bool = False):
     while True:
         try:
-            main()
+            task_manager = TaskManager()
+            task_manager.start_all()
+            task_manager.wait_all()
         except Exception as e:
             if isinstance(e, KeyboardInterrupt):
-                break
+                return
 
             log.exception("Error:")
             time.sleep(10)
+
+        if not loop:
+            break
+
+
+if __name__ == "__main__":
+    from pathlib import Path
+
+    run_with_lock(
+        file_name=Path(__file__).resolve(),
+        func=main,
+        loop=True,
+    )
