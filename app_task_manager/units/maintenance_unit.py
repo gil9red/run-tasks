@@ -78,7 +78,7 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.status.not_in(
                 [TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]
             ),
-            TaskRun.create_date < date,
+            TaskRun.finish_date < date,
         ):
             try:
                 self.log_info(f"Удаление запуска {run}")
