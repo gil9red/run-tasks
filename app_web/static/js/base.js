@@ -248,11 +248,13 @@ LANG_DATATABLES = {
 
 
 function get_date_from_utc(utc) {
+    if (utc == null) {
+        return null;
+    }
     return moment.utc(utc).format("DD/MM/YYYY HH:mm:ss");
 }
 
 
-// TODO: Общее решение для других подобных страниц
 function fill_document_fields(obj) {
     for (let [field, value] of Object.entries(obj)) {
         let tag = document.getElementById(field);

@@ -15,7 +15,9 @@ let interval_update_task_run = null;
 
 
 function update_task_run(task_run=null) {
-    // TODO: Больше полей проверять/обновлять
+    if (task_run != null) {
+        fill_document_fields(task_run);
+    }
 
     let work_status = task_run == null
         ? TASK_RUN_WORK_STATUS

@@ -50,7 +50,6 @@
     <label for="status" class="form-label">
         Статус из БД
     </label>
-    {# TODO: Заполнять из js #}
     <input
             id="status"
             type="text"
@@ -65,7 +64,6 @@
         <label for="process_id" class="form-label">
             Ид. процесса
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="process_id"
                 type="text"
@@ -78,7 +76,6 @@
         <label for="process_return_code" class="form-label">
             Код возврата процесса
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="process_return_code"
                 type="text"
@@ -94,12 +91,12 @@
         <label for="create_date" class="form-label">
             Создано
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="create_date"
                 type="text"
                 class="form-control"
                 value="{% if task_run.create_date %}{{ task_run.create_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                data-is-utc="true"
                 disabled
         >
     </div>
@@ -107,12 +104,12 @@
         <label for="scheduled_date" class="form-label">
             Запланировано
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="scheduled_date"
                 type="text"
                 class="form-control"
                 value="{% if task_run.scheduled_date %}{{ task_run.scheduled_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                data-is-utc="true"
                 disabled
         >
     </div>
@@ -123,12 +120,12 @@
         <label for="start_date" class="form-label">
             Запущено
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="start_date"
                 type="text"
                 class="form-control"
                 value="{% if task_run.start_date %}{{ task_run.start_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                data-is-utc="true"
                 disabled
         >
     </div>
@@ -136,12 +133,12 @@
         <label for="finish_date" class="form-label">
             Завершено
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="finish_date"
                 type="text"
                 class="form-control"
                 value="{% if task_run.finish_date %}{{ task_run.finish_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                data-is-utc="true"
                 disabled
         >
     </div>
