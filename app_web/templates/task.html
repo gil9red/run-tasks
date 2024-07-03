@@ -42,7 +42,7 @@
     </div>
 
     <div class="mb-3">
-        <div>{% if task.description %}{{ task.description | safe }}{% endif %}</div>
+        <div id="description">{% if task.description %}{{ task.description | safe }}{% endif %}</div>
     </div>
 
     <div class="mb-3 d-flex">
@@ -138,12 +138,12 @@
                 Последний запуск
             </a>
         </label>
-        {# TODO: Заполнять из js #}
         <input
                 id="last_started_run_start_date"
                 type="text"
                 class="form-control"
                 value="{{ task.last_started_run_start_date.strftime('%d/%m/%Y %H:%M:%S') }}"
+                data-is-utc="true"
                 disabled
         >
     </div>
