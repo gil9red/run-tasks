@@ -252,6 +252,48 @@ function get_date_from_utc(utc) {
 }
 
 
+// TODO: Общее решение для других подобных страниц
+function fill_document_fields(obj) {
+    for (let [field, value] of Object.entries(obj)) {
+        let tag = document.getElementById(field);
+        if (tag == null) {
+            continue;
+        }
+
+        // Наличие атрибута data-is-utc для полей-дат
+        if (tag.dataset.isUtc) {
+            value = get_date_from_utc(value);
+        }
+
+        switch (tag.tagName) {
+            case "INPUT": {
+                switch (tag.getAttribute("type")) {
+                    case "checkbox": {
+                        tag.checked = value;
+                        break;
+                    }
+                    default: { // text
+                        tag.value = value;
+                    }
+                }
+                break;
+            }
+            case "TEXTAREA": {
+                tag.value = value;
+                break;
+            }
+            case "DIV": {
+                tag.innerHTML = value;
+                break;
+            }
+            default: {
+                console.error(`Unsupported tag ${tag.tagName}`);
+            }
+        }
+    }
+}
+
+
 function date_render(data, type, row, meta) {
     if (data == null) {
         return data;

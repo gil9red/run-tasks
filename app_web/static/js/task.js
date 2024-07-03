@@ -51,8 +51,11 @@ function check_update_task() {
 }
 
 
-// TODO: Общее решение для других подобных страниц
 function update_task(task=null) {
+    if (task != null) {
+        fill_document_fields(task);
+    }
+
     let last_work_status = task == null
         ? TASK_LAST_WORK_STATUS
         : task.last_work_status
@@ -66,47 +69,6 @@ function update_task(task=null) {
     $("#btn-do-run").toggleClass("d-none", last_work_status == "in_processed");
 
     $("#btn-stop").toggleClass("d-none", last_work_status != "in_processed");
-
-    if (task != null) {
-        // Поиск полей на странице по названию полей из ответа сервера
-        for (let [field, value] of Object.entries(task)) {
-            let tag = document.getElementById(field);
-            if (tag == null) {
-                continue;
-            }
-
-            // Наличие атрибута data-is-utc для полей-дат
-            if (tag.dataset.isUtc) {
-                value = get_date_from_utc(value);
-            }
-
-            switch (tag.tagName) {
-                case "INPUT": {
-                    switch (tag.getAttribute("type")) {
-                        case "checkbox": {
-                            tag.checked = value;
-                            break;
-                        }
-                        default: { // text
-                            tag.value = value;
-                        }
-                    }
-                    break;
-                }
-                case "TEXTAREA": {
-                    tag.value = value;
-                    break;
-                }
-                case "DIV": {
-                    tag.innerHTML = value;
-                    break;
-                }
-                default: {
-                    console.error(`Unsupported tag ${tag.tagName}`);
-                }
-            }
-        }
-    }
 }
 
 
