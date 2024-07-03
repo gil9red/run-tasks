@@ -84,24 +84,43 @@
         >{% if task.command %}{{ task.command | e }}{% endif %}</textarea>
     </div>
 
-    <div class="mb-3">
+    <div>
         <div class="row">
             <div class="col">
-                <label for="cron" class="form-label">Расписание</label>
-                <input
-                        class="form-control font-monospace"
-                        id="cron"
-                        name="cron"
-                        {% if task.cron %}
-                        value="{{ task.cron | e }}"
-                        {% endif %}
-                        disabled
-                >
-                <div class="form-text">
-                    <span class="cron-result-error text-danger"></span>
+                <div class="mb-3">
+                    <label for="cron" class="form-label">Расписание</label>
+                    <input
+                            class="form-control font-monospace"
+                            id="cron"
+                            name="cron"
+                            {% if task.cron %}
+                            value="{{ task.cron | e }}"
+                            {% endif %}
+                            disabled
+                    >
+                    <div class="form-text">
+                        <span class="cron-result-error text-danger"></span>
+                    </div>
                 </div>
             </div>
-            {% if task.cron %}
+            <div class="col">
+                <div class="mb-3">
+                    <label for="next_scheduled_date" class="form-label">
+                        Запланированный запуск
+                    </label>
+                    <input
+                            id="next_scheduled_date"
+                            type="text"
+                            class="form-control"
+                            value="{% if task.next_scheduled_date %}{{ task.next_scheduled_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                            data-is-utc="true"
+                            disabled
+                    >
+                </div>
+            </div>
+        </div>
+        {% if task.cron %}
+        <div class="row">
             <div class="col">
                 <div class="form-check form-switch">
                     <input
@@ -124,8 +143,8 @@
                     ></div>
                 </div>
             </div>
-            {% endif %}
         </div>
+        {% endif %}
     </div>
 
     {% if task.last_started_run_start_date %}
