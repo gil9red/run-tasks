@@ -75,6 +75,13 @@ class TaskRunWorkStatusEnum(enum.StrEnum):
 
 
 @enum.unique
+class StopReasonEnum(enum.StrEnum):
+    SERVER_API = enum.auto()
+    TASK_DISABLED = enum.auto()
+    UNIT_STOP = enum.auto()
+
+
+@enum.unique
 class LogKindEnum(enum.StrEnum):
     OUT = enum.auto()
     ERR = enum.auto()
@@ -326,6 +333,7 @@ class TaskRun(BaseModel):
     seq = IntegerField(default=1)
     command = TextField()
     status = EnumField(choices=TaskRunStatusEnum, default=TaskRunStatusEnum.PENDING)
+    stop_reason = EnumField(choices=StopReasonEnum, null=True)
     process_id = IntegerField(null=True)
     process_return_code = IntegerField(null=True)
     create_date = DateTimeField(default=datetime.now)
@@ -424,6 +432,11 @@ class TaskRun(BaseModel):
     def set_error(self, error_text: str):
         self.set_status(TaskRunStatusEnum.ERROR)
         self.add_log_err(text=error_text)
+
+    def set_stop(self, reason: StopReasonEnum):
+        self.stop_reason = reason
+        self.set_status(TaskRunStatusEnum.STOPPED)
+        self.add_log_out(text=f"Запуск остановлен по причине: {reason.value}")  # TODO:
 
     def is_scheduled_date_has_arrived(self) -> bool:
         if self.scheduled_date is None:
@@ -538,3 +551,5 @@ time.sleep(0.050)
 
 if __name__ == "__main__":
     BaseModel.print_count_of_tables()
+
+    print(TaskRun.get_last())

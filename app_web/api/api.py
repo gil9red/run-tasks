@@ -11,7 +11,7 @@ from flask import Blueprint, Response, jsonify, request
 from werkzeug.exceptions import BadRequest
 
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
-from db import Task, TaskRun, TaskRunStatusEnum, TaskRunLog, Notification, NotificationKindEnum
+from db import Task, TaskRun, StopReasonEnum, TaskRunLog, Notification, NotificationKindEnum
 from root_common import get_scheduled_date_generator
 
 
@@ -139,7 +139,7 @@ def task_run_get(task_id: int, task_run_seq: int) -> Response:
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-stop", methods=["POST"])
 def task_run_do_stop(task_id: int, task_run_seq: int) -> Response:
     run: TaskRun = get_task_run(task_id, task_run_seq)
-    run.set_status(TaskRunStatusEnum.STOPPED)
+    run.set_stop(StopReasonEnum.SERVER_API)
 
     return jsonify(
         prepare_response(

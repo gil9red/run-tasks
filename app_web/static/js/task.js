@@ -104,6 +104,7 @@ $(function() {
             { data: 'seq', title: '#', },
             { data: 'command', title: 'Команда', },
             { data: 'status', title: 'Статус из БД', visible: false, },
+            { data: 'stop_reason', title: 'Причина отмены', visible: false, },
             { data: 'process_id', title: 'Ид. процесса', visible: false, },
             { data: 'process_return_code', title: 'Код возврата процесса', visible: false, },
             { data: 'create_date', title: 'Создано', render: date_render, visible: false, },

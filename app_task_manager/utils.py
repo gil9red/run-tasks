@@ -19,7 +19,7 @@ import psutil
 
 from app_task_manager.common import log_manager as log
 from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND
-from db import Task, TaskRun, TaskRunStatusEnum
+from db import Task, TaskRun, TaskRunStatusEnum, StopReasonEnum
 from root_config import PROJECT_NAME
 
 
@@ -248,7 +248,7 @@ class TaskThread(threading.Thread):
             self.current_task_run
             and self.current_task_run.status == TaskRunStatusEnum.RUNNING
         ):
-            self.current_task_run.set_status(TaskRunStatusEnum.STOPPED)
+            self.current_task_run.set_stop(StopReasonEnum.UNIT_STOP)
 
         self._is_stopped = True
 
@@ -299,7 +299,7 @@ class TaskThread(threading.Thread):
 
         def stop_on() -> bool:
             if not task.get_actual_is_enabled():
-                task_run.set_status(TaskRunStatusEnum.STOPPED)
+                task_run.set_stop(StopReasonEnum.TASK_DISABLED)
 
             status = task_run.get_actual_status()
             need_stop = status in [

@@ -46,17 +46,31 @@
     >{% if task_run.command %}{{ task_run.command | e }}{% endif %}</textarea>
 </div>
 
-<div class="mb-3">
-    <label for="status" class="form-label">
-        Статус из БД
-    </label>
-    <input
-            id="status"
-            type="text"
-            class="form-control"
-            value="{{ task_run.status }}"
-            disabled
-    >
+<div class="mb-3 row">
+    <div class="col">
+        <label for="status" class="form-label">
+            Статус из БД
+        </label>
+        <input
+                id="status"
+                type="text"
+                class="form-control"
+                value="{{ task_run.status }}"
+                disabled
+        >
+    </div>
+    <div class="col">
+        <label for="stop_reason" class="form-label">
+            Причина отмены
+        </label>
+        <input
+                id="stop_reason"
+                type="text"
+                class="form-control"
+                value="{% if task_run.stop_reason is not none %}{{ task_run.stop_reason }}{% endif %}"
+                disabled
+        >
+    </div>
 </div>
 
 <div class="mb-3 row">

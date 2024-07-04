@@ -19,6 +19,7 @@ from db import (
     Notification,
     TaskRunStatusEnum,
     TaskRunWorkStatusEnum,
+    StopReasonEnum,
     LogKindEnum,
     NotificationKindEnum,
 )
@@ -769,6 +770,15 @@ class TestTaskRun(BaseTestCaseDb):
             .first()
         ).text
         self.assertEqual(last_err_log, text + "\n")
+
+    def test_set_stop(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+        self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
+        self.assertIsNone(run.stop_reason)
+
+        season = StopReasonEnum.SERVER_API
+        run.set_stop(season)
+        self.assertEqual(run.stop_reason, season)
 
     def test_is_scheduled_date_has_arrived(self):
         run = Task.add(name="*", command="*").add_or_get_run()
