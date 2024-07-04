@@ -65,11 +65,12 @@ class MaintenanceUnit(BaseUnit):
                     f"{log_prefix} Ошибка при работе с процессом {run.process_id}:", e
                 )
 
+            status = TaskRunStatusEnum.UNKNOWN
             self.log_info(
                 f"{log_prefix} Установка запуску задачи (дата создания {run.create_date}) "
-                f"статус {TaskRunStatusEnum.UNKNOWN.value}"
+                f"статус {status.value}"
             )
-            run.set_status(TaskRunStatusEnum.UNKNOWN)
+            run.set_status(status)
 
     def __removing_old_runs(self):
         date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
