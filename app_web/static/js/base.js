@@ -247,6 +247,27 @@ LANG_DATATABLES = {
 }
 
 
+function tableInitComplete(settings, json) {
+    let api = this.api();
+
+    setInterval(
+        function () {
+            // Пользовательская пагинация не сбрасывается при обновлении
+            api.ajax.reload(null, false);
+        },
+        5000 // Каждые 5 секунд
+    );
+}
+
+
+COMMON_PROPS_DATA_TABLE = {
+    stateSave: true,
+    stateDuration: 0, // Без ограничения срока хранения
+    initComplete: tableInitComplete,
+    language: LANG_DATATABLES,
+}
+
+
 function get_date_from_utc(utc) {
     if (utc == null) {
         return null;
@@ -554,25 +575,6 @@ function table_set_visible_column(api, dataSrc, value) {
     if (column != null) {
         column.visible(value);
     }
-}
-
-
-function tableInitComplete(settings, json) {
-    let api = this.api();
-
-    setInterval(
-        function () {
-            // Пользовательская пагинация не сбрасывается при обновлении
-            api.ajax.reload(null, false);
-        },
-        5000 // Каждые 5 секунд
-    );
-}
-
-
-COMMON_PROPS_DATA_TABLE = {
-    initComplete: tableInitComplete,
-    language: LANG_DATATABLES,
 }
 
 
