@@ -260,9 +260,53 @@ function tableInitComplete(settings, json) {
 }
 
 
+function get_state_key(settings) {
+    // Стандартный ключ DataTable подразумеваем адрес, а он будет свой для задач и запусков
+    // Поэтому, его делать только от ид таблиц, но, тогда, ид таблиц должен быть уникальным
+    // среди всех страниц
+    return `DataTables_${settings.sInstance}`;
+}
+
+
 COMMON_PROPS_DATA_TABLE = {
     stateSave: true,
     stateDuration: 0, // Без ограничения срока хранения
+    stateSaveCallback: function (settings, data) {
+        const key = get_state_key(settings);
+
+        if (data.custom_columns_visible == null) {
+            data.custom_columns_visible = {};
+        }
+
+        const api = new DataTable.Api(settings);
+        for (let aoColumn of api.context[0].aoColumns) {
+            let dataSrc = aoColumn.data;
+            if (dataSrc == null) {
+                continue;
+            }
+
+            data.custom_columns_visible[dataSrc] = aoColumn.bVisible;
+        }
+
+        localStorage.setItem(key, JSON.stringify(data));
+    },
+    stateLoadCallback: function (settings) {
+        const key = get_state_key(settings);
+
+        let data = JSON.parse(localStorage.getItem(key));
+        if (data == null) {
+            data = {};
+        }
+        if (data.custom_columns_visible == null) {
+            data.custom_columns_visible = {};
+        }
+
+        // NOTE: На текущий момент #table-visible-columns не существует
+        //       Продолжение работы в preInit.dt
+        settings.custom_columns_visible = data.custom_columns_visible;
+
+        return data;
+    },
     initComplete: tableInitComplete,
     language: LANG_DATATABLES,
 }
@@ -532,43 +576,6 @@ function get_column_by_data_src(api, data_src) {
 }
 
 
-function load_tables_columns_visible() {
-    let tables_columns_visible = null;
-    if (localStorage.tables_columns_visible == null) {
-        tables_columns_visible = {};
-    } else {
-        tables_columns_visible = JSON.parse(localStorage.tables_columns_visible);
-    }
-    return tables_columns_visible;
-}
-
-
-function save_tables_columns_visible(tables_columns_visible) {
-    localStorage.tables_columns_visible = JSON.stringify(tables_columns_visible);
-}
-
-
-function set_value_tables_columns_visible(table_id, column_data_src, value) {
-    let tables_columns_visible = load_tables_columns_visible();
-
-    if (tables_columns_visible[table_id] == null) {
-        tables_columns_visible[table_id] = {};
-    }
-    tables_columns_visible[table_id][column_data_src] = value;
-
-    save_tables_columns_visible(tables_columns_visible);
-}
-
-
-function get_value_tables_columns_visible(table_id, column_data_src) {
-    let tables_columns_visible = load_tables_columns_visible();
-    if (tables_columns_visible[table_id] == null) {
-        return null;
-    }
-    return tables_columns_visible[table_id][column_data_src];
-}
-
-
 function table_set_visible_column(api, dataSrc, value) {
     // TODO: Надо ли пересчитывать размеры таблицы? Если заголовков мало, то странно выглядит
     let column = get_column_by_data_src(api, dataSrc);
@@ -630,47 +637,39 @@ function check_notifications_get_number_of_unsent() {
 
 $(function() {
     $(document).on('preInit.dt', function (e, settings) {
-        let api = new DataTable.Api(settings);
-
         let $table_visible_columns = $("#table-visible-columns");
         if ($table_visible_columns.length) {
+            const column_class = "column-visible";
+
             let items = [];
 
-            let context = api.context[0];
+            const api = new DataTable.Api(settings);
+            const context = api.context[0];
+            const aoColumns = context.aoColumns;
 
-            let context_table_id = `#${context.sTableId}`;
-
-            let aoColumns = context.aoColumns;
-
-            for (let i = 0; i < aoColumns.length; i++) {
-                let aoColumn = context.aoColumns[i];
-
+            for (let aoColumn of aoColumns) {
                 let dataSrc = aoColumn.data;
                 if (dataSrc == null) {
                     continue;
                 }
 
-                let value = get_value_tables_columns_visible(context_table_id, dataSrc)
-                if (value == null) {
-                    // Инициализация полей
-                    set_value_tables_columns_visible(context_table_id, dataSrc, api.column(i).visible());
-                } else {
-                    // Применение значения
-                    table_set_visible_column(api, dataSrc, value);
+                let id_of_column = `cb_visible_column_${dataSrc}`;
+                let is_visible = settings.custom_columns_visible[dataSrc];
+                if (is_visible == null) {
+                    is_visible = aoColumn.bVisible;
                 }
-
                 items.push(`
                     <div class="dropdown-item">
                         <div class="form-check">
                             <input
-                                    class="form-check-input column-visible"
+                                    class="form-check-input ${column_class}"
                                     type="checkbox"
-                                    id="cb_visible_column_${i}"
-                                    data-context-table-id="${context_table_id}"
+                                    id="${id_of_column}"
+                                    data-context-table-id="#${context.sTableId}"
                                     data-context-table-column-data-src="${dataSrc}"
-                                    ${api.column(i).visible() ? "checked" : ""}
+                                    ${is_visible ? "checked" : ""}
                             >
-                            <label class="form-check-label w-100" for="cb_visible_column_${i}">
+                            <label class="form-check-label w-100" for="${id_of_column}">
                                 ${aoColumn.title}
                             </label>
                         </div>
@@ -682,16 +681,15 @@ $(function() {
             );
 
             // Прокидывание клика на чекбокс
-            $('.dropdown-item:has(.column-visible)').on('click', function (e) {
-                $(this).find(".column-visible").trigger("click");
+            $(`.dropdown-item:has(.${column_class})`).on('click', function (e) {
+                $(this).find(`.${column_class}`).trigger("click");
             });
 
-            $('.column-visible').on('change', function (e) {
+            $(`.${column_class}`).on('change', function (e) {
                 let $this = $(this);
                 let dataSrc = $this.data('context-table-column-data-src');
-                let value = $this.prop("checked");
+                let value = $this.prop('checked');
 
-                set_value_tables_columns_visible(context_table_id, dataSrc, value);
                 table_set_visible_column(api, dataSrc, value);
             });
         }
