@@ -645,9 +645,7 @@ $(function() {
 
             const api = new DataTable.Api(settings);
             const context = api.context[0];
-            const aoColumns = context.aoColumns;
-
-            for (let aoColumn of aoColumns) {
+            for (let aoColumn of context.aoColumns) {
                 let dataSrc = aoColumn.data;
                 if (dataSrc == null) {
                     continue;
