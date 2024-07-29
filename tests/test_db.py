@@ -1073,6 +1073,17 @@ class TestNotification(BaseTestCaseDb):
         notification_tg_2.set_as_send()
         self.assertEqual(Notification.get_unsent(), [notification_tg])
 
+        notification_email_2 = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.EMAIL,
+        )
+        self.assertEqual(Notification.get_unsent(), [notification_tg, notification_email_2])
+
+        notification_email_2.cancel()
+        self.assertEqual(Notification.get_unsent(), [notification_tg])
+
     def test_set_as_send(self):
         run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -1088,6 +1099,70 @@ class TestNotification(BaseTestCaseDb):
         self.assertIsNotNone(notification.sending_date)
 
         time.sleep(DATETIME_DELAY_SECS)
+
         sending_date = notification.sending_date
+
         notification.set_as_send()
         self.assertEqual(sending_date, notification.sending_date)
+
+        notification.cancel()
+        self.assertEqual(sending_date, notification.sending_date)
+
+    def test_cancel(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        notification = Notification.add(
+            task_run=run,
+            name="name",
+            text="text",
+            kind=NotificationKindEnum.EMAIL,
+        )
+        self.assertIsNone(notification.canceling_date)
+
+        notification.cancel()
+        self.assertIsNotNone(notification.canceling_date)
+
+        time.sleep(DATETIME_DELAY_SECS)
+
+        canceling_date = notification.canceling_date
+
+        notification.cancel()
+        self.assertEqual(canceling_date, notification.canceling_date)
+
+        notification.set_as_send()
+        self.assertEqual(canceling_date, notification.canceling_date)
+
+    def test_is_ready(self):
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        with self.subTest("sending_date"):
+            notification = Notification.add(
+                task_run=run,
+                name="name",
+                text="text",
+                kind=NotificationKindEnum.EMAIL,
+            )
+            self.assertIsNone(notification.sending_date)
+            self.assertIsNone(notification.canceling_date)
+            self.assertTrue(notification.is_ready())
+
+            notification.set_as_send()
+            self.assertIsNotNone(notification.sending_date)
+            self.assertIsNone(notification.canceling_date)
+            self.assertFalse(notification.is_ready())
+
+        with self.subTest("canceling_date"):
+            notification = Notification.add(
+                task_run=run,
+                name="name",
+                text="text",
+                kind=NotificationKindEnum.EMAIL,
+            )
+            self.assertIsNone(notification.canceling_date)
+            self.assertIsNone(notification.sending_date)
+            self.assertTrue(notification.is_ready())
+
+            notification.cancel()
+            self.assertIsNone(notification.sending_date)
+            self.assertIsNotNone(notification.canceling_date)
+            self.assertFalse(notification.is_ready())

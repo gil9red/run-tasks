@@ -10,7 +10,7 @@ from typing import Any
 from flask import Blueprint, Response, jsonify, request
 from werkzeug.exceptions import BadRequest
 
-from app_web.common import StatusEnum, prepare_response, get_task, get_task_run
+from app_web.common import StatusEnum, prepare_response, get_task, get_task_run, get_notification
 from db import Task, TaskRun, StopReasonEnum, TaskRunLog, Notification, NotificationKindEnum
 from root_common import get_scheduled_date_generator
 
@@ -204,6 +204,52 @@ def notifications_get_number_of_unsent() -> Response:
         prepare_response(
             status=StatusEnum.OK,
             result=[dict(number=len(Notification.get_unsent()))],
+        ),
+    )
+
+
+@api_bp.route("/notifications/all/do-stop", methods=["POST"])
+def notifications_all_do_stop() -> Response:
+    found = False
+    for obj in Notification.get_unsent():
+        # Если уведомление было отправлено или отменено
+        if not obj.is_ready():
+            continue
+
+        found = True
+        obj.cancel()
+
+    return jsonify(
+        prepare_response(
+            status=StatusEnum.OK,
+            text=(
+                "Неотправленные уведомления были отменены"
+                if found
+                else "Неотправленных уведомлений не было найдено"
+            ),
+        ),
+    )
+
+
+@api_bp.route("/notification/<int:notification_id>/do-stop", methods=["POST"])
+def notification_do_stop(notification_id: int) -> Response:
+    notification = get_notification(notification_id)
+    if notification.is_ready():
+        notification.cancel()
+        status = StatusEnum.OK
+        text = f"Уведомление #{notification_id} было отменено"
+    else:
+        if notification.sending_date:
+            status = StatusEnum.ERROR
+            text = f"Невозможно отменить уведомление #{notification_id}: оно было отправлено"
+        else:
+            status = StatusEnum.OK
+            text = f"Уведомление #{notification_id} уже было отменено"
+
+    return jsonify(
+        prepare_response(
+            status=status,
+            text=text,
         ),
     )
 

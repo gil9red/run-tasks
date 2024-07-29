@@ -98,12 +98,23 @@
     <div class="btn-group" role="group">
         <button
                 type="button"
-                class="create-notification btn btn-success"
+                class="btn btn-success"
                 title="Создать уведомление"
                 data-bs-toggle="modal"
                 data-bs-target="#modal-create-notification"
         >
             <i class="bi bi-plus-lg"></i>
+        </button>
+        <button
+                type="button"
+                id="btn-do-stop-all"
+                class="btn btn-warning"
+                title="Отмена всех уведомлений"
+                data-url="/api/notifications/all/do-stop"
+                data-method="POST"
+                data-confirm-text="Отменить все неотправленные уведомления?"
+        >
+            <i class="bi bi-x-octagon"></i>
         </button>
     </div>
 </div>

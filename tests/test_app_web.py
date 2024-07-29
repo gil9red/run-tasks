@@ -668,6 +668,116 @@ class TestAppApiWeb(TestBaseAppWeb):
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 0)
 
+    def test_api_notifications_all_do_stop(self):
+        uri: str = "/api/notifications/all/do-stop"
+
+        self.assertEqual(0, len(Notification.get_unsent()))
+
+        with self.subTest("405 - Method Not Allowed"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            notification_1 = Notification.add(
+                kind=NotificationKindEnum.EMAIL,
+                name="Title",
+                text="Test\nТест",
+                task_run=None,
+            )
+            self.assertTrue(notification_1.is_ready())
+            self.assertIsNone(notification_1.canceling_date)
+            self.assertIsNone(notification_1.sending_date)
+            self.assertEqual(1, len(Notification.get_unsent()))
+
+            notification_2 = Notification.add(
+                kind=NotificationKindEnum.EMAIL,
+                name="Title",
+                text="Test\nТест",
+                task_run=None,
+            )
+            self.assertTrue(notification_2.is_ready())
+            self.assertIsNone(notification_2.canceling_date)
+            self.assertIsNone(notification_2.sending_date)
+            self.assertEqual(2, len(Notification.get_unsent()))
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            for obj in [notification_1, notification_2]:
+                # Нужно перечитать значение из БД
+                obj = obj.get_new()
+
+                self.assertFalse(obj.is_ready())
+                self.assertIsNotNone(obj.canceling_date)
+                self.assertIsNone(obj.sending_date)
+
+    def test_api_notification_do_stop(self):
+        uri_format: str = "/api/notification/{id}/do-stop"
+
+        with self.subTest("404 - Not Found"):
+            rs = self.client.post(uri_format.format(id=999_999))
+            self.assertEqual(rs.status_code, 404)
+
+        with self.subTest("405 - Method Not Allowed"):
+            rs = self.client.get(uri_format.format(id=999_999))
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            notification_1 = Notification.add(
+                kind=NotificationKindEnum.EMAIL,
+                name="Title",
+                text="Test\nТест",
+                task_run=None,
+            )
+            self.assertTrue(notification_1.is_ready())
+            self.assertIsNone(notification_1.canceling_date)
+            self.assertIsNone(notification_1.sending_date)
+            self.assertEqual(1, len(Notification.get_unsent()))
+
+            uri_1 = uri_format.format(id=notification_1.id)
+            rs = self.client.post(uri_1)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            # Отмена отмененного не приведет к ошибке
+            rs = self.client.post(uri_1)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            notification_2 = Notification.add(
+                kind=NotificationKindEnum.EMAIL,
+                name="Title",
+                text="Test\nТест",
+                task_run=None,
+            )
+            self.assertTrue(notification_2.is_ready())
+            self.assertIsNone(notification_2.canceling_date)
+            self.assertIsNone(notification_2.sending_date)
+            self.assertEqual(1, len(Notification.get_unsent()))
+
+            notification_2.set_as_send()
+            self.assertEqual(0, len(Notification.get_unsent()))
+
+            # Отмена отправленного приведет к ошибке
+            uri_2 = uri_format.format(id=notification_2.id)
+            rs = self.client.post(uri_2)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json["status"], "error")
+
     def test_api_cron_get_next_dates(self):
         uri: str = "/api/cron/get-next-dates"
 

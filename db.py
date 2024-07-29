@@ -175,7 +175,6 @@ class Task(BaseModel):
             .first()
         )
 
-    # TODO: test
     # TODO: единая логика с get_last_started_run. Добавить параметр фильтра
     def get_last_run(self) -> Optional["TaskRun"]:
         return (
@@ -504,6 +503,7 @@ class Notification(BaseModel):
     kind = EnumField(choices=NotificationKindEnum)
     append_date = DateTimeField(default=datetime.now)
     sending_date = DateTimeField(null=True)
+    canceling_date = DateTimeField(null=True)
 
     @classmethod
     def add(
@@ -527,16 +527,34 @@ class Notification(BaseModel):
         """
 
         return list(
-            cls.select().where(cls.sending_date.is_null(True)).order_by(cls.append_date)
+            cls
+            .select()
+            .where(
+                cls.sending_date.is_null(True),
+                cls.canceling_date.is_null(True),
+            )
+            .order_by(cls.append_date)
         )
+
+    def is_ready(self) -> bool:
+        return self.sending_date is None and self.canceling_date is None
 
     def set_as_send(self):
         """
         Функция устанавливает дату отправки и сохраняет ее
         """
 
-        if not self.sending_date:
+        if self.is_ready():
             self.sending_date = datetime.now()
+            self.save()
+
+    def cancel(self):
+        """
+        Функция устанавливает дату отмены и сохраняет ее
+        """
+
+        if self.is_ready():
+            self.canceling_date = datetime.now()
             self.save()
 
 
@@ -551,5 +569,3 @@ time.sleep(0.050)
 
 if __name__ == "__main__":
     BaseModel.print_count_of_tables()
-
-    print(TaskRun.get_last())

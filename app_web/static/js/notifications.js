@@ -30,7 +30,47 @@ function send_ajax_create_notification(url, method, data) {
 }
 
 
+function actions_render(data, type, row, meta) {
+    if (type === 'filter') {
+        return null;
+    }
+
+    let tags = [];
+    if (row.sending_date == null && row.canceling_date == null) {
+        let tag = `
+            <button
+                    class="btn text-warning p-0"
+                    title="Отмена уведомления #${row.id}"
+                    data-url="/api/notification/${row.id}/do-stop"
+                    data-method="POST"
+            >
+                <i class="bi bi-stop-circle"></i>
+            </button>
+        `;
+        tags.push(tag);
+    }
+    return tags.join("");
+}
+
+
 $(function() {
+    let $unsent_notifications = $("#unsent-notifications");
+    if ($unsent_notifications.length) {
+        // Доступность кнопки отмены всех уведомлений
+        function update_disabled_btn_do_stop_all() {
+            $("#btn-do-stop-all").prop(
+                "disabled",
+                $unsent_notifications.hasClass("d-none")
+            );
+        }
+
+        update_disabled_btn_do_stop_all();
+        setInterval(
+            update_disabled_btn_do_stop_all,
+            1000 // Каждую 1 секунду
+        );
+    }
+
     let $checkbox_all = $("#modal-create-notification-input-is-all");
     let $select_kind = $("#modal-create-notification-input-kind");
     $checkbox_all.on('change', function() {
@@ -79,7 +119,7 @@ $(function() {
         columns: [
             {
                 data: null, // Явное указание, что тут нет источника данных
-                render: () => null,
+                render: actions_render,
                 orderable: false,
                 title: getTableHeaderTitleWithMenu(), // TODO: Перенести кнопку создания?
                 width: '0px',
@@ -91,6 +131,7 @@ $(function() {
             { data: 'kind', title: 'Тип', render: kind_render, },
             { data: 'append_date', title: 'Добавлено', render: date_render, },
             { data: 'sending_date', title: 'Отправлено', render: date_render, },
+            { data: 'canceling_date', title: 'Отменено', render: date_render, },
         ],
         order: [
             // Сортировка по убыванию id

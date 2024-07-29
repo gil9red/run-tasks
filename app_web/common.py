@@ -10,7 +10,7 @@ from typing import Any
 from flask import abort
 from peewee import DoesNotExist
 
-from db import Task, TaskRun
+from db import Task, TaskRun, Notification
 
 
 @enum.unique
@@ -41,6 +41,13 @@ def get_task(task_id: int) -> Task:
 def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:
     try:
         return TaskRun.get_by_seq(task_id, task_run_seq)
+    except DoesNotExist:
+        abort(404)
+
+
+def get_notification(notification_id: int) -> Notification:
+    try:
+        return Notification.get_by_id(notification_id)
     except DoesNotExist:
         abort(404)
 
