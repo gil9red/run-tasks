@@ -298,18 +298,22 @@ class TaskThread(threading.Thread):
             task_run.add_log_err(text)
 
         def stop_on() -> bool:
-            if not task.get_actual_is_enabled():
-                task_run.set_stop(StopReasonEnum.TASK_DISABLED)
+            actual_task_run: TaskRun = task_run.get_new()
 
-            status = task_run.get_actual_status()
+            if not task.get_actual_is_enabled():
+                actual_task_run.set_stop(StopReasonEnum.TASK_DISABLED)
+
+            status = actual_task_run.status
             need_stop = status in [
                 TaskRunStatusEnum.STOPPED,
                 TaskRunStatusEnum.UNKNOWN,
                 TaskRunStatusEnum.ERROR,
             ]
             if need_stop:
+                reason_text = actual_task_run.stop_reason.value if actual_task_run.stop_reason else 'неизвестна'
                 log.debug(
-                    f"{log_prefix} нужно остановить задачу, текущий статус {status.value}"
+                    f"{log_prefix} нужно остановить задачу (причина {reason_text}),"
+                    f" текущий статус {status.value}"
                 )
 
             return need_stop
