@@ -55,6 +55,11 @@ $(function() {
             dataSrc: '',
         },
         rowId: 'id',
+        createdRow: function (row, data, dataIndex) {
+            if (data.kind == 'err') {
+                $(row).addClass('table-danger');
+            }
+        },
         columns: [
             {
                 data: null, // Явное указание, что тут нет источника данных
