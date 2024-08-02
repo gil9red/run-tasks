@@ -55,11 +55,17 @@ $(function() {
             dataSrc: '',
         },
         rowId: 'id',
-        createdRow: function (row, data, dataIndex) {
-            if (data.kind == 'err') {
-                $(row).addClass('table-danger');
+        columnDefs: [
+            {
+                targets: "_all",
+                createdCell: function (td, cellData, rowData, row, col) {
+                    // Окрашивание текста строки для ошибок
+                    if (rowData.kind == 'err') {
+                        $(td).addClass('text-danger');
+                    }
+                }
             }
-        },
+        ],
         columns: [
             {
                 data: null, // Явное указание, что тут нет источника данных
