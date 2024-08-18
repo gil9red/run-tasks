@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 from http import HTTPStatus
 from typing import Any
 
-from flask import Blueprint, Response, jsonify, request
+from flask import Blueprint, Response, jsonify, request, abort
 from werkzeug.exceptions import BadRequest
 
 from app_web.common import StatusEnum, prepare_response, get_task, get_task_run, get_notification
@@ -136,6 +136,16 @@ def task_run_get(task_id: int, task_run_seq: int) -> Response:
     )
 
 
+@api_bp.route("/task/<int:task_id>/run/last")
+def task_run_get_last(task_id: int) -> Response:  # TODO: в тесты
+    task = get_task(task_id)
+    # TODO: pending тоже попадают, нужно ли? Проверить, что во время работы оно не сформировано
+    task_run: TaskRun | None = task.get_last_run()
+    if not task_run:
+        abort(404)
+    return task_run_get(task_id, task_run.seq)
+
+
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-stop", methods=["POST"])
 def task_run_do_stop(task_id: int, task_run_seq: int) -> Response:
     run: TaskRun = get_task_run(task_id, task_run_seq)
@@ -170,6 +180,16 @@ def task_run_logs(task_id: int, task_run_seq: int) -> Response:
             for obj in get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
         ]
     )
+
+
+@api_bp.route("/task/<int:task_id>/run/last/logs")
+def task_run_logs_last(task_id: int) -> Response:  # TODO: в тесты
+    task = get_task(task_id)
+    # TODO: pending тоже попадают, нужно ли? Проверить, что во время работы оно не сформировано
+    task_run: TaskRun | None = task.get_last_run()
+    if not task_run:
+        abort(404)
+    return task_run_logs(task_id, task_run.seq)
 
 
 @api_bp.route("/notifications")
