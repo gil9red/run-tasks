@@ -58,7 +58,7 @@ function actions_task_render(data, type, row, meta) {
             `
             <a
                     class="icon-link"
-                    href="/task/${row.id}/run/${row.last_started_run_seq}"
+                    href="/task/${row.id}/run/last"
                     title="Страница последнего запуска"
             >
                 <i class="bi bi-terminal"></i>
