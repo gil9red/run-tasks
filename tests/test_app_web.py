@@ -454,6 +454,55 @@ class TestAppApiWeb(TestBaseAppWeb):
                 get_common_view(run_1.to_dict())
             )
 
+    def test_api_task_run_get_last(self):
+        uri_template: str = "/api/task/{task_id}/run/last"
+
+        with self.subTest("405 - Method Not Allowed"):
+            uri: str = uri_template.format(task_id=99999)
+
+            rs = self.client.post(uri)
+            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("404 - Not Found"):
+            uri: str = uri_template.format(task_id=99999)
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+            task_1 = Task.add(
+                name="1",
+                command="ping 127.0.0.1",
+            )
+
+            uri: str = uri_template.format(task_id=task_1.id)
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            task_2 = Task.add(
+                name="2",
+                command="ping 127.0.0.1",
+            )
+            run_1 = task_2.add_or_get_run()
+
+            uri: str = uri_template.format(task_id=task_2.id)
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+
+            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+                return dict(
+                    id=d["id"], task_run=d["task"], seq=d["seq"]
+                )
+
+            self.assertEqual(
+                get_common_view(rs.json["result"][0]),
+                get_common_view(run_1.to_dict())
+            )
+
     def test_api_task_run_do_stop(self):
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999/do-stop"
@@ -562,6 +611,46 @@ class TestAppApiWeb(TestBaseAppWeb):
             run_1 = task_2.add_or_get_run()
 
             uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/logs"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json, [])
+
+            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+                return dict(
+                    id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
+                )
+
+            items = []
+            for i in range(5):
+                items.append(run_1.add_log_out(f"out={i}"))
+                items.append(run_1.add_log_err(f"out={i}"))
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj) for obj in rs.json],
+                [get_common_view(obj.to_dict()) for obj in items],
+            )
+
+    def test_api_task_run_last_logs(self):
+        uri_template: str = "/api/task/{task_id}/run/last/logs"
+
+        with self.subTest("404 - Not Found"):
+            uri: str = uri_template.format(task_id=99999)
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok"):
+            task_1 = Task.add(
+                name="2",
+                command="ping 127.0.0.1",
+            )
+            run_1 = task_1.add_or_get_run()
+
+            uri: str = uri_template.format(task_id=task_1.id)
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
