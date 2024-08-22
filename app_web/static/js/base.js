@@ -541,6 +541,9 @@ function on_ajax_error(rs, reason) {
     }
 
     let text = "На сервере произошла неожиданная ошибка";
+    if (rs.responseJSON && rs.responseJSON.text) {
+        text = `${text}: ${rs.responseJSON.text}`;
+    }
     noty({
         text: reason ? `${text} ${reason}` : text,
         type: 'error',
