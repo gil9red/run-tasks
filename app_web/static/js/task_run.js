@@ -1,6 +1,11 @@
+function is_last_uri() {
+    return window.TASK_RUN_SEQ == "last";
+}
+
+
 function check_update_task_run() {
     send_ajax(
-        `/api/task/${TASK_ID}/run/${TASK_RUN_SEQ}`,
+        `/api/task/${window.TASK_ID}/run/${window.TASK_RUN_SEQ}`,
         "GET",
         null, // json
         null, // css_selector_table
@@ -16,18 +21,32 @@ let interval_update_task_run = null;
 
 function update_task_run(task_run=null) {
     if (task_run != null) {
+        if (is_last_uri()) {
+            $(".task-run-seq").text(task_run.seq);
+            $("title").text(window.PATTERN.title.format(task_run.seq));
+
+            let btn_send_notification = document.getElementById("btn-send-notification");
+            btn_send_notification.title = window.PATTERN.button_send_notification.title.format(task_run.seq);
+            btn_send_notification.dataset.url = window.PATTERN.button_send_notification.data_url.format(task_run.seq);
+
+            let btn_stop = document.getElementById("btn-stop");
+            btn_stop.title = window.PATTERN.button_stop.title.format(task_run.seq);
+            btn_stop.dataset.url = window.PATTERN.button_stop.data_url.format(task_run.seq);
+        }
+
         fill_document_fields(task_run);
     }
 
     let work_status = task_run == null
-        ? TASK_RUN_WORK_STATUS
+        ? window.TASK_RUN_WORK_STATUS
         : task_run.work_status
     ;
 
     // Завершение интервала для завершенных запусков
     if (
         interval_update_task_run != null
-        && work_status != "none" && work_status != "in_processed"
+        && !["none", "in_processed"].includes(work_status)
+        && !is_last_uri()  // Если это не страница последнего запуска
     ) {
         clearInterval(interval_update_task_run);
     }
@@ -42,7 +61,11 @@ function update_task_run(task_run=null) {
 $(function() {
     update_task_run();
     // Запуск интервала для не завершенных запусков
-    if (TASK_RUN_WORK_STATUS == "none" || TASK_RUN_WORK_STATUS == "in_processed") {
+    // Или для страницы последней задачи
+    if (
+        ["none", "in_processed"].includes(window.TASK_RUN_WORK_STATUS)
+        || is_last_uri()
+    ) {
         interval_update_task_run = setInterval(
             check_update_task_run,
             1000 // Каждая секунда
@@ -51,7 +74,7 @@ $(function() {
 
     new DataTable('#table-task-run-logs', {
         ajax: {
-            url: `/api/task/${TASK_ID}/run/${TASK_RUN_SEQ}/logs`,
+            url: `/api/task/${TASK_ID}/run/${window.TASK_RUN_SEQ}/logs`,
             dataSrc: '',
         },
         rowId: 'id',

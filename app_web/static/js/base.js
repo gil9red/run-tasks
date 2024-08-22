@@ -4,6 +4,16 @@ $.noty.defaults.timeout = 10000; // 10 secs
 $.noty.defaults.progressBar = true;
 
 
+// NOTE: https://stackoverflow.com/a/69718380/5909792
+String.prototype.format = function () {
+    let args = arguments;
+    return this.replace(/{([0-9]+)}/g, function (match, index) {
+        // check if the argument is there
+        return typeof args[index] == 'undefined' ? match : args[index];
+    });
+};
+
+
 LANG_DATATABLES = {
     "processing": "Подождите...",
     "search": "Поиск:",

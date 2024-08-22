@@ -111,6 +111,7 @@ def task_run_last(task_id: int) -> str:
         "task_run.html",
         title=PROJECT_NAME,
         task_run=get_task_run(task_id, task_run_seq),
+        is_last=True,
     )
 
 

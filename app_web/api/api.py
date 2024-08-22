@@ -139,7 +139,6 @@ def task_run_get(task_id: int, task_run_seq: int) -> Response:
 @api_bp.route("/task/<int:task_id>/run/last")
 def task_run_get_last(task_id: int) -> Response:
     task = get_task(task_id)
-    # TODO: pending тоже попадают, нужно ли? Проверить, что во время работы оно не сформировано
     task_run: TaskRun | None = task.get_last_run()
     if not task_run:
         abort(404)
@@ -185,7 +184,6 @@ def task_run_logs(task_id: int, task_run_seq: int) -> Response:
 @api_bp.route("/task/<int:task_id>/run/last/logs")
 def task_run_logs_last(task_id: int) -> Response:
     task = get_task(task_id)
-    # TODO: pending тоже попадают, нужно ли? Проверить, что во время работы оно не сформировано
     task_run: TaskRun | None = task.get_last_run()
     if not task_run:
         abort(404)

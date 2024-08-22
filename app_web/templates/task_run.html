@@ -5,7 +5,7 @@
 {% block header %}
 <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
 <li class="breadcrumb-item"><a href="/task/{{ task_run.task.id }}">{{ task_run.task.name }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">#{{ task_run.seq }}</li>
+<li class="breadcrumb-item active" aria-current="page">#<span class="task-run-seq">{{ task_run.seq }}</span></li>
 {% endblock %}
 
 {% block content %}
@@ -14,9 +14,10 @@
     <span class="task_run_work_status"></span>
 </div>
 
-<div class="btn-toolbar" role="toolbar">
+<div class="btn-toolbar mb-3" role="toolbar">
     <div class="btn-group" role="group">
         <button
+                id="btn-send-notification"
                 class="btn btn-danger"
                 title="Отправить уведомления запуска #{{ task_run.seq }}"
                 data-url="/api/task/{{ task_run.task.id }}/run/{{ task_run.seq }}/do-send-notifications"
@@ -33,6 +34,33 @@
         >
             <i class="bi bi-stop-circle"></i>
         </button>
+    </div>
+</div>
+
+<div class="mb-3 row">
+    <div class="col">
+        <label for="id" class="form-label">
+            Ид.
+        </label>
+        <input
+                id="id"
+                type="text"
+                class="form-control"
+                value="{{ task_run.id }}"
+                disabled
+        >
+    </div>
+    <div class="col">
+        <label for="seq" class="form-label">
+            Номер
+        </label>
+        <input
+                id="seq"
+                type="text"
+                class="form-control"
+                value="{{ task_run.seq }}"
+                disabled
+        >
     </div>
 </div>
 
@@ -161,9 +189,21 @@
 <table id="table-task-run-logs" class="table"></table>
 
 <script>
-    const TASK_ID = {{ task_run.task.id }};
-    const TASK_RUN_SEQ = {{ task_run.seq }};
-    const TASK_RUN_WORK_STATUS = "{{ task_run.work_status }}";
+    window.PATTERN = {
+        title: 'Запуск #{0} задачи "{{ task_run.task.name }}"',
+        button_send_notification: {
+            title: "Отправить уведомления запуска #{0}",
+            data_url: "/api/task/{{ task_run.task.id }}/run/{0}/do-send-notifications",
+        },
+        button_stop: {
+            title: "Остановить запуск #{0}",
+            data_url: "/api/task/{{ task_run.task.id }}/run/{0}/do-stop",
+        },
+    };
+
+    window.TASK_ID = {{ task_run.task.id }};
+    window.TASK_RUN_SEQ = "{{ 'last' if is_last is defined else task_run.seq }}";
+    window.TASK_RUN_WORK_STATUS = "{{ task_run.work_status }}";
 </script>
 <script src="{{ url_for('static', filename='js/task_run.js') }}"></script>
 {% endblock %}
