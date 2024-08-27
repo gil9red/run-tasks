@@ -5,7 +5,14 @@
 {% block header %}
 <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
 <li class="breadcrumb-item"><a href="/task/{{ task_run.task.id }}">{{ task_run.task.name }}</a></li>
-<li class="breadcrumb-item active" aria-current="page">#<span class="task-run-seq">{{ task_run.seq }}</span></li>
+<li class="breadcrumb-item active" aria-current="page">
+    <a
+            class="task-run-seq-url"
+            href="/task/{{ task_run.task.id }}/run/{{ task_run.seq }}"
+    >
+        #<span class="task-run-seq">{{ task_run.seq }}</span>
+    </a>
+</li>
 {% endblock %}
 
 {% block content %}
@@ -52,7 +59,12 @@
     </div>
     <div class="col">
         <label for="seq" class="form-label">
-            Номер
+            <a
+                    class="task-run-seq-url"
+                    href="/task/{{ task_run.task.id }}/run/{{ task_run.seq }}"
+            >
+                Номер
+            </a>
         </label>
         <input
                 id="seq"
@@ -191,6 +203,7 @@
 <script>
     window.PATTERN = {
         title: 'Запуск #{0} задачи "{{ task_run.task.name }}"',
+        url: '/task/{{ task_run.task.id }}/run/{0}',
         button_send_notification: {
             title: "Отправить уведомления запуска #{0}",
             data_url: "/api/task/{{ task_run.task.id }}/run/{0}/do-send-notifications",
