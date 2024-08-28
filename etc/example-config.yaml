@@ -2,7 +2,7 @@ project_name: "run-tasks"
 
 manager:
   encoding: null
-  pattern_file_job_command: "{project_name}_job{job_id}_run{job_run_id}"
+  pattern_file_task_command: "{project_name}_task{task_id}_run{task_run_id}"
   storage_period:
     task_run_in_days: 100
 

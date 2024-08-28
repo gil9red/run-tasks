@@ -18,7 +18,7 @@ from typing import Callable, IO, AnyStr
 import psutil
 
 from app_task_manager.common import log_manager as log
-from app_task_manager.config import ENCODING, PATTERN_FILE_JOB_COMMAND
+from app_task_manager.config import ENCODING, PATTERN_FILE_TASK_COMMAND
 from db import Task, TaskRun, TaskRunStatusEnum, StopReasonEnum
 from root_config import PROJECT_NAME
 
@@ -62,10 +62,10 @@ def get_shell_command(file_name_command: str) -> list[str]:
 
 
 def get_prefix_file_name_command(task: Task, task_run: TaskRun) -> str:
-    return PATTERN_FILE_JOB_COMMAND.format(
+    return PATTERN_FILE_TASK_COMMAND.format(
         project_name=PROJECT_NAME,
-        job_id=task.id,
-        job_run_id=task_run.id,
+        task_id=task.id,
+        task_run_id=task_run.id,
     )
 
 
@@ -78,7 +78,7 @@ def create_temp_file(task: Task, task_run: TaskRun) -> IO:
     suffix = ".bat" if IS_WIN else ".sh"
     file_content = f"{task_run.command}\nexit {'%ERRORLEVEL%' if IS_WIN else '$?'}"
 
-    # NOTE: Пример названия файла "run-tasks_job4_run163__cx6w_2zk.bat"
+    # NOTE: Пример названия файла "run-tasks_task4_run163__cx6w_2zk.bat"
     temp_file = NamedTemporaryFile(
         mode="w",
         prefix=f"{file_name_command}__",
