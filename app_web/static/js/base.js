@@ -406,7 +406,7 @@ function bool_render(data, type, row, meta) {
 }
 
 
-function get_work_status_task_widget(data, showTitle=false) {
+function get_work_status_task_widget(data, showTitle=false, spinnerSize=2) {
     let title = data;
     let result = `<span class="text-bg-danger">${data}</span>`;
 
@@ -424,7 +424,12 @@ function get_work_status_task_widget(data, showTitle=false) {
         case "in_processed": {
             title = "Выполняется запуск";
             result = `
-                <span class="spinner-grow spinner-grow-sm text-primary" role="status" title="${title}">
+                <span
+                        class="spinner-grow text-primary"
+                        role="status"
+                        title="${title}"
+                        style="width: ${spinnerSize}rem; height: ${spinnerSize}rem;"
+                >
                     <span class="visually-hidden">Выполняется запуск...</span>
                 </span>
             `;
@@ -475,7 +480,7 @@ function work_status_task_run_render(data, type, row, meta) {
         return null;
     }
 
-    let result = get_work_status_task_widget(data);
+    let result = get_work_status_task_widget(data, false, 1);
     return `
         <div class="d-flex justify-content-center">
             ${result}
