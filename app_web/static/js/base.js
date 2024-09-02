@@ -406,13 +406,15 @@ function bool_render(data, type, row, meta) {
 }
 
 
-function get_work_status_task_widget(data) {
+function get_work_status_task_widget(data, showTitle=false) {
+    let title = data;
     let result = `<span class="text-bg-danger">${data}</span>`;
 
     switch (data) {
         case "none": {
+            title = "Не было запусков";
             result = `
-                <span class="text-secondary-emphasis" title="Не было запусков">
+                <span class="text-secondary-emphasis" title="${title}">
                     <i class="bi bi-slash-circle"></i>
                 </span>
             `;
@@ -420,8 +422,9 @@ function get_work_status_task_widget(data) {
         }
 
         case "in_processed": {
+            title = "Выполняется запуск";
             result = `
-                <span class="spinner-grow spinner-grow-sm text-primary" role="status" title="Выполняется запуск">
+                <span class="spinner-grow spinner-grow-sm text-primary" role="status" title="${title}">
                     <span class="visually-hidden">Выполняется запуск...</span>
                 </span>
             `;
@@ -429,8 +432,9 @@ function get_work_status_task_widget(data) {
         }
 
         case "successful": {
+            title = "Последний запуск завершился успешно";
             result = `
-                <span class="text-success" title="Последний запуск завершился успешно">
+                <span class="text-success" title="${title}">
                     <i class="bi bi-check-circle"></i>
                 </span>
             `;
@@ -438,8 +442,9 @@ function get_work_status_task_widget(data) {
         }
 
         case "failed": {
+            title = "Последний запуск завершился ошибкой";
             result = `
-                <span class="text-danger" title="Последний запуск завершился ошибкой">
+                <span class="text-danger" title="${title}">
                     <i class="bi bi-x-circle"></i>
                 </span>
             `;
@@ -447,13 +452,18 @@ function get_work_status_task_widget(data) {
         }
 
         case "stopped": {
+            title = "Последний запуск был остановлен";
             result = `
-                <span class="text-warning" title="Последний запуск был остановлен">
+                <span class="text-warning" title="${title}">
                     <i class="bi bi-stop-circle"></i>
                 </span>
             `;
             break;
         }
+    }
+
+    if (showTitle) {
+        result = `${result}<span class="fs-3"> — ${title}</span>`;
     }
 
     return result;
