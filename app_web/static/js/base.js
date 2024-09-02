@@ -480,7 +480,11 @@ function work_status_task_run_render(data, type, row, meta) {
         return null;
     }
 
-    let result = get_work_status_task_widget(data, false, 1);
+    let result = get_work_status_task_widget(
+        data,
+        false, // showTitle
+        1      // spinnerSize
+    );
     return `
         <div class="d-flex justify-content-center">
             ${result}
