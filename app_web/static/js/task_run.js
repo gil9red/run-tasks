@@ -24,7 +24,7 @@ function update_task_run(task_run=null) {
         if (is_last_uri()) {
             $(".task-run-seq").text(task_run.seq);
             $("title").text(window.PATTERN.title.format(task_run.seq));
-            $(".task-run-seq-url").attr("href", window.PATTERN.title.url);
+            $(".task-run-seq-url").attr("href", window.PATTERN.url.format(task_run.seq));
 
             let btn_send_notification = document.getElementById("btn-send-notification");
             btn_send_notification.title = window.PATTERN.button_send_notification.title.format(task_run.seq);
