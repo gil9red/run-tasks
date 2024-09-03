@@ -50,6 +50,7 @@ function update_task_run(task_run=null) {
         && !is_last_uri()  // Если это не страница последнего запуска
     ) {
         clearInterval(interval_update_task_run);
+        stop_datatables_auto_reload();
     }
 
     $(".task_run_work_status").html(
@@ -60,20 +61,25 @@ function update_task_run(task_run=null) {
 
 
 $(function() {
+    const tableId = "table-task-run-logs";
+
     update_task_run();
+
     // Запуск интервала для не завершенных запусков
     // Или для страницы последней задачи
-    if (
-        ["none", "in_processed"].includes(window.TASK_RUN_WORK_STATUS)
-        || is_last_uri()
-    ) {
+    let auto_reload = ["none", "in_processed"].includes(window.TASK_RUN_WORK_STATUS)
+        || is_last_uri();
+    if (auto_reload) {
         interval_update_task_run = setInterval(
             check_update_task_run,
             1000 // Каждая секунда
         );
+    } else {
+        // Отключение автообновления таблиц из base.js
+        DATATABLES_AUTO_RELOAD_STOPPING.push(tableId);
     }
 
-    new DataTable('#table-task-run-logs', {
+    new DataTable(`#${tableId}`, {
         ajax: {
             url: `/api/task/${TASK_ID}/run/${window.TASK_RUN_SEQ}/logs`,
             dataSrc: '',

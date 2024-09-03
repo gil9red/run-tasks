@@ -257,16 +257,38 @@ LANG_DATATABLES = {
 }
 
 
-function tableInitComplete(settings, json) {
-    let api = this.api();
+const DATATABLES_AUTO_RELOAD = new Map();
+const DATATABLES_AUTO_RELOAD_STOPPING = [];
 
-    setInterval(
-        function () {
-            // Пользовательская пагинация не сбрасывается при обновлении
-            api.ajax.reload(null, false);
-        },
-        5000 // Каждые 5 секунд
-    );
+
+function stop_datatables_auto_reload() {
+    for (const [tableId, intervalId] of DATATABLES_AUTO_RELOAD) {
+        console.log(`Stopping auto reload in table ${tableId}`);
+        clearInterval(intervalId);
+    }
+}
+
+
+function tableInitComplete(settings, json) {
+    let tableId = settings.sTableId;
+
+    if (!DATATABLES_AUTO_RELOAD_STOPPING.includes(tableId)) {
+        let api = this.api();
+
+        let intervalId = setInterval(
+            function () {
+                if (DATATABLES_AUTO_RELOAD_STOPPING.includes(tableId)) {
+                    clearInterval(intervalId);
+                    return;
+                }
+
+                // Пользовательская пагинация не сбрасывается при обновлении
+                api.ajax.reload(null, false);
+            },
+            5000 // Каждые 5 секунд
+        );
+        DATATABLES_AUTO_RELOAD.set(tableId, intervalId);
+    }
 }
 
 
