@@ -327,6 +327,29 @@ class Task(BaseModel):
         items = self.get_runs_by([TaskRunStatusEnum.RUNNING])
         return items[0] if items else None
 
+    # TODO: фильтрация? like работает с кириллицей?
+    # TODO: в тесты
+    def get_all_logs(
+        self,
+        filter_by_text: str | None = None,
+        page: int = 1,
+        items_per_page: int = 10,
+    ) -> list["TaskRunLog"]:
+        filters = [
+            TaskRunLog.task_run.in_(
+                TaskRun.select(TaskRun.id).where(TaskRun.task == self)
+            ),
+        ]
+        if filter_by_text:
+            filters.append(
+                TaskRunLog.text.ilike(f"%{filter_by_text}%")
+            )
+
+        query = TaskRunLog.select().where(*filters)
+        query = query.paginate(page, items_per_page)
+
+        return list(query)
+
 
 class TaskRun(BaseModel):
     task = ForeignKeyField(Task, on_delete="CASCADE", backref="runs")
