@@ -464,6 +464,103 @@ class TestTask(BaseTestCaseDb):
         run.set_status(TaskRunStatusEnum.UNKNOWN)
         self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.FAILED)
 
+    def test_get_all_logs(self):
+        task = Task.add(name="*", command="*")
+
+        logs: list[TaskRunLog] = []
+        for _ in range(10):
+            run = task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.RUNNING)
+
+            prefix: str = f"[run#{run.id}-{run.seq}]"
+            for i in range(1, 30 + 1):
+                if i % 2 == 0:
+                    log = run.add_log_out(f"{prefix} OUT#{i}")
+                else:
+                    log = run.add_log_err(f"{prefix} ERR#{i}")
+                logs.append(log)
+
+            run.set_status(TaskRunStatusEnum.FINISHED)
+
+        filter_by_text = "[run#5-"
+        filtered_logs = [log for log in logs if filter_by_text in log.text]
+        items_per_page = 10
+        order_by_id_desc = TaskRunLog.id.desc()
+
+        with self.subTest("Get all logs"):
+            self.assertEqual(logs, task.get_all_logs(page=1, items_per_page=len(logs)))
+            self.assertEqual(
+                logs[::-1],
+                task.get_all_logs(
+                    order_by=order_by_id_desc,
+                    page=1,
+                    items_per_page=len(logs),
+                ),
+            )
+
+        with self.subTest("Filtering by all logs"):
+            self.assertEqual(
+                filtered_logs,
+                task.get_all_logs(
+                    filter_by_text=filter_by_text,
+                    page=1,
+                    items_per_page=len(logs),
+                ),
+            )
+
+        with self.subTest("Filtering by all reversed logs"):
+            self.assertEqual(
+                filtered_logs[::-1],
+                task.get_all_logs(
+                    order_by=order_by_id_desc,
+                    filter_by_text=filter_by_text,
+                    page=1,
+                    items_per_page=len(logs),
+                ),
+            )
+
+        with self.subTest("Pagination by all logs"):
+            cur_logs = logs
+
+            for page in (1, 2, 3):
+                self.assertEqual(
+                    cur_logs[(page - 1) * items_per_page : page * items_per_page],
+                    task.get_all_logs(page=page, items_per_page=items_per_page),
+                    msg=f"page#{page}",
+                )
+
+        with self.subTest("Pagination by all reversed logs"):
+            cur_logs = logs[::-1]
+
+            for page in (1, 2, 3):
+                self.assertEqual(
+                    cur_logs[(page - 1) * items_per_page : page * items_per_page],
+                    task.get_all_logs(
+                        order_by=order_by_id_desc, page=page, items_per_page=items_per_page
+                    ),
+                    msg=f"page#{page}",
+                )
+
+        with self.subTest("Filtering and pagination"):
+            cur_logs = filtered_logs
+
+            for page in (1, 2, 3):
+                self.assertEqual(
+                    cur_logs[(page - 1) * items_per_page: page * items_per_page],
+                    task.get_all_logs(filter_by_text=filter_by_text, page=page, items_per_page=items_per_page),
+                    msg=f"page#{page}",
+                )
+
+        with self.subTest("Filtering and pagination by reversed logs"):
+            cur_logs = filtered_logs[::-1]
+
+            for page in (1, 2, 3):
+                self.assertEqual(
+                    cur_logs[(page - 1) * items_per_page : page * items_per_page],
+                    task.get_all_logs(filter_by_text=filter_by_text, order_by=order_by_id_desc, page=page, items_per_page=items_per_page),
+                    msg=f"page#{page}",
+                )
+
 
 class TestTaskRun(BaseTestCaseDb):
     def test_get_by_seq(self):

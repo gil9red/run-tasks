@@ -15,6 +15,7 @@ from jinja2.sandbox import SandboxedEnvironment
 # pip install peewee
 from peewee import (
     Model,
+    Field,
     TextField,
     ForeignKeyField,
     DateTimeField,
@@ -327,17 +328,16 @@ class Task(BaseModel):
         items = self.get_runs_by([TaskRunStatusEnum.RUNNING])
         return items[0] if items else None
 
-    # TODO: фильтрация? like работает с кириллицей?
-    # TODO: в тесты
     def get_all_logs(
         self,
         filter_by_text: str | None = None,
+        order_by: Field | None = None,  # NOTE: Ожидается поле TaskRunLog
         page: int = 1,
         items_per_page: int = 10,
     ) -> list["TaskRunLog"]:
         filters = [
             TaskRunLog.task_run.in_(
-                TaskRun.select(TaskRun.id).where(TaskRun.task == self)
+                TaskRun.select().where(TaskRun.task == self)
             ),
         ]
         if filter_by_text:
@@ -346,6 +346,8 @@ class Task(BaseModel):
             )
 
         query = TaskRunLog.select().where(*filters)
+        if order_by:
+            query = query.order_by(order_by)
         query = query.paginate(page, items_per_page)
 
         return list(query)
