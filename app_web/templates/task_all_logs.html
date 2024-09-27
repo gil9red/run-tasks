@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Все логи запусков задачи "{{ task.name }}"
+{% endblock %}
+
+{% block header %}
+    <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
+    <li class="breadcrumb-item"><a href="/task/{{ task.id }}">{{ task.name }}</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Все логи запусков</li>
+{% endblock %}
+
+{% block content %}
+
+<!-- TODO: -->
+<h3>Все логи</h3>
+
+<table id="table-task-all-logs" class="table"></table>
+
+<script>
+    const TASK_ID = {{ task.id }};
+</script>
+<!-- TODO: -->
+<script src="{{ url_for('static', filename='js/task_all_logs.js') }}"></script>
+{% endblock %}

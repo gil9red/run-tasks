@@ -104,6 +104,15 @@ def task_update(task_id: int) -> str:
     )
 
 
+@app.route("/task/<int:task_id>/logs")
+def task_logs(task_id: int) -> str:
+    return render_template(
+        "task_all_logs.html",
+        title=PROJECT_NAME,
+        task=get_task(task_id),
+    )
+
+
 @app.route("/task/<int:task_id>/run/last")
 def task_run_last(task_id: int) -> str:
     task_run_seq = get_task(task_id).last_started_run_seq

@@ -90,6 +90,23 @@ def task_update(task_id: int) -> Response:
     )
 
 
+@api_bp.route("/task/<int:task_id>/logs")
+def task_logs(task_id: int) -> Response:
+    task: Task = get_task(task_id)
+
+    # TODO: Нужно будет анализировать данные фильтрации, сортировки и пагинации
+    # data: dict[str, Any] = request.json
+
+    return jsonify(
+        [
+            obj.to_dict()
+            for obj in task.get_all_logs(
+                items_per_page=999_999_999  # TODO: Временное решение для возврата всех записей
+            )
+        ]
+    )
+
+
 @api_bp.route("/task/<int:task_id>/delete", methods=["DELETE"])
 def task_delete(task_id: int) -> Response:
     task: Task = get_task(task_id)
