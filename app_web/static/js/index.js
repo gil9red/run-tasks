@@ -68,6 +68,17 @@ function actions_task_render(data, type, row, meta) {
     }
     tags.push(
         `
+        <a
+                class="icon-link"
+                href="/task/${row.id}/logs"
+                title="Страница всех логов"
+        >
+            <i class="bi bi-journal-text"></i>
+        </a>
+        `
+    );
+    tags.push(
+        `
         <button
                 class="btn text-danger p-0"
                 title="Удалить"
