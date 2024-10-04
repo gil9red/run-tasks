@@ -879,11 +879,24 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json["status"], "error")
 
-        with self.subTest(msg="OK"):
+        with self.subTest(msg="Default"):
             now: datetime = datetime.now()
 
             for cron in ["* * * * *", "0 * * * *"]:
                 rs = self.client.get(uri, query_string=dict(cron=cron))
                 self.assertEqual(rs.status_code, 200)
+                for obj in rs.json["result"]:
+                    self.assertGreater(datetime.fromisoformat(obj["date"]), now)
+
+        with self.subTest(msg="Define number"):
+            now: datetime = datetime.now()
+            number: int = 10
+
+            for cron in ["* * * * *", "0 * * * *"]:
+                rs = self.client.get(uri, query_string=dict(cron=cron, number=number))
+                self.assertEqual(rs.status_code, 200)
+
+                self.assertEqual(len(rs.json["result"]), number)
+
                 for obj in rs.json["result"]:
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)

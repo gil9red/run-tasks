@@ -295,12 +295,13 @@ def cron_get_next_dates() -> Response:
         raise BadRequest('Отсутствует параметр "cron"')
 
     cron: str = request.args["cron"]
+    number: int = int(request.args.get("number", 5))
 
     status = StatusEnum.OK
     text = None
     try:
         it = get_scheduled_date_generator(cron)
-        result = [dict(date=next(it)) for _ in range(5)]
+        result = [dict(date=next(it)) for _ in range(number)]
     except Exception:
         status = StatusEnum.ERROR
         text = "Неправильный формат"

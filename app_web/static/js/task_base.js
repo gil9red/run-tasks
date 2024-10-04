@@ -15,6 +15,7 @@ function process_cron() {
         method: "GET",
         data: {
             cron: cron,
+            number: 7,
         },
         contentType: "application/json; charset=utf-8",
         dataType: "json",  // Тип данных загружаемых с сервера
