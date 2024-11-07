@@ -1,0 +1,14 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='libs/textarea-line-numbers/tln.min.css') }}">
+<style>
+    .tln-active {
+        background-color: var(--bs-body-bg);
+        border: var(--bs-border-width) solid var(--bs-border-color);
+    }
+    div:has(> .tln-active) {
+        height: 150px;
+    }
+</style>
+<script src="{{ url_for('static', filename='libs/textarea-line-numbers/tln.min.js') }}"></script>
+<script>
+    TLN.append_line_numbers("command");
+</script>

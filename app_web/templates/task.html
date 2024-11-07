@@ -81,13 +81,14 @@
 
     <div class="mb-3">
         <label for="command" class="form-label">Команда</label>
-        <textarea
-                class="form-control font-monospace"
-                id="command"
-                rows="3"
-                name="command"
-                disabled
-        >{% if task.command %}{{ task.command | e }}{% endif %}</textarea>
+        <div>
+            <textarea
+                    id="command"
+                    class="form-control"
+                    name="command"
+                    readonly
+            >{% if task.command %}{{ task.command | e }}{% endif %}</textarea>
+        </div>
     </div>
 
     <div>
@@ -175,6 +176,8 @@
     {% endif %}
 </div>
 
+{% include 'textarea-line-numbers/fragment.html' %}
+
 <!-- TODO: -->
 <h3>Запуски</h3>
 
@@ -184,6 +187,7 @@
     const TASK_ID = {{ task.id }};
     const TASK_LAST_WORK_STATUS = "{{ task.last_work_status }}";
 </script>
+
 <script src="{{ url_for('static', filename='js/task_base.js') }}"></script>
 <script src="{{ url_for('static', filename='js/task.js') }}"></script>
 {% endblock %}

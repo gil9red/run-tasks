@@ -211,13 +211,14 @@
     </div>
     <div class="mb-3">
         <label for="command" class="form-label">Команда</label>
-        <textarea
-                class="form-control font-monospace"
-                id="command"
-                rows="3"
-                name="command"
-                required
-        >{% if is_mode_edit and task.command %}{{ task.command | e }}{% endif %}</textarea>
+        <div>
+            <textarea
+                    id="command"
+                    class="form-control"
+                    name="command"
+                    required
+            >{% if is_mode_edit and task.command %}{{ task.command | e }}{% endif %}</textarea>
+        </div>
     </div>
     <div class="pb-2 sticky-bottom">
         <button
@@ -245,6 +246,8 @@
         </a>
     </div>
 </form>
+
+{% include 'textarea-line-numbers/fragment.html' %}
 
 <script src="{{ url_for('static', filename='js/task_base.js') }}"></script>
 <script src="{{ url_for('static', filename='js/task_create_or_update.js') }}"></script>
