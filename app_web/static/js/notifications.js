@@ -112,7 +112,7 @@ $(function() {
 
     new DataTable('#table-notifications', {
         ajax: {
-            url: `/api/notifications`,
+            url: '/api/notifications',
             dataSrc: '',
         },
         rowId: 'id',
