@@ -125,7 +125,8 @@ $(function() {
                 width: '0px',
             },
             { data: 'id', title: 'Ид.', }, // TODO: Спрятать?
-            { data: 'task_run', title: 'Ид. запуска', }, // TODO: Спрятать? Заполнять ссылку на запуск (брать task_run_seq)?
+            { data: 'task_run.id', title: 'Ид. запуска', }, // TODO: Спрятать? Заполнять ссылку на запуск (брать task_run_seq)?
+            { data: 'task_run.seq', title: 'Номер запуска', },
             { data: 'name', title: 'Название', },
             { data: 'text', title: 'Текст', },
             { data: 'kind', title: 'Тип', render: kind_render, },

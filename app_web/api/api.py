@@ -209,9 +209,18 @@ def task_run_logs_last(task_id: int) -> Response:
 
 @api_bp.route("/notifications")
 def notifications() -> Response:
-    return jsonify(
-        [obj.to_dict() for obj in Notification.select().order_by(Notification.id)]
-    )
+    items: list[dict[str, Any]] = []
+
+    for obj in Notification.select().order_by(Notification.id):
+        data: dict[str, Any] = obj.to_dict()
+
+        # Добавление task_run как объект, а не идентификатор
+        if obj.task_run:
+            data["task_run"] = obj.task_run.to_dict()
+
+        items.append(data)
+
+    return jsonify(items)
 
 
 @api_bp.route("/notification/create", methods=["POST"])
