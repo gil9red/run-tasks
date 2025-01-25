@@ -1,14 +1,23 @@
-<link rel="stylesheet" href="{{ url_for('static', filename='libs/textarea-line-numbers/tln.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='libs/codemirror-6.65.7/codemirror.min.css') }}">
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/codemirror.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='libs/codemirror-6.65.7/darcula.min.css') }}">
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/shell.min.js') }}"></script>
+
 <style>
-    .tln-active {
-        background-color: var(--bs-body-bg);
-        border: var(--bs-border-width) solid var(--bs-border-color);
-    }
-    div:has(> .tln-active) {
+    .CodeMirror {
         height: 150px;
     }
 </style>
-<script src="{{ url_for('static', filename='libs/textarea-line-numbers/tln.min.js') }}"></script>
 <script>
-    TLN.append_line_numbers("command");
+    const el = document.getElementById("command");
+    CodeMirror.fromTextArea(
+        el,
+        {
+            lineNumbers: true,
+            mode: "shell",
+            theme: "darcula",
+            readOnly: el.attributes.readonly != null,
+            minLines: 5,
+        },
+    );
 </script>
