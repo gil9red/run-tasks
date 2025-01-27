@@ -2,22 +2,84 @@
 <script src="{{ url_for('static', filename='libs/codemirror-6.65.7/codemirror.min.js') }}"></script>
 <link rel="stylesheet" href="{{ url_for('static', filename='libs/codemirror-6.65.7/darcula.min.css') }}">
 <script src="{{ url_for('static', filename='libs/codemirror-6.65.7/shell.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='libs/codemirror-6.65.7/lint.min.css') }}">
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/active-line.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/css.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/htmlmixed.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/javascript.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/lint.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/xml.min.js') }}"></script>
 
 <style>
     .CodeMirror {
         height: 150px;
     }
+    /* Удаление подчеркивания из темы */
+    .cm-s-darcula span.cm-tag {
+        text-decoration: none;
+    }
 </style>
 <script>
-    const el = document.getElementById("command");
-    CodeMirror.fromTextArea(
-        el,
-        {
+    function get_editor_properties(el) {
+        return {
+            gutters: ["CodeMirror-lint-markers"],
+            styleActiveLine: true,
             lineNumbers: true,
-            mode: "shell",
+            lineWrapping: true,
             theme: "darcula",
-            readOnly: el.attributes.readonly != null,
-            minLines: 5,
+            readOnly: el.attributes.readonly != null ? "nocursor" : false,
+        };
+    }
+
+    const descriptionEl = document.querySelector("textarea#description");
+    const $description_preview = $("#description-preview");
+    if (descriptionEl != null) {
+        let editor = CodeMirror.fromTextArea(
+            descriptionEl,
+            {
+                ...get_editor_properties(descriptionEl),
+                mode: "htmlmixed",
+            }
+        );
+        editor.on(
+            "change",
+            (instance , changeObj) => {
+                $description_preview.html(instance.getValue());
+            },
+        );
+    }
+
+    const commandEl = document.querySelector("textarea#command");
+
+    // NOTE: Для проверки required
+    let validationMessage = ""
+    const codeMirror = CodeMirror.fromTextArea(
+        commandEl,
+        {
+            ...get_editor_properties(commandEl),
+            mode: "shell",
+            lint: () => {
+                const found = []
+                if (validationMessage) {
+                    found.push({
+                        from: CodeMirror.Pos(0),
+                        to: CodeMirror.Pos(0),
+                        message: validationMessage,
+                    });
+                }
+                return found;
+            },
         },
     );
+
+    commandEl.addEventListener("invalid", (e) => {
+        // This will prevent the "An invalid form control with name='<name>' is not focusable." error
+        e.preventDefault();
+        validationMessage = commandEl.validationMessage;
+        codeMirror.performLint();
+    });
+    codeMirror.on("change", () => {
+        validationMessage = "";
+        codeMirror.save();
+    });
 </script>
