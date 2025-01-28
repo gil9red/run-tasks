@@ -9,6 +9,12 @@
 <script src="{{ url_for('static', filename='libs/codemirror-6.65.7/javascript.min.js') }}"></script>
 <script src="{{ url_for('static', filename='libs/codemirror-6.65.7/lint.min.js') }}"></script>
 <script src="{{ url_for('static', filename='libs/codemirror-6.65.7/xml.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='libs/codemirror-6.65.7/show-hint.min.css') }}">
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/show-hint.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/css-hint.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/html-hint.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/javascript-hint.min.js') }}"></script>
+<script src="{{ url_for('static', filename='libs/codemirror-6.65.7/xml-hint.min.js') }}"></script>
 
 <style>
     .CodeMirror {
@@ -39,6 +45,7 @@
             {
                 ...get_editor_properties(descriptionEl),
                 mode: "htmlmixed",
+                extraKeys: {"Ctrl-Space": "autocomplete"},
             }
         );
         editor.on(
