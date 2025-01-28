@@ -17,7 +17,7 @@ String.prototype.format = function () {
 LANG_DATATABLES = {
     "processing": "Подождите...",
     "search": "Поиск:",
-    "lengthMenu": "Показать _MENU_ записей",
+    "lengthMenu": "Показать _MENU_",
     "info": "Записи с _START_ до _END_ из _TOTAL_ записей",
     "infoEmpty": "Записи с 0 до 0 из 0 записей",
     "infoFiltered": "(отфильтровано из _MAX_ записей)",
@@ -301,6 +301,10 @@ function get_state_key(settings) {
 
 
 COMMON_PROPS_DATA_TABLE = {
+    lengthMenu: [
+        [10, 25, 50, -1],
+        ["10 записей", "25 записей", "50 записей", "Все записи"]
+    ],
     stateSave: true,
     stateDuration: 0, // Без ограничения срока хранения
     stateSaveCallback: function (settings, data) {
