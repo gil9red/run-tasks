@@ -305,6 +305,7 @@ COMMON_PROPS_DATA_TABLE = {
         [10, 25, 50, -1],
         ["10 записей", "25 записей", "50 записей", "Все записи"]
     ],
+    colReorder: true,
     stateSave: true,
     stateDuration: 0, // Без ограничения срока хранения
     stateSaveCallback: function (settings, data) {
