@@ -7,3 +7,7 @@
 .icon-link-hover {
     --bs-icon-link-transform: translate3d(0, -.125rem, 0);
 }
+
+.form-check.form-switch > * {
+    cursor: pointer;
+}
