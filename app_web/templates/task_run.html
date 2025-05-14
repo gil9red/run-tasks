@@ -81,7 +81,7 @@
             class="form-control font-monospace"
             id="command"
             rows="3"
-            disabled
+            readonly
     >{% if task_run.command %}{{ task_run.command | e }}{% endif %}</textarea>
 </div>
 
@@ -198,6 +198,8 @@
 </div>
 
 <table id="table-task-run-logs" class="table"></table>
+
+{% include 'textarea-line-numbers/fragment.html' %}
 
 <script>
     window.PATTERN = {
