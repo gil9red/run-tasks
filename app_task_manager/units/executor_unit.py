@@ -14,12 +14,12 @@ from db import Task
 
 
 class ExecutorUnit(BaseUnit):
-    def __init__(self, owner: "TaskManager", encoding: str = ENCODING):
+    def __init__(self, owner: "TaskManager"):
         super().__init__(owner)
 
-        self._process_iter_delay_secs = 1
+        self._process_iter_delay_secs: int = 1
 
-        self.encoding = encoding
+        self.encoding: str = owner.encoding
         self.timeout_on_stopping_secs: int = 5
         self.tasks: dict[str, TaskThread] = dict()
 

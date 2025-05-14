@@ -44,7 +44,7 @@ class TaskManager:
         self.units: list[BaseUnit] = [
             MaintenanceUnit(owner=self),
             SchedulerUnit(owner=self),
-            ExecutorUnit(owner=self, encoding=self.encoding),
+            ExecutorUnit(owner=self),
             NotificationUnit(owner=self),
         ]
 
