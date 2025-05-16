@@ -22,6 +22,7 @@ from peewee import (
     BooleanField,
     CharField,
     IntegerField,
+    DoesNotExist,
 )
 from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
@@ -391,6 +392,20 @@ class TaskRun(BaseModel):
             return TaskRunWorkStatusEnum.SUCCESSFUL
 
         return TaskRunWorkStatusEnum.FAILED
+
+    @property
+    def prev_task_run(self) -> Self | None:
+        try:
+            return self.get_by_seq(self.task.id, self.seq - 1)
+        except DoesNotExist:
+            return
+
+    @property
+    def next_task_run(self) -> Self | None:
+        try:
+            return self.get_by_seq(self.task.id, self.seq + 1)
+        except DoesNotExist:
+            return
 
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(

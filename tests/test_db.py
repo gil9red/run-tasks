@@ -845,6 +845,76 @@ class TestTaskRun(BaseTestCaseDb):
             run.set_status(TaskRunStatusEnum.UNKNOWN)
             run.set_status(TaskRunStatusEnum.ERROR)
 
+    def test_prev_task_run(self):
+        task = Task.add(name="*", command="*")
+
+        run_1 = task.add_or_get_run()
+        run_1.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_2 = task.add_or_get_run()
+        run_2.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_3 = task.add_or_get_run()
+        run_3.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_4 = task.add_or_get_run()
+        run_4.set_status(TaskRunStatusEnum.STOPPED)
+
+        self.assertIsNone(run_1.prev_task_run)
+
+        self.assertIsNone(run_2.prev_task_run.prev_task_run)
+        self.assertEqual(run_2.prev_task_run, run_1)
+
+        self.assertIsNone(run_3.prev_task_run.prev_task_run.prev_task_run)
+        self.assertEqual(run_3.prev_task_run, run_2)
+
+        self.assertIsNone(run_4.prev_task_run.prev_task_run.prev_task_run.prev_task_run)
+        self.assertEqual(run_4.prev_task_run, run_3)
+
+        run_1.delete_instance()
+        self.assertIsNone(run_2.prev_task_run)
+
+        run_2.delete_instance()
+        self.assertIsNone(run_3.prev_task_run)
+
+        self.assertEqual(run_4.prev_task_run, run_3)
+        self.assertIsNone(run_4.prev_task_run.prev_task_run)
+
+    def test_next_task_run(self):
+        task = Task.add(name="*", command="*")
+
+        run_1 = task.add_or_get_run()
+        run_1.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_2 = task.add_or_get_run()
+        run_2.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_3 = task.add_or_get_run()
+        run_3.set_status(TaskRunStatusEnum.STOPPED)
+
+        run_4 = task.add_or_get_run()
+        run_4.set_status(TaskRunStatusEnum.STOPPED)
+
+        self.assertIsNone(run_4.next_task_run)
+
+        self.assertIsNone(run_3.next_task_run.next_task_run)
+        self.assertEqual(run_3.next_task_run, run_4)
+
+        self.assertIsNone(run_2.next_task_run.next_task_run.next_task_run)
+        self.assertEqual(run_2.next_task_run, run_3)
+
+        self.assertIsNone(run_1.next_task_run.next_task_run.next_task_run.next_task_run)
+        self.assertEqual(run_1.next_task_run, run_2)
+
+        run_4.delete_instance()
+        self.assertIsNone(run_4.next_task_run)
+
+        run_3.delete_instance()
+        self.assertIsNone(run_2.next_task_run)
+
+        self.assertEqual(run_1.next_task_run, run_2)
+        self.assertIsNone(run_1.next_task_run.next_task_run)
+
     def test_set_error(self):
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
