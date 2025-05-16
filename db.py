@@ -22,7 +22,6 @@ from peewee import (
     BooleanField,
     CharField,
     IntegerField,
-    DoesNotExist,
 )
 from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
@@ -395,17 +394,29 @@ class TaskRun(BaseModel):
 
     @property
     def prev_task_run(self) -> Self | None:
-        try:
-            return self.get_by_seq(self.task.id, self.seq - 1)
-        except DoesNotExist:
-            return
+        return (
+            self
+            .select()
+            .where(
+                TaskRun.task == self.task,
+                TaskRun.seq < self.seq
+            )
+            .order_by(TaskRun.seq.desc())
+            .first()
+        )
 
     @property
     def next_task_run(self) -> Self | None:
-        try:
-            return self.get_by_seq(self.task.id, self.seq + 1)
-        except DoesNotExist:
-            return
+        return (
+            self
+            .select()
+            .where(
+                TaskRun.task == self.task,
+                TaskRun.seq > self.seq
+            )
+            .order_by(TaskRun.seq.asc())
+            .first()
+        )
 
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(
