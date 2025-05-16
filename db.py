@@ -170,21 +170,14 @@ class Task(BaseModel):
 
     def get_last_started_run(self) -> Optional["TaskRun"]:
         return (
-            self
-            .runs
-            .where(TaskRun.status != TaskRunStatusEnum.PENDING)
+            self.runs.where(TaskRun.status != TaskRunStatusEnum.PENDING)
             .order_by(TaskRun.id.desc())
             .first()
         )
 
     # TODO: единая логика с get_last_started_run. Добавить параметр фильтра
     def get_last_run(self) -> Optional["TaskRun"]:
-        return (
-            self
-            .runs
-            .order_by(TaskRun.id.desc())
-            .first()
-        )
+        return self.runs.order_by(TaskRun.id.desc()).first()
 
     @hybrid_property
     def last_started_run_seq(self) -> int | None:
@@ -336,14 +329,10 @@ class Task(BaseModel):
         items_per_page: int = 10,
     ) -> list["TaskRunLog"]:
         filters = [
-            TaskRunLog.task_run.in_(
-                TaskRun.select().where(TaskRun.task == self)
-            ),
+            TaskRunLog.task_run.in_(TaskRun.select().where(TaskRun.task == self)),
         ]
         if filter_by_text:
-            filters.append(
-                TaskRunLog.text.ilike(f"%{filter_by_text}%")
-            )
+            filters.append(TaskRunLog.text.ilike(f"%{filter_by_text}%"))
 
         query = TaskRunLog.select().where(*filters)
         if order_by:
@@ -374,7 +363,9 @@ class TaskRun(BaseModel):
 
     @hybrid_property
     def is_success(self) -> bool:
-        return self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
+        return (
+            self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
+        )
 
     @hybrid_property
     def work_status(self) -> TaskRunWorkStatusEnum:
@@ -395,12 +386,8 @@ class TaskRun(BaseModel):
     @property
     def prev_task_run(self) -> Self | None:
         return (
-            self
-            .select()
-            .where(
-                TaskRun.task == self.task,
-                TaskRun.seq < self.seq
-            )
+            self.select()
+            .where(TaskRun.task == self.task, TaskRun.seq < self.seq)
             .order_by(TaskRun.seq.desc())
             .first()
         )
@@ -408,12 +395,8 @@ class TaskRun(BaseModel):
     @property
     def next_task_run(self) -> Self | None:
         return (
-            self
-            .select()
-            .where(
-                TaskRun.task == self.task,
-                TaskRun.seq > self.seq
-            )
+            self.select()
+            .where(TaskRun.task == self.task, TaskRun.seq > self.seq)
             .order_by(TaskRun.seq.asc())
             .first()
         )
@@ -459,7 +442,10 @@ class TaskRun(BaseModel):
                 self.start_date = datetime.now()
 
             case TaskRunStatusEnum.STOPPED:
-                if self.status not in [TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]:
+                if self.status not in [
+                    TaskRunStatusEnum.PENDING,
+                    TaskRunStatusEnum.RUNNING,
+                ]:
                     raise_about_bad_status()
 
             case TaskRunStatusEnum.FINISHED:
@@ -549,7 +535,9 @@ class TaskRunLog(BaseModel):
 
 
 class Notification(BaseModel):
-    task_run = ForeignKeyField(TaskRun, null=True, on_delete="CASCADE", backref="notifications")
+    task_run = ForeignKeyField(
+        TaskRun, null=True, on_delete="CASCADE", backref="notifications"
+    )
     name = TextField()
     text = TextField()
     kind = EnumField(choices=NotificationKindEnum)
@@ -579,8 +567,7 @@ class Notification(BaseModel):
         """
 
         return list(
-            cls
-            .select()
+            cls.select()
             .where(
                 cls.sending_date.is_null(True),
                 cls.canceling_date.is_null(True),

@@ -175,7 +175,7 @@ class TestTask(BaseTestCaseDb):
 
         with self.subTest(msg="Тест description with html"):
             description = (
-                'Скрипт для уведомления о завершенных ранобе в '
+                "Скрипт для уведомления о завершенных ранобе в "
                 '<a href="https://ranobehub.org/">https://ranobehub.org/</a>.'
             )
             task = Task.add(
@@ -250,7 +250,8 @@ class TestTask(BaseTestCaseDb):
         self.assertIsNone(task_run_2)
         task_run_2 = task.add_or_get_run(scheduled_date)
         self.assertEqual(
-            task_run_2, task.get_pending_run(has_scheduled_date=scheduled_date is not None)
+            task_run_2,
+            task.get_pending_run(has_scheduled_date=scheduled_date is not None),
         )
 
     def test_add_or_get_run(self):
@@ -289,7 +290,7 @@ class TestTask(BaseTestCaseDb):
             task_run.set_status(TaskRunStatusEnum.STOPPED)
 
         with self.subTest(
-                msg="Проверка ограничения количества TaskRun по has_scheduled_date"
+            msg="Проверка ограничения количества TaskRun по has_scheduled_date"
         ):
             task_run_1 = task.add_or_get_run()
             self.assertIsNotNone(task_run_1)
@@ -536,7 +537,9 @@ class TestTask(BaseTestCaseDb):
                 self.assertEqual(
                     cur_logs[(page - 1) * items_per_page : page * items_per_page],
                     task.get_all_logs(
-                        order_by=order_by_id_desc, page=page, items_per_page=items_per_page
+                        order_by=order_by_id_desc,
+                        page=page,
+                        items_per_page=items_per_page,
                     ),
                     msg=f"page#{page}",
                 )
@@ -546,8 +549,12 @@ class TestTask(BaseTestCaseDb):
 
             for page in (1, 2, 3):
                 self.assertEqual(
-                    cur_logs[(page - 1) * items_per_page: page * items_per_page],
-                    task.get_all_logs(filter_by_text=filter_by_text, page=page, items_per_page=items_per_page),
+                    cur_logs[(page - 1) * items_per_page : page * items_per_page],
+                    task.get_all_logs(
+                        filter_by_text=filter_by_text,
+                        page=page,
+                        items_per_page=items_per_page,
+                    ),
                     msg=f"page#{page}",
                 )
 
@@ -557,7 +564,12 @@ class TestTask(BaseTestCaseDb):
             for page in (1, 2, 3):
                 self.assertEqual(
                     cur_logs[(page - 1) * items_per_page : page * items_per_page],
-                    task.get_all_logs(filter_by_text=filter_by_text, order_by=order_by_id_desc, page=page, items_per_page=items_per_page),
+                    task.get_all_logs(
+                        filter_by_text=filter_by_text,
+                        order_by=order_by_id_desc,
+                        page=page,
+                        items_per_page=items_per_page,
+                    ),
                     msg=f"page#{page}",
                 )
 
@@ -875,7 +887,9 @@ class TestTaskRun(BaseTestCaseDb):
             self.assertIsNone(run_3.prev_task_run.prev_task_run.prev_task_run)
             self.assertEqual(run_3.prev_task_run, run_2)
 
-            self.assertIsNone(run_4.prev_task_run.prev_task_run.prev_task_run.prev_task_run)
+            self.assertIsNone(
+                run_4.prev_task_run.prev_task_run.prev_task_run.prev_task_run
+            )
             self.assertEqual(run_4.prev_task_run, run_3)
 
         with self.subTest("Case 2"):
@@ -914,7 +928,9 @@ class TestTaskRun(BaseTestCaseDb):
             self.assertIsNone(run_2.next_task_run.next_task_run.next_task_run)
             self.assertEqual(run_2.next_task_run, run_3)
 
-            self.assertIsNone(run_1.next_task_run.next_task_run.next_task_run.next_task_run)
+            self.assertIsNone(
+                run_1.next_task_run.next_task_run.next_task_run.next_task_run
+            )
             self.assertEqual(run_1.next_task_run, run_2)
 
         with self.subTest("Case 2"):
@@ -1272,7 +1288,9 @@ class TestNotification(BaseTestCaseDb):
             text="text",
             kind=NotificationKindEnum.EMAIL,
         )
-        self.assertEqual(Notification.get_unsent(), [notification_tg, notification_email_2])
+        self.assertEqual(
+            Notification.get_unsent(), [notification_tg, notification_email_2]
+        )
 
         notification_email_2.cancel()
         self.assertEqual(Notification.get_unsent(), [notification_tg])
