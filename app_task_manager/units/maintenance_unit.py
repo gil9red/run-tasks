@@ -6,6 +6,7 @@ __author__ = "ipetrash"
 
 from datetime import datetime, timedelta
 
+from peewee import fn
 from psutil import Process, NoSuchProcess, AccessDenied
 
 from app_task_manager.config import STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS
@@ -79,7 +80,7 @@ class MaintenanceUnit(BaseUnit):
             TaskRun.status.not_in(
                 [TaskRunStatusEnum.PENDING, TaskRunStatusEnum.RUNNING]
             ),
-            TaskRun.finish_date < date,
+            fn.COALESCE(TaskRun.finish_date, TaskRun.create_date) < date,
         ):
             try:
                 self.log_info(f"Удаление запуска {run}")
