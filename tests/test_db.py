@@ -370,6 +370,17 @@ class TestTask(BaseTestCaseDb):
 
         self.assertEqual(len(items), task.number_of_runs)
 
+        # Удаление первых 3 запусков
+        for run in items[:3]:
+            run.delete_instance()
+
+        self.assertEqual(5, task.number_of_runs)
+
+        run = task.add_or_get_run()
+        self.assertEqual(TaskRunStatusEnum.PENDING, run.status)
+        # PENDING не считаются
+        self.assertEqual(5, task.number_of_runs)
+
     def test_get_last_started_run(self):
         task = Task.add(name="*", command="*")
         self.assertIsNone(task.get_last_started_run())
