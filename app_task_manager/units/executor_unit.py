@@ -7,7 +7,6 @@ __author__ = "ipetrash"
 import time
 from datetime import datetime, timedelta
 
-from app_task_manager.config import ENCODING
 from app_task_manager.units.base_unit import BaseUnit
 from app_task_manager.utils import TaskThread
 from db import Task
