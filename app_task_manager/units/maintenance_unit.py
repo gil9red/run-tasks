@@ -16,12 +16,12 @@ from db import TaskRun, TaskRunStatusEnum
 
 
 class MaintenanceUnit(BaseUnit):
-    def __init__(self, owner: "TaskManager"):
+    def __init__(self, owner: "TaskManager") -> None:
         super().__init__(owner)
 
         self._process_iter_delay_secs = 60
 
-    def __processing_hanging_runs(self):
+    def __processing_hanging_runs(self) -> None:
         # Текущие запущенные задачи в менеджере
         task_runs: list[TaskRun] = self.owner.get_current_task_runs()
 
@@ -73,7 +73,7 @@ class MaintenanceUnit(BaseUnit):
             )
             run.set_status(status)
 
-    def __removing_old_runs(self):
+    def __removing_old_runs(self) -> None:
         date = datetime.now() - timedelta(days=STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS)
 
         for run in TaskRun.select().where(
@@ -88,6 +88,6 @@ class MaintenanceUnit(BaseUnit):
             except Exception as e:
                 self.log_exception(f"Ошибка при удалении запуска {run}:", e)
 
-    def process(self):
+    def process(self) -> None:
         self.__processing_hanging_runs()
         self.__removing_old_runs()

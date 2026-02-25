@@ -12,7 +12,7 @@ from root_common import get_scheduled_date_generator
 
 
 class SchedulerUnit(BaseUnit):
-    def __init__(self, owner: "TaskManager"):
+    def __init__(self, owner: "TaskManager") -> None:
         super().__init__(owner)
 
         self._process_iter_delay_secs = 5
@@ -23,7 +23,7 @@ class SchedulerUnit(BaseUnit):
             get_scheduled_date_generator(cron)
         )
 
-    def process(self):
+    def process(self) -> None:
         for task in Task.select().where(Task.is_enabled == True):
             if task.is_infinite and not task.get_runs_by(
                 [TaskRunStatusEnum.RUNNING]

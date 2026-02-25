@@ -15,13 +15,13 @@ from app_task_manager.external_task_storage.main import process
 
 
 class TestSchedulerUnit(TestCase):
-    def test__get_scheduled_date(self):
+    def test__get_scheduled_date(self) -> None:
         self.assertGreater(SchedulerUnit._get_scheduled_date("* * * * *"), datetime.now())
         self.assertGreater(SchedulerUnit._get_scheduled_date("0 * * * *"), datetime.now())
 
 
 class TestRemoteUpdateCreateTasks(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = BaseModel.get_inherited_models()
         self.test_db = SqliteExtDatabase(
             ":memory:",
@@ -33,7 +33,7 @@ class TestRemoteUpdateCreateTasks(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
-    def test_process(self):
+    def test_process(self) -> None:
         self.assertEqual(0, Task.count())
 
         def _create_data(

@@ -14,7 +14,7 @@ from db import Task
 
 
 class ExecutorUnit(BaseUnit):
-    def __init__(self, owner: "TaskManager"):
+    def __init__(self, owner: "TaskManager") -> None:
         super().__init__(owner)
 
         self._process_iter_delay_secs: int = 1
@@ -33,12 +33,12 @@ class ExecutorUnit(BaseUnit):
 
         return task_thread
 
-    def before_process(self):
+    def before_process(self) -> None:
         super().before_process()
 
         self.log_info("Запуск всех задач из базы")
 
-    def process(self):
+    def process(self) -> None:
         for task in Task.select().where(Task.is_enabled == True):
             name = task.name
             if name not in self.tasks:
@@ -50,7 +50,7 @@ class ExecutorUnit(BaseUnit):
                 self.log_info(f"Удаление потока задачи #{task.id} {name!r}")
                 self.tasks.pop(name)
 
-    def stop(self):
+    def stop(self) -> None:
         super().stop()
 
         for t in list(self.tasks.values()):

@@ -25,7 +25,7 @@ from app_web.main import app
 
 class TestBaseAppWeb(TestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUpClass(cls) -> None:
         app.testing = True
         cls.client = app.test_client()
 
@@ -38,10 +38,10 @@ class TestBaseAppWeb(TestCase):
         assert rs.status_code == 200
 
     @classmethod
-    def tearDownClass(cls):
+    def tearDownClass(cls) -> None:
         cls.client.get("/logout")
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = BaseModel.get_inherited_models()
         self.test_db = SqliteExtDatabase(
             ":memory:",
@@ -55,13 +55,13 @@ class TestBaseAppWeb(TestCase):
 
 
 class TestAppWeb(TestBaseAppWeb):
-    def test_index(self):
+    def test_index(self) -> None:
         uri: str = "/"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_task(self):
+    def test_task(self) -> None:
         with self.subTest("404 - Not Found"):
             rs = self.client.get("/task/99999")
             self.assertEqual(rs.status_code, 404)
@@ -76,13 +76,13 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
-    def test_task_create(self):
+    def test_task_create(self) -> None:
         uri: str = "/task/create"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_task_update(self):
+    def test_task_update(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/update"
             rs = self.client.get(uri)
@@ -98,7 +98,7 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
-    def test_task_run_last(self):
+    def test_task_run_last(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/last"
             rs = self.client.get(uri)
@@ -132,7 +132,7 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
-    def test_task_run(self):
+    def test_task_run(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
             rs = self.client.get(uri)
@@ -157,19 +157,19 @@ class TestAppWeb(TestBaseAppWeb):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
 
-    def test_notifications(self):
+    def test_notifications(self) -> None:
         uri: str = "/notifications"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_favicon(self):
+    def test_favicon(self) -> None:
         uri: str = "/favicon.ico"
 
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_task_run_get_url(self):
+    def test_task_run_get_url(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         # NOTE: Полный путь не работает с тестовым клиентом
@@ -178,7 +178,7 @@ class TestAppWeb(TestBaseAppWeb):
 
 
 class TestAppApiWeb(TestBaseAppWeb):
-    def test_api_tasks(self):
+    def test_api_tasks(self) -> None:
         uri: str = "/api/tasks"
 
         rs = self.client.get(uri)
@@ -205,7 +205,7 @@ class TestAppApiWeb(TestBaseAppWeb):
         self.assertEqual(rs.status_code, 200)
         self.assertEqual(rs.json, [task_1.to_dict(), task_2.to_dict()])
 
-    def test_api_task_create(self):
+    def test_api_task_create(self) -> None:
         uri: str = "/api/task/create"
 
         data = {
@@ -240,7 +240,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
-    def test_api_task_get(self):
+    def test_api_task_get(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "api/task/99999"
             rs = self.client.get(uri)
@@ -263,7 +263,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json["result"], [task.to_dict()])
 
-    def test_api_task_update(self):
+    def test_api_task_update(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/404/update"
             rs = self.client.get(uri)
@@ -308,7 +308,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
-    def test_api_task_delete(self):
+    def test_api_task_delete(self) -> None:
         uri: str = f"/api/task/404/delete"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -336,7 +336,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertIsNone(task.get_by_name(task.name))
 
-    def test_api_task_runs(self):
+    def test_api_task_runs(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/runs"
 
@@ -377,7 +377,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 [get_common_view(obj.to_dict()) for obj in [run_1, run_2, run_3]],
             )
 
-    def test_api_task_do_run(self):
+    def test_api_task_do_run(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/do-run"
 
@@ -407,7 +407,7 @@ class TestAppApiWeb(TestBaseAppWeb):
 
             self.assertIsNotNone(task_1.get_last_run())
 
-    def test_api_task_run_get(self):
+    def test_api_task_run_get(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999"
 
@@ -454,7 +454,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 get_common_view(run_1.to_dict())
             )
 
-    def test_api_task_run_get_last(self):
+    def test_api_task_run_get_last(self) -> None:
         uri_template: str = "/api/task/{task_id}/run/last"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -503,7 +503,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 get_common_view(run_1.to_dict())
             )
 
-    def test_api_task_run_do_stop(self):
+    def test_api_task_run_do_stop(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999/do-stop"
 
@@ -544,7 +544,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             run_1 = run_1.get_new()
             self.assertEqual(run_1.status, TaskRunStatusEnum.STOPPED)
 
-    def test_api_task_run_do_send_notifications(self):
+    def test_api_task_run_do_send_notifications(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999/do-send-notifications"
 
@@ -585,7 +585,7 @@ class TestAppApiWeb(TestBaseAppWeb):
 
             self.assertNotEqual(run_1.notifications.count(), 0)
 
-    def test_api_task_run_logs(self):
+    def test_api_task_run_logs(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/run/99999/logs"
 
@@ -633,7 +633,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 [get_common_view(obj.to_dict()) for obj in items],
             )
 
-    def test_api_task_run_last_logs(self):
+    def test_api_task_run_last_logs(self) -> None:
         uri_template: str = "/api/task/{task_id}/run/last/logs"
 
         with self.subTest("404 - Not Found"):
@@ -673,7 +673,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 [get_common_view(obj.to_dict()) for obj in items],
             )
 
-    def test_api_notifications(self):
+    def test_api_notifications(self) -> None:
         uri: str = "/api/notifications"
 
         rs = self.client.get(uri)
@@ -690,7 +690,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             ],
         )
 
-    def test_api_notification_create(self):
+    def test_api_notification_create(self) -> None:
         uri: str = "/api/notification/create"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -715,7 +715,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs_data["result"][0]["kind"], data["kind"])
             self.assertEqual(rs_data["result"][0]["text"], data["text"])
 
-    def test_api_notifications_get_number_of_unsent(self):
+    def test_api_notifications_get_number_of_unsent(self) -> None:
         uri: str = "/api/notifications/get-number-of-unsent"
 
         rs = self.client.get(uri)
@@ -757,7 +757,7 @@ class TestAppApiWeb(TestBaseAppWeb):
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 0)
 
-    def test_api_notifications_all_do_stop(self):
+    def test_api_notifications_all_do_stop(self) -> None:
         uri: str = "/api/notifications/all/do-stop"
 
         self.assertEqual(0, len(Notification.get_unsent()))
@@ -809,7 +809,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 self.assertIsNotNone(obj.canceling_date)
                 self.assertIsNone(obj.sending_date)
 
-    def test_api_notification_do_stop(self):
+    def test_api_notification_do_stop(self) -> None:
         uri_format: str = "/api/notification/{id}/do-stop"
 
         with self.subTest("404 - Not Found"):
@@ -867,7 +867,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json["status"], "error")
 
-    def test_api_cron_get_next_dates(self):
+    def test_api_cron_get_next_dates(self) -> None:
         uri: str = "/api/cron/get-next-dates"
 
         with self.subTest(msg="ERROR"):

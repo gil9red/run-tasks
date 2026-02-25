@@ -21,7 +21,7 @@ from app_task_manager.units.notification_unit import NotificationUnit
 from db import TaskRun
 
 
-def log_uncaught_exceptions(ex_cls, ex, tb):
+def log_uncaught_exceptions(ex_cls, ex, tb) -> None:
     # Если было запрошено прерывание
     if isinstance(ex, KeyboardInterrupt):
         sys.exit()
@@ -38,7 +38,7 @@ sys.excepthook = log_uncaught_exceptions
 
 
 class TaskManager:
-    def __init__(self, encoding: str = ENCODING):
+    def __init__(self, encoding: str = ENCODING) -> None:
         self.encoding = encoding
 
         self.units: list[BaseUnit] = [
@@ -64,7 +64,7 @@ class TaskManager:
 
         return items
 
-    def start_all(self):
+    def start_all(self) -> None:
         if self._is_stopped:
             log.warn("Нельзя запустить задачи, когда было вызвана остановка")
             return
@@ -76,7 +76,7 @@ class TaskManager:
             atexit.register(self.stop_all)
             self._has_atexit_callback = True
 
-    def stop_all(self):
+    def stop_all(self) -> None:
         log.info("Остановка всех задач")
         self._is_stopped = True
 
@@ -85,12 +85,12 @@ class TaskManager:
 
         self._is_stopped = False
 
-    def wait_all(self):
+    def wait_all(self) -> None:
         while True:
             time.sleep(0.1)
 
 
-def main(loop: bool = False):
+def main(loop: bool = False) -> None:
     while True:
         try:
             task_manager = TaskManager()

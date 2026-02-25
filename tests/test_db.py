@@ -30,7 +30,7 @@ DATETIME_DELAY_SECS: float = 0.001
 
 
 class BaseTestCaseDb(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         self.models = BaseModel.get_inherited_models()
         self.test_db = SqliteExtDatabase(
             ":memory:",
@@ -44,7 +44,7 @@ class BaseTestCaseDb(TestCase):
 
 
 class TestTask(BaseTestCaseDb):
-    def test_get_by_name(self):
+    def test_get_by_name(self) -> None:
         self.assertIsNone(Task.get_by_name("task_1"))
 
         with self.assertRaises(NotDefinedParameterException):
@@ -59,7 +59,7 @@ class TestTask(BaseTestCaseDb):
         task_2 = Task.add(name="task_2", command="*")
         self.assertEqual(task_2, Task.get_by_name(task_2.name))
 
-    def test_get_actual_is_enabled(self):
+    def test_get_actual_is_enabled(self) -> None:
         task = Task.add(name="task_1", command="*")
         task_clone = Task.get_by_name(name=task.name)
         self.assertEqual(task.is_enabled, task_clone.is_enabled)
@@ -71,7 +71,7 @@ class TestTask(BaseTestCaseDb):
 
         self.assertEqual(task.is_enabled, task_clone.get_actual_is_enabled())
 
-    def test_set_is_enabled(self):
+    def test_set_is_enabled(self) -> None:
         task = Task.add(name="task_1", command="*")
         self.assertTrue(task.is_enabled)
 
@@ -81,7 +81,7 @@ class TestTask(BaseTestCaseDb):
         task.set_enabled(True)
         self.assertTrue(task.is_enabled)
 
-    def test_set_is_infinite(self):
+    def test_set_is_infinite(self) -> None:
         task = Task.add(name="task_1", command="*")
         self.assertFalse(task.is_infinite)
 
@@ -91,7 +91,7 @@ class TestTask(BaseTestCaseDb):
         task.set_is_infinite(False)
         self.assertFalse(task.is_infinite)
 
-    def test_set_command(self):
+    def test_set_command(self) -> None:
         name = "task command one line"
         command_one_line = "ping 127.0.0.1"
 
@@ -105,7 +105,7 @@ class TestTask(BaseTestCaseDb):
         task.set_command(command_one_line)
         self.assertEqual(task.command, command_one_line)
 
-    def test_set_description(self):
+    def test_set_description(self) -> None:
         name = "task command one line"
         command_one_line = "ping 127.0.0.1"
         description = None
@@ -122,7 +122,7 @@ class TestTask(BaseTestCaseDb):
 
         self.assertEqual(task.description, description)
 
-    def test_add(self):
+    def test_add(self) -> None:
         name = "task command one line"
         command_one_line = "ping 127.0.0.1"
         description = None
@@ -205,7 +205,7 @@ class TestTask(BaseTestCaseDb):
             )
             self.assertTrue(task.is_infinite)
 
-    def test_get_last_scheduled_run(self):
+    def test_get_last_scheduled_run(self) -> None:
         task = Task.add(name="task_1", command="*")
 
         self.assertIsNone(task.get_last_scheduled_run())
@@ -237,7 +237,7 @@ class TestTask(BaseTestCaseDb):
         self.assertIsNone(task_run_4.scheduled_date)
         self.assertIsNone(task.get_last_scheduled_run())
 
-    def test_get_pending_run(self):
+    def test_get_pending_run(self) -> None:
         task = Task.add(name="task_1", command="*")
 
         task_run_1 = task.get_pending_run()
@@ -254,7 +254,7 @@ class TestTask(BaseTestCaseDb):
             task.get_pending_run(has_scheduled_date=scheduled_date is not None),
         )
 
-    def test_add_or_get_run(self):
+    def test_add_or_get_run(self) -> None:
         task = Task.add(name="task_1", command="*")
 
         with self.subTest(msg="Общий"):
@@ -311,7 +311,7 @@ class TestTask(BaseTestCaseDb):
                 ),
             )
 
-    def test_get_runs_by(self):
+    def test_get_runs_by(self) -> None:
         task = Task.add(name="task_1", command="*")
         self.assertEqual(task.get_runs_by([]), [])
 
@@ -337,7 +337,7 @@ class TestTask(BaseTestCaseDb):
             [task_run_1, task_run_2],
         )
 
-    def test_get_current_run(self):
+    def test_get_current_run(self) -> None:
         task = Task.add(name="task_1", command="*")
         self.assertIsNone(task.get_current_run())
 
@@ -350,7 +350,7 @@ class TestTask(BaseTestCaseDb):
         run.set_status(TaskRunStatusEnum.FINISHED)
         self.assertIsNone(task.get_current_run())
 
-    def test_number_of_runs(self):
+    def test_number_of_runs(self) -> None:
         task = Task.add(name="*", command="*")
         self.assertEqual(0, task.number_of_runs)
 
@@ -381,7 +381,7 @@ class TestTask(BaseTestCaseDb):
         # PENDING не считаются
         self.assertEqual(5, task.number_of_runs)
 
-    def test_get_last_started_run(self):
+    def test_get_last_started_run(self) -> None:
         task = Task.add(name="*", command="*")
         self.assertIsNone(task.get_last_started_run())
 
@@ -409,7 +409,7 @@ class TestTask(BaseTestCaseDb):
         run4 = _check_run(run3, TaskRunStatusEnum.ERROR)
         _check_run(run4, TaskRunStatusEnum.UNKNOWN)
 
-    def test_last_started_run_seq(self):
+    def test_last_started_run_seq(self) -> None:
         task = Task.add(name="*", command="*")
         self.assertIsNone(task.last_started_run_seq)
 
@@ -428,7 +428,7 @@ class TestTask(BaseTestCaseDb):
         run1.set_status(TaskRunStatusEnum.RUNNING)
         self.assertEqual(run1.seq, task.last_started_run_seq)
 
-    def test_last_started_run_start_date(self):
+    def test_last_started_run_start_date(self) -> None:
         task = Task.add(name="*", command="*")
         self.assertIsNone(task.last_started_run_start_date)
 
@@ -449,7 +449,7 @@ class TestTask(BaseTestCaseDb):
         self.assertIsNotNone(run1.start_date)
         self.assertEqual(run1.start_date, task.last_started_run_start_date)
 
-    def test_last_work_status(self):
+    def test_last_work_status(self) -> None:
         task = Task.add(name="*", command="*")
         self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.NONE)
 
@@ -476,7 +476,7 @@ class TestTask(BaseTestCaseDb):
         run.set_status(TaskRunStatusEnum.UNKNOWN)
         self.assertEqual(task.last_work_status, TaskRunWorkStatusEnum.FAILED)
 
-    def test_get_all_logs(self):
+    def test_get_all_logs(self) -> None:
         task = Task.add(name="*", command="*")
 
         logs: list[TaskRunLog] = []
@@ -586,7 +586,7 @@ class TestTask(BaseTestCaseDb):
 
 
 class TestTaskRun(BaseTestCaseDb):
-    def test_get_by_seq(self):
+    def test_get_by_seq(self) -> None:
         task = Task.add(name="*", command="*")
 
         run_1 = task.add_or_get_run()
@@ -604,7 +604,7 @@ class TestTaskRun(BaseTestCaseDb):
         self.assertEqual(run_3.seq, 1)
         self.assertEqual(run_3, TaskRun.get_by_seq(task_2.id, 1))
 
-    def test_set_status(self):
+    def test_set_status(self) -> None:
         with self.subTest(msg="Статус не меняется вместе с зависимыми полями"):
             run = Task.add(name="*", command="*").add_or_get_run()
             self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
@@ -886,7 +886,7 @@ class TestTaskRun(BaseTestCaseDb):
 
         return run_1, run_2, run_3, run_4
 
-    def test_prev_task_run(self):
+    def test_prev_task_run(self) -> None:
         with self.subTest("Case 1"):
             run_1, run_2, run_3, run_4 = self._prepare_runs("Case 1")
 
@@ -927,7 +927,7 @@ class TestTaskRun(BaseTestCaseDb):
             run_1.delete_instance()
             self.assertIsNone(run_4.prev_task_run)
 
-    def test_next_task_run(self):
+    def test_next_task_run(self) -> None:
         with self.subTest("Case 1"):
             run_1, run_2, run_3, run_4 = self._prepare_runs("Case 1")
 
@@ -968,7 +968,7 @@ class TestTaskRun(BaseTestCaseDb):
             run_4.delete_instance()
             self.assertIsNone(run_1.next_task_run)
 
-    def test_set_error(self):
+    def test_set_error(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
 
@@ -991,7 +991,7 @@ class TestTaskRun(BaseTestCaseDb):
         ).text
         self.assertEqual(last_err_log, text + "\n")
 
-    def test_set_stop(self):
+    def test_set_stop(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
         self.assertIsNone(run.stop_reason)
@@ -1000,7 +1000,7 @@ class TestTaskRun(BaseTestCaseDb):
         run.set_stop(season)
         self.assertEqual(run.stop_reason, season)
 
-    def test_is_scheduled_date_has_arrived(self):
+    def test_is_scheduled_date_has_arrived(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertFalse(run.is_scheduled_date_has_arrived())
 
@@ -1016,7 +1016,7 @@ class TestTaskRun(BaseTestCaseDb):
         )
         self.assertTrue(run.is_scheduled_date_has_arrived())
 
-    def test_set_process_id(self):
+    def test_set_process_id(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertIsNone(run.process_id)
 
@@ -1024,7 +1024,7 @@ class TestTaskRun(BaseTestCaseDb):
         run.set_process_id(process_id)
         self.assertEqual(process_id, run.process_id)
 
-    def test_get_actual_status(self):
+    def test_get_actual_status(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         run_clone = TaskRun.get_by_id(run.id)
         self.assertEqual(run.status, run_clone.status)
@@ -1038,7 +1038,7 @@ class TestTaskRun(BaseTestCaseDb):
 
         self.assertEqual(run.status, run_clone.get_actual_status())
 
-    def test_add_log(self):
+    def test_add_log(self) -> None:
         with self.subTest(msg="Common"):
             run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -1061,7 +1061,7 @@ class TestTaskRun(BaseTestCaseDb):
             log2 = run.add_log("1234", kind=LogKindEnum.OUT, end="")
             self.assertEqual(log2.text, "1234")
 
-    def test_add_log_out(self):
+    def test_add_log_out(self) -> None:
         with self.subTest(msg="Common"):
             run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -1083,7 +1083,7 @@ class TestTaskRun(BaseTestCaseDb):
             log2 = run.add_log_out("1234", end="")
             self.assertEqual(log2.text, "1234")
 
-    def test_add_log_err(self):
+    def test_add_log_err(self) -> None:
         with self.subTest(msg="Common"):
             run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -1105,14 +1105,14 @@ class TestTaskRun(BaseTestCaseDb):
             log2 = run.add_log_err("1234", end="")
             self.assertEqual(log2.text, "1234")
 
-    def test_send_notifications(self):
+    def test_send_notifications(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertEqual(run.notifications.count(), 0)
 
         run.send_notifications()
         self.assertNotEqual(run.notifications.count(), 0)
 
-    def test_delete_cascade(self):
+    def test_delete_cascade(self) -> None:
         task = Task.add(name="*", command="*")
 
         items = []
@@ -1126,7 +1126,7 @@ class TestTaskRun(BaseTestCaseDb):
         task.delete_instance()
         self.assertEqual(0, task.runs.count())
 
-    def test_get_full_url(self):
+    def test_get_full_url(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertTrue(run.get_url())
         self.assertTrue(str(run.task.id) in run.get_url())
@@ -1138,7 +1138,7 @@ class TestTaskRun(BaseTestCaseDb):
 
         self.assertNotEqual(run.get_url(), run.get_url(full=False))
 
-    def test_is_success(self):
+    def test_is_success(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertFalse(run.is_success)
 
@@ -1154,7 +1154,7 @@ class TestTaskRun(BaseTestCaseDb):
         run.process_return_code = 404
         self.assertFalse(run.is_success)
 
-    def test_work_status(self):
+    def test_work_status(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         self.assertEqual(run.work_status, TaskRunWorkStatusEnum.NONE)
 
@@ -1179,7 +1179,7 @@ class TestTaskRun(BaseTestCaseDb):
 
 
 class TestTaskRunLog(BaseTestCaseDb):
-    def test_delete_cascade(self):
+    def test_delete_cascade(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         items = []
@@ -1197,7 +1197,7 @@ class TestTaskRunLog(BaseTestCaseDb):
 
 
 class TestNotification(BaseTestCaseDb):
-    def test_add(self):
+    def test_add(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
         name = "test"
         text = "Hello World!\nПривет Мир!"
@@ -1248,7 +1248,7 @@ class TestNotification(BaseTestCaseDb):
             ),
         )
 
-    def test_get_unsent(self):
+    def test_get_unsent(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         self.assertEqual(Notification.get_unsent(), [])
@@ -1306,7 +1306,7 @@ class TestNotification(BaseTestCaseDb):
         notification_email_2.cancel()
         self.assertEqual(Notification.get_unsent(), [notification_tg])
 
-    def test_set_as_send(self):
+    def test_set_as_send(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         notification = Notification.add(
@@ -1330,7 +1330,7 @@ class TestNotification(BaseTestCaseDb):
         notification.cancel()
         self.assertEqual(sending_date, notification.sending_date)
 
-    def test_cancel(self):
+    def test_cancel(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         notification = Notification.add(
@@ -1354,7 +1354,7 @@ class TestNotification(BaseTestCaseDb):
         notification.set_as_send()
         self.assertEqual(canceling_date, notification.canceling_date)
 
-    def test_is_ready(self):
+    def test_is_ready(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         with self.subTest("sending_date"):

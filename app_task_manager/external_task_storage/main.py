@@ -21,7 +21,7 @@ CONFIG_GIST: dict[str, Any] = CONFIG["manager"]["external_task_storage"]["gist"]
 log = logging.getLogger("external_task_storage")
 
 
-def process(tasks: dict[str, dict[str, Any]]):
+def process(tasks: dict[str, dict[str, Any]]) -> None:
     total = len(tasks)
     updated = 0
     created = 0
@@ -92,7 +92,7 @@ def process(tasks: dict[str, dict[str, Any]]):
     """.strip())
 
 
-def download_and_process():
+def download_and_process() -> None:
     log.info("Обработка задач из внешнего хранилища")
 
     gist_url = CONFIG_GIST["url"]

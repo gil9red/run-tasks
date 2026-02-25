@@ -33,7 +33,7 @@ from third_party.shorten import shorten
 
 
 class NotDefinedParameterException(ValueError):
-    def __init__(self, parameter_name: str):
+    def __init__(self, parameter_name: str) -> None:
         self.parameter_name = parameter_name
         text = f'Parameter "{self.parameter_name}" must be defined!'
 
@@ -115,7 +115,7 @@ class BaseModel(Model):
         return sorted(cls.__subclasses__(), key=lambda x: x.__name__)
 
     @classmethod
-    def print_count_of_tables(cls):
+    def print_count_of_tables(cls) -> None:
         items = []
         for sub_cls in cls.get_inherited_models():
             name = sub_cls.__name__
@@ -134,7 +134,7 @@ class BaseModel(Model):
     def to_dict(self) -> dict[str, Any]:
         return model_to_dict(self, recurse=False)
 
-    def __str__(self):
+    def __str__(self) -> str:
         fields = []
         for k, field in self._meta.fields.items():
             v = getattr(self, k)
@@ -255,28 +255,28 @@ class Task(BaseModel):
             is_infinite=is_infinite,
         )
 
-    def set_command(self, command: str):
+    def set_command(self, command: str) -> None:
         if self.command == command:
             return
 
         self.command = command
         self.save()
 
-    def set_description(self, description: str):
+    def set_description(self, description: str) -> None:
         if self.description == description:
             return
 
         self.description = description
         self.save()
 
-    def set_enabled(self, value: bool):
+    def set_enabled(self, value: bool) -> None:
         if self.is_enabled == value:
             return
 
         self.is_enabled = value
         self.save()
 
-    def set_is_infinite(self, value: bool):
+    def set_is_infinite(self, value: bool) -> None:
         if self.is_infinite == value:
             return
 
@@ -473,11 +473,11 @@ class TaskRun(BaseModel):
 
         self.save()
 
-    def set_error(self, error_text: str):
+    def set_error(self, error_text: str) -> None:
         self.set_status(TaskRunStatusEnum.ERROR)
         self.add_log_err(text=error_text)
 
-    def set_stop(self, reason: StopReasonEnum):
+    def set_stop(self, reason: StopReasonEnum) -> None:
         self.stop_reason = reason
         self.set_status(TaskRunStatusEnum.STOPPED)
         self.add_log_out(text=f"Запуск остановлен по причине: {reason.value}")  # TODO:
@@ -488,7 +488,7 @@ class TaskRun(BaseModel):
 
         return self.scheduled_date <= datetime.now()
 
-    def set_process_id(self, value: int):
+    def set_process_id(self, value: int) -> None:
         self.process_id = value
         self.save()
 
@@ -508,7 +508,7 @@ class TaskRun(BaseModel):
     def add_log_err(self, text: str, end: str = "\n") -> "TaskRunLog":
         return self.add_log(text=text, kind=LogKindEnum.ERR, end=end)
 
-    def send_notifications(self):
+    def send_notifications(self) -> None:
         variables: dict[str, Any] = dict(run=self, config=CONFIG)
         env = SandboxedEnvironment()
 
@@ -585,7 +585,7 @@ class Notification(BaseModel):
     def is_ready(self) -> bool:
         return self.sending_date is None and self.canceling_date is None
 
-    def set_as_send(self):
+    def set_as_send(self) -> None:
         """
         Функция устанавливает дату отправки и сохраняет ее
         """
@@ -594,7 +594,7 @@ class Notification(BaseModel):
             self.sending_date = datetime.now()
             self.save()
 
-    def cancel(self):
+    def cancel(self) -> None:
         """
         Функция устанавливает дату отмены и сохраняет ее
         """

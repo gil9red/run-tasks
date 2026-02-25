@@ -118,7 +118,7 @@ def get_env_for_children_process() -> dict:
 
 # SOURCE: https://stackoverflow.com/a/66292378/5909792
 class RaisingThread(threading.Thread):
-    def run(self):
+    def run(self) -> None:
         self._exc = None
         try:
             super().run()
@@ -141,7 +141,7 @@ class ThreadRunProcess(threading.Thread):
         on_finish_callback: Callable[[psutil.Popen], None] = None,
         stop_on: Callable[[], bool] = lambda: False,
         encoding: str = ENCODING,
-    ):
+    ) -> None:
         super().__init__(
             daemon=True,  # Thread dies with the program
         )
@@ -162,12 +162,12 @@ class ThreadRunProcess(threading.Thread):
 
         self._exc: Exception | None = None
 
-    def run(self):
+    def run(self) -> None:
         try:
             if self.stop_on():
                 return
 
-            def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]):
+            def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]) -> None:
                 for text in iter(stream.readline, ""):
                     on_callback(text)
                     if self.stop_on():
@@ -233,7 +233,7 @@ class ThreadRunProcess(threading.Thread):
 
 
 class TaskThread(threading.Thread):
-    def __init__(self, name: str, encoding: str = ENCODING):
+    def __init__(self, name: str, encoding: str = ENCODING) -> None:
         super().__init__(
             name=name,
             daemon=True,  # Thread dies with the program
@@ -243,7 +243,7 @@ class TaskThread(threading.Thread):
         self.current_task_run: TaskRun | None = None
         self._is_stopped: bool = False
 
-    def stop(self):
+    def stop(self) -> None:
         if (
             self.current_task_run
             and self.current_task_run.status == TaskRunStatusEnum.RUNNING
@@ -268,7 +268,7 @@ class TaskThread(threading.Thread):
 
         return None
 
-    def run(self):
+    def run(self) -> None:
         while not self._is_stopped:
             task: Task | None = Task.get_by_name(self.name)
             if not task:
@@ -284,16 +284,16 @@ class TaskThread(threading.Thread):
 
             time.sleep(2)  # TODO:
 
-    def _start_task_run(self, task: Task, task_run: TaskRun):
-        def start_callback(process: psutil.Popen):
+    def _start_task_run(self, task: Task, task_run: TaskRun) -> None:
+        def start_callback(process: psutil.Popen) -> None:
             log.debug(f"{log_prefix} process_id: {process.pid}")
             task_run.set_process_id(process.pid)
 
-        def process_stdout(text: str):
+        def process_stdout(text: str) -> None:
             log.debug(f"{log_prefix} stdout: {text!r}")
             task_run.add_log_out(text)
 
-        def process_stderr(text: str):
+        def process_stderr(text: str) -> None:
             log.debug(f"{log_prefix} stderr: {text!r}")
             task_run.add_log_err(text)
 

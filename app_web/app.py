@@ -32,7 +32,7 @@ class UpdatedJSONProvider(DefaultJSONProvider):
 
 
 class User(flask_login.UserMixin):
-    def __init__(self, login: str, password: str):
+    def __init__(self, login: str, password: str) -> None:
         self.id = login
         self.password = password
 

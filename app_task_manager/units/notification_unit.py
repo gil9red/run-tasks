@@ -20,7 +20,7 @@ third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notif
 
 
 class NotificationUnit(BaseUnit):
-    def __init__(self, owner: "TaskManager"):
+    def __init__(self, owner: "TaskManager") -> None:
         super().__init__(owner)
 
         self._process_iter_delay_secs = 5

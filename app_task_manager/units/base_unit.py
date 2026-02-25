@@ -14,7 +14,7 @@ from root_common import get_full_exception
 
 
 class BaseUnit(Thread, ABC):
-    def __init__(self, owner: "TaskManager"):
+    def __init__(self, owner: "TaskManager") -> None:
         super().__init__(daemon=True)
 
         self.owner = owner
@@ -26,29 +26,29 @@ class BaseUnit(Thread, ABC):
 
         self._log_prefix: str = f"[{type(self).__name__}]"
 
-    def log_debug(self, text: str):
+    def log_debug(self, text: str) -> None:
         self.log.debug(f"{self._log_prefix} {text}")
 
-    def log_info(self, text: str):
+    def log_info(self, text: str) -> None:
         self.log.info(f"{self._log_prefix} {text}")
 
-    def log_warn(self, text: str):
+    def log_warn(self, text: str) -> None:
         self.log.warning(f"{self._log_prefix} {text}")
 
-    def log_exception(self, text: str, e: BaseException):
+    def log_exception(self, text: str, e: BaseException) -> None:
         self.log.error(f"{self._log_prefix} {text}:\n{get_full_exception(e)}")
 
-    def stop(self):
+    def stop(self) -> None:
         self._is_stopped = True
 
-    def before_process(self):
+    def before_process(self) -> None:
         pass
 
     @abstractmethod
-    def process(self):
+    def process(self) -> None:
         pass
 
-    def run(self):
+    def run(self) -> None:
         self.log_info("Старт")
 
         self.before_process()

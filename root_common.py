@@ -36,7 +36,7 @@ def send_email(
     port: int = EMAIL_PORT,
     login: str = EMAIL_LOGIN,
     password: str = EMAIL_PASSWORD,
-):
+) -> None:
     msg = EmailMessage()
     msg["Subject"] = subject
     msg["From"] = send_to
