@@ -77,6 +77,17 @@
         </div>
     </div>
     <div class="mb-3">
+        <label for="command" class="form-label">Команда</label>
+        <div>
+            <textarea
+                    id="command"
+                    class="form-control"
+                    name="command"
+                    required
+            >{% if is_mode_edit and task.command %}{{ task.command | e }}{% endif %}</textarea>
+        </div>
+    </div>
+    <div class="mb-3">
         <label for="description" class="form-label">Описание</label>
         <textarea
                 class="form-control"
@@ -207,17 +218,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="mb-3">
-        <label for="command" class="form-label">Команда</label>
-        <div>
-            <textarea
-                    id="command"
-                    class="form-control"
-                    name="command"
-                    required
-            >{% if is_mode_edit and task.command %}{{ task.command | e }}{% endif %}</textarea>
         </div>
     </div>
     <div class="pb-2 sticky-bottom">
