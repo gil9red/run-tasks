@@ -1,0 +1,25 @@
+[project]
+name = "run-tasks"
+version = "2026.4.16"
+description = "Легковесная система управления задачами с веб-интерфейсом и фоновым исполнителем."
+requires-python = ">=3.12"
+dependencies = [
+    "beautifulsoup4==4.12.3",
+    "concurrent-log-handler==0.9.25",
+    "cron-converter==1.0.2",
+    "filelock==3.15.4",
+    "flask==3.0.2",
+    "flask-limiter==3.5.1",
+    "flask-login==0.6.3",
+    "peewee==3.17.1",
+    "psutil==5.9.8",
+    "pyyaml==6.0.1",
+    "requests==2.31.0",
+]
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE.txt"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
