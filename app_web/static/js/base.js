@@ -353,7 +353,7 @@ function get_date_from_utc(utc) {
     if (utc == null) {
         return null;
     }
-    return moment.utc(utc).format("DD/MM/YYYY HH:mm:ss");
+    return moment.utc(utc).format(window.appConfig.dateFormat);
 }
 
 

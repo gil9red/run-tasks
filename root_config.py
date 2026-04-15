@@ -81,3 +81,6 @@ logging.config.dictConfig(CONFIG["logging"])
 
 PROJECT_NAME: str = CONFIG["project_name"]
 CONFIG_NOTIFICATION: dict[str, Any] = CONFIG["notification"]
+
+PY_DATE_FORMAT: str = "%d.%m.%Y %H:%M:%S"
+JS_DATE_FORMAT: str = "DD.MM.YYYY HH:mm:ss"

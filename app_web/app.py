@@ -21,6 +21,8 @@ from app_web import config
 from app_web.api.api import api_bp
 from app_web.common import StatusEnum, prepare_response
 
+from root_config import PY_DATE_FORMAT, JS_DATE_FORMAT
+
 
 class UpdatedJSONProvider(DefaultJSONProvider):
     sort_keys = False
@@ -115,3 +117,20 @@ def check_route_access() -> Response | tuple[Response, int] | None:
 
     params: dict = {"from": request.path}
     return redirect(url_for("login", **params))
+
+
+@app.template_filter("format_datetime")
+def format_datetime(
+    value: datetime | None,
+    dt_format: str = PY_DATE_FORMAT,
+) -> str:
+    if value is None:
+        return ""
+    return value.strftime(dt_format)
+
+
+@app.context_processor
+def inject_date_formats() -> dict[str, str]:
+    return {
+        "JS_DATE_FORMAT": JS_DATE_FORMAT,
+    }

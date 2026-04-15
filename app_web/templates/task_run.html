@@ -172,7 +172,7 @@
                 id="create_date"
                 type="text"
                 class="form-control"
-                value="{% if task_run.create_date %}{{ task_run.create_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                value="{{ task_run.create_date | format_datetime }}"
                 data-is-utc="true"
                 disabled
         >
@@ -185,7 +185,7 @@
                 id="scheduled_date"
                 type="text"
                 class="form-control"
-                value="{% if task_run.scheduled_date %}{{ task_run.scheduled_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                value="{{ task_run.scheduled_date | format_datetime }}"
                 data-is-utc="true"
                 disabled
         >
@@ -201,7 +201,7 @@
                 id="start_date"
                 type="text"
                 class="form-control"
-                value="{% if task_run.start_date %}{{ task_run.start_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                value="{{ task_run.start_date | format_datetime }}"
                 data-is-utc="true"
                 disabled
         >
@@ -214,7 +214,7 @@
                 id="finish_date"
                 type="text"
                 class="form-control"
-                value="{% if task_run.finish_date %}{{ task_run.finish_date.strftime('%d/%m/%Y %H:%M:%S') }}{% endif %}"
+                value="{{ task_run.finish_date | format_datetime }}"
                 data-is-utc="true"
                 disabled
         >
