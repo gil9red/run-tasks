@@ -5,8 +5,10 @@ __author__ = "ipetrash"
 
 
 import logging
+
 from datetime import datetime, date
 from http import HTTPStatus
+from pathlib import Path
 
 from flask import Flask, Response, request, redirect, url_for, jsonify
 from flask.json.provider import DefaultJSONProvider
@@ -44,7 +46,10 @@ USERS: dict[str, User] = {
 }
 
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    root_path=str(Path(__file__).resolve().parent),
+)
 app.debug = config.DEBUG
 app.json = UpdatedJSONProvider(app)
 app.logger = logging.getLogger("werkzeug")
