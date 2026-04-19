@@ -10,7 +10,7 @@ from typing import Any
 
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-from db import (
+from run_tasks.db import (
     BaseModel,
     Task,
     TaskRun,
@@ -19,8 +19,8 @@ from db import (
     NotificationKindEnum,
 )
 
-from app_web.config import USERS
-from app_web.main import app
+from run_tasks.app_web.config import USERS
+from run_tasks.app_web.main import app
 
 
 class TestBaseAppWeb(TestCase):

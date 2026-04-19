@@ -17,10 +17,10 @@ from flask import (
     flash,
 )
 
-from app_web import config
-from app_web.app import USERS, app, limiter
-from app_web.common import get_task, get_task_run, public_route
-from root_config import PROJECT_NAME
+from run_tasks.app_web import config
+from run_tasks.app_web.app import USERS, app, limiter
+from run_tasks.app_web.common import get_task, get_task_run, public_route
+from run_tasks.config import PROJECT_NAME
 
 
 @app.route("/")
@@ -144,7 +144,7 @@ def favicon() -> Response:
 
 if __name__ == "__main__":
     import sys
-    from third_party.is_free_port import is_free_port
+    from run_tasks.third_party.is_free_port import is_free_port
 
     # Режим отладки использует перезагрузку скриптов, а оно не сочетается с is_free_port
     if not app.debug and not is_free_port(config.PORT):

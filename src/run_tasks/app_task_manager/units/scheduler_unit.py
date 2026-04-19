@@ -6,9 +6,9 @@ __author__ = "ipetrash"
 
 from datetime import datetime
 
-from app_task_manager.units.base_unit import BaseUnit
-from db import Task, TaskRunStatusEnum
-from root_common import get_scheduled_date_generator
+from run_tasks.app_task_manager.units.base_unit import BaseUnit
+from run_tasks.db import Task, TaskRunStatusEnum
+from run_tasks.common import get_scheduled_date_generator
 
 
 class SchedulerUnit(BaseUnit):

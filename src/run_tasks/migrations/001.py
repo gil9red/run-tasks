@@ -8,7 +8,7 @@ __author__ = "ipetrash"
 
 
 from playhouse.migrate import SqliteDatabase, SqliteMigrator, migrate
-from db import DB_FILE_NAME, Notification, DateTimeField
+from run_tasks.db import DB_FILE_NAME, EnumField, TaskRun, StopReasonEnum
 
 
 db = SqliteDatabase(DB_FILE_NAME)
@@ -18,8 +18,8 @@ migrator = SqliteMigrator(db)
 with db.atomic():
     migrate(
         migrator.add_column(
-            Notification._meta.table_name,
-            "canceling_date",
-            DateTimeField(null=True),
+            TaskRun._meta.table_name,
+            "stop_reason",
+            EnumField(choices=StopReasonEnum, null=True),
         ),
     )

@@ -9,8 +9,8 @@ from abc import ABC, abstractmethod
 from logging import Logger
 from threading import Thread
 
-from app_task_manager.common import log_manager
-from root_common import get_full_exception
+from run_tasks.app_task_manager.common import log_manager
+from run_tasks.common import get_full_exception
 
 
 class BaseUnit(Thread, ABC):

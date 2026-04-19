@@ -10,15 +10,15 @@ import time
 import traceback
 from datetime import datetime
 
-from app_task_manager.common import log_manager as log
-from app_task_manager.config import ENCODING
-from app_task_manager.units.base_unit import BaseUnit
-from app_task_manager.units.executor_unit import ExecutorUnit
-from app_task_manager.units.maintenance_unit import MaintenanceUnit
-from app_task_manager.units.scheduler_unit import SchedulerUnit
-from app_task_manager.units.notification_unit import NotificationUnit
+from run_tasks.app_task_manager.common import log_manager as log
+from run_tasks.app_task_manager.config import ENCODING
+from run_tasks.app_task_manager.units.base_unit import BaseUnit
+from run_tasks.app_task_manager.units.executor_unit import ExecutorUnit
+from run_tasks.app_task_manager.units.maintenance_unit import MaintenanceUnit
+from run_tasks.app_task_manager.units.scheduler_unit import SchedulerUnit
+from run_tasks.app_task_manager.units.notification_unit import NotificationUnit
 
-from db import TaskRun
+from run_tasks.db import TaskRun
 
 
 def log_uncaught_exceptions(ex_cls, ex, tb) -> None:
@@ -109,7 +109,7 @@ def main(loop: bool = False) -> None:
 
 if __name__ == "__main__":
     from pathlib import Path
-    from third_party.use_filelock import run_with_lock
+    from run_tasks.third_party.use_filelock import run_with_lock
 
     run_with_lock(
         file_name=Path(__file__).resolve(),

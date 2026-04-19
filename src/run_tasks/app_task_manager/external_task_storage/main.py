@@ -10,9 +10,9 @@ from typing import Any
 # pip install PyYAML
 import yaml
 
-from root_config import CONFIG
-from db import Task
-from third_party.get_gist_file import get_gist_file
+from run_tasks.config import CONFIG
+from run_tasks.db import Task
+from run_tasks.third_party.get_gist_file import get_gist_file
 
 
 CONFIG_GIST: dict[str, Any] = CONFIG["manager"]["external_task_storage"]["gist"]

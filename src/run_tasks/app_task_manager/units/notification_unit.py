@@ -6,17 +6,17 @@ __author__ = "ipetrash"
 
 import time
 
-from app_task_manager.units.base_unit import BaseUnit
-from db import Notification, NotificationKindEnum
-from root_common import get_full_exception, send_email
-from root_config import CONFIG_NOTIFICATION
+from run_tasks.app_task_manager.units.base_unit import BaseUnit
+from run_tasks.db import Notification, NotificationKindEnum
+from run_tasks.common import get_full_exception, send_email
+from run_tasks.config import CONFIG_NOTIFICATION
 
-import third_party.add_notify_telegram
-from third_party.add_notify_telegram import add_notify
+import run_tasks.third_party.add_notify_telegram
+from run_tasks.third_party.add_notify_telegram import add_notify
 
 
 # Установка адреса сервера, через который отправляются уведомления
-third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notify_url"]
+run_tasks.third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notify_url"]
 
 
 class NotificationUnit(BaseUnit):

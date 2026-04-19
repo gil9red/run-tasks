@@ -27,9 +27,9 @@ from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
-from root_config import DB_FILE_NAME, CONFIG, CONFIG_NOTIFICATION
-from third_party.db_enum_field import EnumField
-from third_party.shorten import shorten
+from run_tasks.config import DB_FILE_NAME, CONFIG, CONFIG_NOTIFICATION
+from run_tasks.third_party.db_enum_field import EnumField
+from run_tasks.third_party.shorten import shorten
 
 
 class NotDefinedParameterException(ValueError):

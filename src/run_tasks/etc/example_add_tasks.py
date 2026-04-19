@@ -5,8 +5,7 @@ __author__ = "ipetrash"
 
 
 import time
-import db
-
+from run_tasks import db
 
 task = db.Task.add(
     name="test cron",

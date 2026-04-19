@@ -17,10 +17,10 @@ from typing import Callable, IO, AnyStr
 
 import psutil
 
-from app_task_manager.common import log_manager as log
-from app_task_manager.config import ENCODING, PATTERN_FILE_TASK_COMMAND
-from db import Task, TaskRun, TaskRunStatusEnum, StopReasonEnum
-from root_config import PROJECT_NAME
+from run_tasks.app_task_manager.common import log_manager as log
+from run_tasks.app_task_manager.config import ENCODING, PATTERN_FILE_TASK_COMMAND
+from run_tasks.db import Task, TaskRun, TaskRunStatusEnum, StopReasonEnum
+from run_tasks.config import PROJECT_NAME
 
 
 IS_WIN: bool = sys.platform == "win32"

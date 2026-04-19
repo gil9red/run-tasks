@@ -9,10 +9,10 @@ from datetime import datetime, timedelta
 from peewee import fn
 from psutil import Process, NoSuchProcess, AccessDenied
 
-from app_task_manager.config import STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS
-from app_task_manager.utils import get_prefix_file_name_command, kill_proc_tree
-from app_task_manager.units.base_unit import BaseUnit
-from db import TaskRun, TaskRunStatusEnum
+from run_tasks.app_task_manager.config import STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS
+from run_tasks.app_task_manager.utils import get_prefix_file_name_command, kill_proc_tree
+from run_tasks.app_task_manager.units.base_unit import BaseUnit
+from run_tasks.db import TaskRun, TaskRunStatusEnum
 
 
 class MaintenanceUnit(BaseUnit):

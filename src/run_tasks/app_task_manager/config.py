@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 import sys
 from typing import Any
 
-from root_config import CONFIG
+from run_tasks.config import CONFIG
 
 
 CONFIG_MANAGER: dict[str, Any] = CONFIG["manager"]

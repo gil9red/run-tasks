@@ -10,7 +10,7 @@ from typing import Any
 from flask import abort
 from peewee import DoesNotExist
 
-from db import Task, TaskRun, Notification
+from run_tasks.db import Task, TaskRun, Notification
 
 
 @enum.unique

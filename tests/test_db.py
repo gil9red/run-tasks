@@ -10,7 +10,7 @@ from unittest import TestCase
 
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-from db import (
+from run_tasks.db import (
     NotDefinedParameterException,
     BaseModel,
     Task,

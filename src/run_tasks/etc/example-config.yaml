@@ -84,7 +84,7 @@ logging:
 
   filters:
     filter_remove_date_from_werkzeug_logs:
-      (): third_party.filter_remove_date_from_werkzeug_logs.FilterRemoveDateFromWerkzeugLogs
+      (): run_tasks.third_party.filter_remove_date_from_werkzeug_logs.FilterRemoveDateFromWerkzeugLogs
 
   loggers:
     task_manager:

@@ -19,11 +19,11 @@ import flask_login
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from app_web import config
-from app_web.api.api import api_bp
-from app_web.common import StatusEnum, prepare_response
+from run_tasks.app_web import config
+from run_tasks.app_web.api.api import api_bp
+from run_tasks.app_web.common import StatusEnum, prepare_response
 
-from root_config import PY_DATE_FORMAT, JS_DATE_FORMAT
+from run_tasks.config import PY_DATE_FORMAT, JS_DATE_FORMAT
 
 
 class UpdatedJSONProvider(DefaultJSONProvider):

@@ -10,9 +10,9 @@ from typing import Any
 from flask import Blueprint, Response, jsonify, request, abort
 from werkzeug.exceptions import BadRequest
 
-from app_web.common import StatusEnum, prepare_response, get_task, get_task_run, get_notification
-from db import Task, TaskRun, StopReasonEnum, TaskRunLog, Notification, NotificationKindEnum
-from root_common import get_scheduled_date_generator
+from run_tasks.app_web.common import StatusEnum, prepare_response, get_task, get_task_run, get_notification
+from run_tasks.db import Task, TaskRun, StopReasonEnum, TaskRunLog, Notification, NotificationKindEnum
+from run_tasks.common import get_scheduled_date_generator
 
 
 api_bp = Blueprint("api", __name__)

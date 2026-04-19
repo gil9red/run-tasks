@@ -9,9 +9,9 @@ from unittest import TestCase
 
 from playhouse.sqlite_ext import SqliteExtDatabase
 
-from db import BaseModel, Task
-from app_task_manager.units.scheduler_unit import SchedulerUnit
-from app_task_manager.external_task_storage.main import process
+from run_tasks.db import BaseModel, Task
+from run_tasks.app_task_manager.units.scheduler_unit import SchedulerUnit
+from run_tasks.app_task_manager.external_task_storage.main import process
 
 
 class TestSchedulerUnit(TestCase):
