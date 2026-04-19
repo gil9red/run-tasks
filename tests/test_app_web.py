@@ -53,6 +53,10 @@ class TestBaseAppWeb(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
+    def tearDown(self) -> None:
+        self.test_db.drop_tables(self.models)
+        self.test_db.close()
+
 
 class TestAppWeb(TestBaseAppWeb):
     def test_index(self) -> None:

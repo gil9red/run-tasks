@@ -42,6 +42,10 @@ class BaseTestCaseDb(TestCase):
         self.test_db.connect()
         self.test_db.create_tables(self.models)
 
+    def tearDown(self) -> None:
+        self.test_db.drop_tables(self.models)
+        self.test_db.close()
+
 
 class TestTask(BaseTestCaseDb):
     def test_get_by_name(self) -> None:
