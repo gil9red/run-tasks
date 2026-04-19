@@ -32,7 +32,11 @@ $(function() {
             { data: 'id', title: 'Ид.', },
             { data: 'task_run', title: 'Запуск', },
             { data: 'kind', title: 'Тип', },
-            { data: 'text', title: 'Текст', },
+            {
+                data: 'text',
+                title: 'Текст',
+                render: DataTable.render.text(), // Экранирует HTML
+            },
             { data: 'date', title: 'Дата', render: date_render, },
         ],
         order: [
