@@ -17,6 +17,7 @@ import yaml
 DIR: Path = Path(__file__).resolve().parent
 
 DIR_LOGS: Path = DIR / "logs"
+DIR_LOGS.mkdir(parents=True, exist_ok=True)
 
 DB_DIR_NAME: Path = DIR / "database"
 DB_DIR_NAME.mkdir(parents=True, exist_ok=True)
