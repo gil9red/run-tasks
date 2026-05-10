@@ -377,16 +377,12 @@ class TaskRun(BaseModel):
     def work_status(self) -> TaskRunWorkStatusEnum:
         if self.status == TaskRunStatusEnum.PENDING:
             return TaskRunWorkStatusEnum.NONE
-
         if self.status == TaskRunStatusEnum.RUNNING:
             return TaskRunWorkStatusEnum.IN_PROCESSED
-
         if self.status == TaskRunStatusEnum.STOPPED:
             return TaskRunWorkStatusEnum.STOPPED
-
         if self.is_success:
             return TaskRunWorkStatusEnum.SUCCESSFUL
-
         return TaskRunWorkStatusEnum.FAILED
 
     @property
