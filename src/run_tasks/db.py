@@ -15,6 +15,7 @@ from jinja2.sandbox import SandboxedEnvironment
 # pip install peewee
 from peewee import (
     Model,
+    Expression,
     Field,
     TextField,
     ForeignKeyField,
@@ -176,15 +177,13 @@ class Task(BaseModel):
         return number if number is not None else 0
 
     def get_last_started_run(self) -> Optional["TaskRun"]:
-        return (
-            self.runs.where(TaskRun.status != TaskRunStatusEnum.PENDING)
-            .order_by(TaskRun.id.desc())
-            .first()
-        )
+        return self.get_last_run(filters=[TaskRun.status != TaskRunStatusEnum.PENDING])
 
-    # TODO: единая логика с get_last_started_run. Добавить параметр фильтра
-    def get_last_run(self) -> Optional["TaskRun"]:
-        return self.runs.order_by(TaskRun.id.desc()).first()
+    def get_last_run(self, filters: list[Expression] | None = None) -> Optional["TaskRun"]:
+        query = self.runs
+        if filters:
+            query = query.where(*filters)
+        return query.order_by(TaskRun.id.desc()).first()
 
     @hybrid_property
     def last_started_run_seq(self) -> int | None:
