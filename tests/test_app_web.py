@@ -9,6 +9,7 @@ from unittest import TestCase
 from typing import Any
 
 from playhouse.sqlite_ext import SqliteExtDatabase
+from playhouse.shortcuts import model_to_dict
 
 from run_tasks.db import (
     BaseModel,
@@ -16,6 +17,7 @@ from run_tasks.db import (
     TaskRun,
     Notification,
     TaskRunStatusEnum,
+    TaskRunWorkStatusEnum,
     NotificationKindEnum,
 )
 
@@ -182,33 +184,6 @@ class TestAppWeb(TestBaseAppWeb):
 
 
 class TestAppApiWeb(TestBaseAppWeb):
-    def test_api_tasks(self) -> None:
-        uri: str = "/api/tasks"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-        self.assertEqual(rs.json, [])
-
-        task_1 = Task.add(
-            name="1",
-            command="ping 127.0.0.1",
-            description="description ping",
-            cron="* * * * *",
-        )
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-        self.assertEqual(rs.json, [task_1.to_dict()])
-
-        task_2 = Task.add(
-            name="2",
-            command="ping 127.0.0.1\nping 127.0.0.1",
-            description="description ping",
-            is_infinite=True,
-        )
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-        self.assertEqual(rs.json, [task_1.to_dict(), task_2.to_dict()])
-
     def test_api_task_create(self) -> None:
         uri: str = "/api/task/create"
 
@@ -449,9 +424,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
 
             def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-                return dict(
-                    id=d["id"], task_run=d["task"], seq=d["seq"]
-                )
+                return dict(id=d["id"], task_run=d["task"], seq=d["seq"])
 
             self.assertEqual(
                 get_common_view(rs.json["result"][0]),
@@ -498,9 +471,7 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
 
             def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-                return dict(
-                    id=d["id"], task_run=d["task"], seq=d["seq"]
-                )
+                return dict(id=d["id"], task_run=d["task"], seq=d["seq"])
 
             self.assertEqual(
                 get_common_view(rs.json["result"][0]),
@@ -904,3 +875,416 @@ class TestAppApiWeb(TestBaseAppWeb):
 
                 for obj in rs.json["result"]:
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
+
+
+class TestAppApiWebTasks(TestBaseAppWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.uri: str = "/api/tasks"
+
+    @staticmethod
+    def _get_expected_json(task: Task, overrides: dict | None = None) -> dict[str, Any]:
+        """Преобразует модель Task в ожидаемый API словарь"""
+
+        base = {
+            **model_to_dict(task, recurse=False),
+            "number_of_runs": 0,
+            "last_started_run_seq": None,
+            "last_started_run_start_date": None,
+            "next_scheduled_date": None,
+            "last_work_status": TaskRunWorkStatusEnum.NONE.value,
+        }
+        if overrides:
+            base.update(overrides)
+        return base
+
+    def assert_tasks(
+        self,
+        params: dict | None = None,
+        records_filtered: int | None = None,
+        expected_tasks: list[Task | tuple[Task, dict]] | None = None,
+        draw: int = 1,
+        check_only_id: bool = False,
+    ):
+        rs = self.client.get(self.uri, query_string=params or dict())
+        self.assertEqual(200, rs.status_code)
+
+        data = rs.json
+        self.assertEqual(draw, data["draw"])
+        self.assertEqual(Task.select().count(), data["recordsTotal"])
+
+        if records_filtered is None:
+            records_filtered = data["recordsTotal"]
+
+        self.assertEqual(records_filtered, data["recordsFiltered"])
+
+        if expected_tasks is not None:
+            expected_data: list[dict[str, Any]] = []
+            for item in expected_tasks:
+                json_data: dict[str, Any]
+                if isinstance(item, tuple):
+                    task, overrides = item
+                    json_data = self._get_expected_json(task, overrides)
+                else:
+                    json_data = self._get_expected_json(item)
+
+                expected_data.append(json_data)
+
+            if check_only_id:
+                self.assertEqual(
+                    [obj["id"] for obj in expected_data],
+                    [obj["id"] for obj in data["data"]],
+                )
+            else:
+                self.assertEqual(expected_data, data["data"])
+
+    def test_empty(self) -> None:
+        self.assert_tasks(expected_tasks=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_tasks(params={"draw": 999}, expected_tasks=[], draw=999)
+        self.assert_tasks(params={"draw": "999"}, expected_tasks=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+    def test_main(self) -> None:
+        t_tg = Task.add(
+            name="tg_bot",
+            command="python bot.py",
+            description="ping",
+            is_infinite=True,
+        )
+        t_web = Task.add(
+            name="web_parser",
+            command="uvicorn main:app",
+            description="https://127.0.0.1",
+            cron="@hourly",
+        )
+        t_win = Task.add(
+            name="ping_srv",
+            command=r"C:\Users\admin",
+            description="bot",
+            cron="0 */8 * * *",
+        )
+        t_token = Task.add(
+            name="vk_tool",
+            command="set TOKEN=123",
+            description="t.me/link",
+            cron="*/5 * * * *",
+        )
+        self.assert_tasks(
+            expected_tasks=[t_tg, t_web, t_win, t_token],
+        )
+
+    def test_pagination(self) -> None:
+        """Проверка базовой пагинации"""
+
+        tasks = [
+            Task.add(name=f"task_{i}", command="ping", cron=None) for i in range(15)
+        ]
+
+        with self.subTest("Первая страница"):
+            self.assert_tasks(
+                params={"start": 0, "length": 5}, expected_tasks=tasks[:5]
+            )
+
+        with self.subTest("Вторая страница"):
+            self.assert_tasks(
+                params={"start": 5, "length": 5}, expected_tasks=tasks[5:10]
+            )
+
+        with self.subTest("Пустой результат при запредельном смещении"):
+            self.assert_tasks(
+                params={"start": 999, "length": 5},
+                expected_tasks=[],
+            )
+
+    def test_search_filtering(self) -> None:
+        """Проверка поиска по всем полям: name, command, description, cron"""
+
+        t_tg = Task.add(
+            name="tg_bot",
+            command="python bot.py",
+            description="ping",
+            is_infinite=True,
+        )
+        t_web = Task.add(
+            name="web_parser",
+            command="uvicorn main:app",
+            description="https://127.0.0.1",
+            cron="@hourly",
+        )
+        t_win = Task.add(
+            name="ping_srv",
+            command=r"C:\Users\admin",
+            description="bot",
+            cron="0 */8 * * *",
+        )
+        t_token = Task.add(
+            name="vk_tool",
+            command="set TOKEN=123",
+            description="t.me/link",
+            cron="*/5 * * * *",
+        )
+
+        search_cases: list[tuple[str, str, int, list[Task]]] = [
+            ("Поиск по имени 'tg'", "tg", 1, [t_tg]),
+            ("Поиск по команде 'uvicorn'", "uvicorn", 1, [t_web]),
+            ("Поиск по пути 'C:/Users'", "Users", 1, [t_win]),
+            ("Поиск по IP в описании", "127.0.0.1", 1, [t_web]),
+            ("Поиск по ссылке в описании", "t.me", 1, [t_token]),
+            ("Поиск по cron", "@hourly", 1, [t_web]),
+            ("Слово 'bot' в разных полях", "bot", 2, [t_tg, t_win]),
+        ]
+        for msg, query, filtered, expected in search_cases:
+            with self.subTest(msg):
+                self.assert_tasks(
+                    params={"search[value]": query},
+                    records_filtered=filtered,
+                    expected_tasks=expected,
+                )
+
+    def test_search_with_pagination(self) -> None:
+        """Проверка совместной работы фильтрации и пагинации."""
+
+        bot_tasks = [Task.add(name=f"bot_{i}", command="python") for i in range(5)]
+        for i in range(10):
+            Task.add(name=f"other_{i}", command="ping")
+
+        # Общее кол-во: 15. Отфильтрованных (по слову 'bot'): 5
+        with self.subTest("Первая страница поиска (3 элемента)"):
+            params = {
+                "search[value]": "bot",
+                "start": 0,
+                "length": 3,
+                "order[0][name]": "name",
+                "order[0][dir]": "asc",
+            }
+            # Ожидаем первые 3 из 5 найденных
+            self.assert_tasks(
+                params=params, records_filtered=5, expected_tasks=bot_tasks[:3]
+            )
+
+        with self.subTest("Вторая страница поиска (оставшиеся 2 элемента)"):
+            params = {
+                "search[value]": "bot",
+                "start": 3,
+                "length": 3,
+                "order[0][name]": "name",
+                "order[0][dir]": "asc",
+            }
+            # Ожидаем последние 2 из 5 найденных
+            self.assert_tasks(
+                params=params, records_filtered=5, expected_tasks=bot_tasks[3:5]
+            )
+
+        with self.subTest("Поиск 'bot' с сортировкой DESC и пагинацией"):
+            params = {
+                "search[value]": "bot",
+                "start": 0,
+                "length": 2,
+                "order[0][name]": "name",
+                "order[0][dir]": "desc",
+            }
+            # Ожидаем bot_4, bot_3
+            self.assert_tasks(
+                params=params,
+                records_filtered=5,
+                expected_tasks=[bot_tasks[4], bot_tasks[3]],
+            )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки, включая специфику cron"""
+
+        task_1 = Task.add(name="Alpha", command="1", cron=None)
+        task_2 = Task.add(name="Beta", command="2", cron="@hourly")
+        task_3 = Task.add(name="Gamma", command="3", cron=None)
+
+        def _run_n_runs(task: Task, n_times: int) -> None:
+            for _ in range(n_times):
+                run = task.add_or_get_run()
+                run.set_status(TaskRunStatusEnum.RUNNING)
+                run.set_status(TaskRunStatusEnum.FINISHED)
+
+        _run_n_runs(task_2, n_times=10)
+        _run_n_runs(task_1, n_times=5)
+
+        with self.subTest("Сортировка по имени DESC"):
+            self.assert_tasks(
+                params={"order[0][name]": "name", "order[0][dir]": "desc"},
+                expected_tasks=[task_3, task_2, task_1],
+                check_only_id=True,
+            )
+
+        with self.subTest("Сортировка по cron (задачи с cron первыми)"):
+            # Логика ASC ставит значения выше NULL
+            self.assert_tasks(
+                params={"order[0][name]": "cron", "order[0][dir]": "asc"},
+                expected_tasks=[task_1, task_3, task_2],
+                check_only_id=True,
+            )
+
+        with self.subTest("Сортировка db_number_of_runs по возрастанию"):
+            self.assert_tasks(
+                params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "asc"},
+                expected_tasks=[task_3, task_1, task_2],
+                check_only_id=True,
+            )
+
+        with self.subTest("Сортировка db_number_of_runs по убыванию"):
+            self.assert_tasks(
+                params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "desc"},
+                expected_tasks=[task_2, task_1, task_3],
+                check_only_id=True,
+            )
+
+    def test_multi_column_sorting(self) -> None:
+        """Проверка сортировки по нескольким колонкам одновременно"""
+
+        t_a = Task.add(name="A", command="1", is_enabled=True, is_infinite=False)
+        t_b = Task.add(name="B", command="2", is_enabled=True, is_infinite=True)
+
+        params = {
+            "order[0][name]": "is_enabled",
+            "order[0][dir]": "desc",
+            "order[1][name]": "is_infinite",
+            "order[1][dir]": "desc",
+        }
+        self.assert_tasks(params=params, expected_tasks=[t_b, t_a])
+
+    def test_task_with_execution_history(self) -> None:
+        """Тест отображения данных о запусках"""
+
+        task = Task.add(
+            name="ping", command="ping 127.0.0.1", description="ping", cron="@hourly"
+        )
+
+        with self.subTest("Без запусков"):
+            overrides = {
+                "number_of_runs": 0,
+                "last_started_run_seq": None,
+                "last_work_status": TaskRunWorkStatusEnum.NONE.value,
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        run_1 = task.add_or_get_run()
+        with self.subTest("Запуск #1 в ожидании"):
+            overrides = {
+                "number_of_runs": 0,
+                "last_started_run_seq": None,
+                "last_work_status": TaskRunWorkStatusEnum.NONE.value,
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.NONE, run_1.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #1 выполняется"):
+            run_1.set_status(TaskRunStatusEnum.RUNNING)
+            overrides = {
+                "number_of_runs": 1,
+                "last_started_run_seq": 1,
+                "last_work_status": TaskRunWorkStatusEnum.IN_PROCESSED.value,
+                "last_started_run_start_date": run_1.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_1.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #1 завершен"):
+            run_1.process_return_code = 0
+            run_1.set_status(TaskRunStatusEnum.FINISHED)
+            overrides = {
+                "number_of_runs": 1,
+                "last_started_run_seq": 1,
+                "last_work_status": TaskRunWorkStatusEnum.SUCCESSFUL.value,
+                "last_started_run_start_date": run_1.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, run_1.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        run_2 = task.add_or_get_run()
+        with self.subTest("Запуск #2 в ожидании"):
+            overrides = {
+                "number_of_runs": 1,
+                "last_started_run_seq": 1,
+                "last_work_status": TaskRunWorkStatusEnum.SUCCESSFUL.value,
+                "last_started_run_start_date": run_1.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.NONE, run_2.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #2 выполняется"):
+            run_2.set_status(TaskRunStatusEnum.RUNNING)
+            overrides = {
+                "number_of_runs": 2,
+                "last_started_run_seq": 2,
+                "last_work_status": TaskRunWorkStatusEnum.IN_PROCESSED.value,
+                "last_started_run_start_date": run_2.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_2.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #2 завершен не успешно"):
+            run_2.process_return_code = 999
+            run_2.set_status(TaskRunStatusEnum.FINISHED)
+            overrides = {
+                "number_of_runs": 2,
+                "last_started_run_seq": 2,
+                "last_work_status": TaskRunWorkStatusEnum.FAILED.value,
+                "last_started_run_start_date": run_2.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_2.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        run_3 = task.add_or_get_run()
+        with self.subTest("Запуск #3 в ожидании"):
+            overrides = {
+                "number_of_runs": 2,
+                "last_started_run_seq": 2,
+                "last_work_status": TaskRunWorkStatusEnum.FAILED.value,
+                "last_started_run_start_date": run_2.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.NONE, run_3.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #3 выполняется"):
+            run_3.set_status(TaskRunStatusEnum.RUNNING)
+            overrides = {
+                "number_of_runs": 3,
+                "last_started_run_seq": 3,
+                "last_work_status": TaskRunWorkStatusEnum.IN_PROCESSED.value,
+                "last_started_run_start_date": run_3.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_3.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])
+
+        with self.subTest("Запуск #3 завершен не успешно"):
+            run_3.process_return_code = 0
+            run_3.set_status(TaskRunStatusEnum.ERROR)
+            overrides = {
+                "number_of_runs": 3,
+                "last_started_run_seq": 3,
+                "last_work_status": TaskRunWorkStatusEnum.FAILED.value,
+                "last_started_run_start_date": run_3.start_date.isoformat(sep=" "),
+            }
+            self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
+            self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_3.work_status)
+            self.assert_tasks(expected_tasks=[(task, overrides)])

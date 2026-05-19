@@ -4,15 +4,111 @@
 __author__ = "ipetrash"
 
 
+from functools import reduce
+from dataclasses import dataclass, field
 from http import HTTPStatus
-from typing import Any
+from operator import or_
+from typing import Self, Any
 
-from flask import Blueprint, Response, jsonify, request, abort
+from flask import Blueprint, Request, Response, jsonify, request, abort
 from werkzeug.exceptions import BadRequest
 
-from run_tasks.app_web.common import StatusEnum, prepare_response, get_task, get_task_run, get_notification
-from run_tasks.db import Task, TaskRun, StopReasonEnum, TaskRunLog, Notification, NotificationKindEnum
+from peewee import Model, Expression, SQL, ColumnBase, fn, JOIN
+from playhouse.shortcuts import model_to_dict
+
+from querystring_parser import parser
+
+from run_tasks.app_web.common import (
+    StatusEnum,
+    prepare_response,
+    get_task,
+    get_task_run,
+    get_notification,
+)
+from run_tasks.db import (
+    Task,
+    TaskRun,
+    StopReasonEnum,
+    TaskRunLog,
+    Notification,
+    NotificationKindEnum,
+    TaskRunStatusEnum,
+    TaskRunWorkStatusEnum,
+)
 from run_tasks.common import get_scheduled_date_generator
+
+
+@dataclass(frozen=True, kw_only=True)
+class DataTableRequest:
+    draw: int
+    start: int
+    length: int
+    search_value: str
+    order_by: list[Expression] = field(default_factory=list)
+
+    @classmethod
+    def from_request(
+        cls,
+        request: Request,
+        models: list[type[Model]],
+        allowed_columns: list[str],
+    ) -> Self:
+        nested_args: dict[str, Any] = parser.parse(
+            request.query_string.decode("utf-8"),
+            normalized=True,
+        )
+
+        draw = int(nested_args.get("draw", 1))
+        start = int(nested_args.get("start", 0))
+        length = int(nested_args.get("length", 10))
+
+        search_dict = nested_args.get("search", dict())
+        search_value = search_dict.get("value", "").strip()
+
+        order_list: list[Expression] = []
+
+        orders = nested_args.get("order", dict())
+
+        for order_data in orders:
+            col_idx = order_data.get("column")  # Индекс колонки
+            direction = order_data.get("dir", "asc")
+
+            col_name = order_data.get("name")
+            if not col_name:
+                abort(400, description=f"Missing name for column index {col_idx}")
+
+            if col_name not in allowed_columns:
+                abort(403, description=f"Sorting by field '{col_name}' is forbidden")
+
+            field_obj: ColumnBase | None = None
+
+            if "." in col_name:
+                model_part, field_part = col_name.split(".", 1)
+                for m in models:
+                    if m._meta.name == model_part:
+                        field_obj = m._meta.fields.get(field_part)
+                        break
+
+            if not field_obj:
+                for m in models:
+                    if col_name in m._meta.fields:
+                        field_obj = m._meta.fields[col_name]
+                        break
+
+            if not field_obj:
+                field_obj = SQL(col_name)
+
+            order_list.append(
+                field_obj.desc() if direction == "desc" else field_obj.asc()
+            )
+
+        return cls(
+            draw=draw,
+            start=start,
+            length=length,
+            search_value=search_value,
+            order_by=order_list,
+        )
 
 
 api_bp = Blueprint("api", __name__)
@@ -20,7 +116,131 @@ api_bp = Blueprint("api", __name__)
 
 @api_bp.route("/tasks")
 def tasks() -> Response:
-    return jsonify([obj.to_dict() for obj in Task.select().order_by(Task.id)])
+    model_type: type[Model] = Task
+
+    subquery_last_started_run = (
+        TaskRun.select(
+            TaskRun,
+            TaskRun.work_status.alias("work_status"),
+            fn.ROW_NUMBER()
+            .over(partition_by=[TaskRun.task], order_by=[TaskRun.id.desc()])
+            .alias("rn"),
+        )
+        .where(TaskRun.status != TaskRunStatusEnum.PENDING)
+        .alias("last_started_run")
+    )
+
+    subquery_nearest_scheduled_run = (
+        TaskRun.select(
+            TaskRun.task,
+            TaskRun.scheduled_date,
+            fn.ROW_NUMBER()
+            .over(partition_by=[TaskRun.task], order_by=[TaskRun.create_date])
+            .alias("rn"),
+        )
+        .where(
+            (TaskRun.status == TaskRunStatusEnum.PENDING)
+            & TaskRun.scheduled_date.is_null(False)
+        )
+        .alias("nearest_scheduled_run")
+    )
+
+    # TODO: Подумать над названием свойств с db_ - мб что-то по другому назвать
+    #       В ответе их с таким же названием возвращать?
+    query = (
+        Task.select(
+            Task,
+            fn.COALESCE(
+                subquery_last_started_run.c.work_status,
+                TaskRunWorkStatusEnum.NONE,
+            ).alias("db_last_work_status"),
+            subquery_last_started_run.c.start_date.alias(
+                "db_last_started_run_start_date"
+            ),
+            fn.COALESCE(subquery_last_started_run.c.seq, 0).alias("db_number_of_runs"),
+            subquery_last_started_run.c.seq.alias("db_last_started_run_seq"),
+            subquery_nearest_scheduled_run.c.scheduled_date.alias(
+                "db_next_scheduled_date"
+            ),
+        )
+        .join(
+            subquery_last_started_run,
+            JOIN.LEFT_OUTER,
+            on=(
+                (Task.id == subquery_last_started_run.c.task_id)
+                & (subquery_last_started_run.c.rn == 1)
+            ),
+        )
+        .join(
+            subquery_nearest_scheduled_run,
+            JOIN.LEFT_OUTER,
+            on=(
+                (Task.id == subquery_nearest_scheduled_run.c.task_id)
+                & (subquery_nearest_scheduled_run.c.rn == 1)
+            ),
+        )
+    )
+
+    data_table_rq = DataTableRequest.from_request(
+        request,
+        models=[Task, TaskRun],
+        allowed_columns=[
+            "id",
+            "name",
+            "command",
+            "description",
+            "is_enabled",
+            "cron",
+            "is_infinite",
+            "db_last_started_run_start_date",
+            "db_number_of_runs",
+            "db_last_started_run_seq",
+            "db_next_scheduled_date",
+        ],
+    )
+
+    total_records = query.count()
+
+    if data_table_rq.search_value:
+        search_fields = [
+            model_type.name,
+            model_type.command,
+            model_type.description,
+            model_type.cron,
+        ]
+        conditions = [
+            field.contains(data_table_rq.search_value) for field in search_fields
+        ]
+        query = query.where(reduce(or_, conditions))
+
+    records_filtered = query.count()
+
+    query = (
+        query.order_by(*data_table_rq.order_by)
+        .offset(data_table_rq.start)
+        .limit(data_table_rq.length)
+    )
+
+    def to_dict(obj) -> dict[str, Any]:
+        return {
+            **model_to_dict(obj, recurse=False),
+            **{
+                "number_of_runs": obj.db_number_of_runs,
+                "last_started_run_seq": obj.db_last_started_run_seq,
+                "last_started_run_start_date": obj.db_last_started_run_start_date,
+                "next_scheduled_date": obj.db_next_scheduled_date,
+                "last_work_status": obj.db_last_work_status,
+            },
+        }
+
+    return jsonify(
+        {
+            "draw": data_table_rq.draw,
+            "recordsTotal": total_records,
+            "recordsFiltered": records_filtered,
+            "data": [to_dict(obj) for obj in query.objects()],
+        }
+    )
 
 
 @api_bp.route("/task/create", methods=["POST"])

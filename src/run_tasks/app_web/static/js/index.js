@@ -109,8 +109,22 @@ $(function() {
     let table = new DataTable(TABLE_ID, {
         ajax: {
             url: '/api/tasks',
-            dataSrc: '',
+            data: function (d) {
+                d.order = d
+                    .order
+                    .filter(obj => obj.name && obj.name.trim() !== '')
+                    .map(obj => { return {
+                        column: obj.column,
+                        name: obj.name,
+                        dir: obj.dir,
+                    }})
+                ;
+                d.search = {value: d.search.value};
+                delete d.columns;
+                return d;
+            }
         },
+        serverSide: true,
         rowId: 'id',
         columns: [
             {
@@ -153,16 +167,16 @@ $(function() {
                 orderable: false,
                 title: 'Статус',
             },
-            { data: 'id', title: 'Ид.', },
-            { data: 'name', title: 'Название', render: task_name_render, },
-            { data: 'description', title: 'Описание', visible: false, },
-            { data: 'cron', title: 'Расписание', },
-            { data: 'is_enabled', title: 'Активный', render: bool_render, },
-            { data: 'is_infinite', title: '<i class="bi bi-infinity"></i>', render: bool_render, },
-            { data: 'command', title: 'Команда', visible: false, },
-            { data: 'last_started_run_start_date', title: 'Последний запуск', render: date_render, },
-            { data: 'next_scheduled_date', title: 'Следующий запуск', visible: false, render: date_render, },
-            { data: 'number_of_runs', title: 'Запуски', },
+            { data: 'id', name: 'id', title: 'Ид.', },
+            { data: 'name', name: 'name', title: 'Название', render: task_name_render, },
+            { data: 'description', name: 'description', title: 'Описание', visible: false, },
+            { data: 'cron', name: 'cron', title: 'Расписание', },
+            { data: 'is_enabled', name: 'is_enabled', title: 'Активный', render: bool_render, },
+            { data: 'is_infinite', name: 'is_infinite', title: '<i class="bi bi-infinity"></i>', render: bool_render, },
+            { data: 'command', name: 'command', title: 'Команда', visible: false, },
+            { data: 'last_started_run_start_date', name: 'db_last_started_run_start_date', title: 'Последний запуск', render: date_render, },
+            { data: 'next_scheduled_date', name: 'db_next_scheduled_date', title: 'Следующий запуск', visible: false, render: date_render, },
+            { data: 'number_of_runs', name: 'db_number_of_runs', title: 'Запуски', },
         ],
         order: [
             // Сортировка по возрастанию id

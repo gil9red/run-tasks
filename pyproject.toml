@@ -14,6 +14,7 @@ dependencies = [
     "peewee==3.17.1",
     "psutil==5.9.8",
     "pyyaml==6.0.1",
+    "querystring-parser>=1.2.4",
     "requests==2.31.0",
 ]
 readme = "README.md"

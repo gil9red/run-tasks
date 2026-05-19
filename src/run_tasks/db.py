@@ -16,6 +16,7 @@ from jinja2.sandbox import SandboxedEnvironment
 from peewee import (
     Model,
     Expression,
+    Case,
     Field,
     TextField,
     ForeignKeyField,
@@ -373,6 +374,12 @@ class TaskRun(BaseModel):
             self.status == TaskRunStatusEnum.FINISHED and self.process_return_code == 0
         )
 
+    @is_success.expression
+    def is_success(cls) -> Any:
+        return (cls.status == TaskRunStatusEnum.FINISHED) & (
+            cls.process_return_code == 0
+        )
+
     @hybrid_property
     def work_status(self) -> TaskRunWorkStatusEnum:
         if self.status == TaskRunStatusEnum.PENDING:
@@ -384,6 +391,26 @@ class TaskRun(BaseModel):
         if self.is_success:
             return TaskRunWorkStatusEnum.SUCCESSFUL
         return TaskRunWorkStatusEnum.FAILED
+
+    @work_status.expression
+    def work_status(cls) -> Any:
+        # Логика для SQL-запросов (Case)
+        return Case(
+            None,
+            [
+                (cls.status == TaskRunStatusEnum.PENDING, TaskRunWorkStatusEnum.NONE),
+                (
+                    cls.status == TaskRunStatusEnum.RUNNING,
+                    TaskRunWorkStatusEnum.IN_PROCESSED,
+                ),
+                (
+                    cls.status == TaskRunStatusEnum.STOPPED,
+                    TaskRunWorkStatusEnum.STOPPED,
+                ),
+                (cls.is_success, TaskRunWorkStatusEnum.SUCCESSFUL),
+            ],
+            TaskRunWorkStatusEnum.FAILED,
+        )
 
     @property
     def prev_task_run(self) -> Self | None:
