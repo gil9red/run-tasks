@@ -116,8 +116,6 @@ api_bp = Blueprint("api", __name__)
 
 @api_bp.route("/tasks")
 def tasks() -> Response:
-    model_type: type[Model] = Task
-
     subquery_last_started_run = (
         TaskRun.select(
             TaskRun,
@@ -195,10 +193,10 @@ def tasks() -> Response:
 
     if data_table_rq.search_value:
         search_fields = [
-            model_type.name,
-            model_type.command,
-            model_type.description,
-            model_type.cron,
+            Task.name,
+            Task.command,
+            Task.description,
+            Task.cron,
         ]
         conditions = [
             field.contains(data_table_rq.search_value) for field in search_fields
