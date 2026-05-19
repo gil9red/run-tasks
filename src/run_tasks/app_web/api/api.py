@@ -122,11 +122,10 @@ def tasks() -> Response:
         TaskRun.select(
             TaskRun,
             TaskRun.work_status.alias("work_status"),
-            fn.ROW_NUMBER()
-            .over(partition_by=[TaskRun.task], order_by=[TaskRun.id.desc()])
-            .alias("rn"),
+            fn.MAX(TaskRun.id),
         )
         .where(TaskRun.status != TaskRunStatusEnum.PENDING)
+        .group_by(TaskRun.task)
         .alias("last_started_run")
     )
 
@@ -134,14 +133,13 @@ def tasks() -> Response:
         TaskRun.select(
             TaskRun.task,
             TaskRun.scheduled_date,
-            fn.ROW_NUMBER()
-            .over(partition_by=[TaskRun.task], order_by=[TaskRun.create_date])
-            .alias("rn"),
+            fn.MAX(TaskRun.id),
         )
         .where(
             (TaskRun.status == TaskRunStatusEnum.PENDING)
             & TaskRun.scheduled_date.is_null(False)
         )
+        .group_by(TaskRun.task)
         .alias("nearest_scheduled_run")
     )
 
@@ -166,18 +164,12 @@ def tasks() -> Response:
         .join(
             subquery_last_started_run,
             JOIN.LEFT_OUTER,
-            on=(
-                (Task.id == subquery_last_started_run.c.task_id)
-                & (subquery_last_started_run.c.rn == 1)
-            ),
+            on=(Task.id == subquery_last_started_run.c.task_id),
         )
         .join(
             subquery_nearest_scheduled_run,
             JOIN.LEFT_OUTER,
-            on=(
-                (Task.id == subquery_nearest_scheduled_run.c.task_id)
-                & (subquery_nearest_scheduled_run.c.rn == 1)
-            ),
+            on=(Task.id == subquery_nearest_scheduled_run.c.task_id),
         )
     )
 
