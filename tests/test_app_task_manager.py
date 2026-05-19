@@ -16,8 +16,12 @@ from run_tasks.app_task_manager.external_task_storage.main import process
 
 class TestSchedulerUnit(TestCase):
     def test__get_scheduled_date(self) -> None:
-        self.assertGreater(SchedulerUnit._get_scheduled_date("* * * * *"), datetime.now())
-        self.assertGreater(SchedulerUnit._get_scheduled_date("0 * * * *"), datetime.now())
+        self.assertGreater(
+            SchedulerUnit._get_scheduled_date("* * * * *"), datetime.now()
+        )
+        self.assertGreater(
+            SchedulerUnit._get_scheduled_date("0 * * * *"), datetime.now()
+        )
 
 
 class TestRemoteUpdateCreateTasks(TestCase):
@@ -41,11 +45,11 @@ class TestRemoteUpdateCreateTasks(TestCase):
         self.assertEqual(0, Task.count())
 
         def _create_data(
-                command: str,
-                description: str,
-                cron: str,
-                is_enabled: bool = True,
-                is_infinite: bool = False,
+            command: str,
+            description: str,
+            cron: str,
+            is_enabled: bool = True,
+            is_infinite: bool = False,
         ) -> dict:
             return dict(
                 command=command,

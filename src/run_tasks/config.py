@@ -13,7 +13,6 @@ from typing import Any
 
 import yaml
 
-
 DIR: Path = Path(__file__).resolve().parent
 
 DIR_LOGS: Path = DIR / "logs"
@@ -35,9 +34,7 @@ if not CONFIG_FILE_NAME.exists():
     print(f"Файл конфига скопирован из примера {CONFIG_EXAMPLE_FILE_NAME}")
     shutil.copy(CONFIG_EXAMPLE_FILE_NAME, CONFIG_FILE_NAME)
 
-CONFIG: dict[str, Any] = yaml.safe_load(
-    CONFIG_FILE_NAME.read_text("utf-8")
-)
+CONFIG: dict[str, Any] = yaml.safe_load(CONFIG_FILE_NAME.read_text("utf-8"))
 CONFIG_EXAMPLE: dict[str, Any] = yaml.safe_load(
     CONFIG_EXAMPLE_FILE_NAME.read_text("utf-8")
 )

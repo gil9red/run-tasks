@@ -14,9 +14,10 @@ from run_tasks.config import CONFIG_NOTIFICATION
 import run_tasks.third_party.add_notify_telegram
 from run_tasks.third_party.add_notify_telegram import add_notify
 
-
 # Установка адреса сервера, через который отправляются уведомления
-run_tasks.third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"]["add_notify_url"]
+run_tasks.third_party.add_notify_telegram.URL = CONFIG_NOTIFICATION["telegram"][
+    "add_notify_url"
+]
 
 
 class NotificationUnit(BaseUnit):

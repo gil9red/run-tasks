@@ -24,7 +24,6 @@ from run_tasks.db import (
     NotificationKindEnum,
 )
 
-
 # Минимальное время задержки между вызовами datetime.now(), чтобы даты не совпали
 DATETIME_DELAY_SECS: float = 0.001
 

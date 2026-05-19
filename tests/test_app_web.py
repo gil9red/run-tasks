@@ -257,7 +257,7 @@ class TestAppApiWeb(TestBaseAppWeb):
 
         with self.subTest("200 - Ok"):
             data = {
-                "name":  "Foo Bar",
+                "name": "Foo Bar",
                 "command": "Command",
                 "description": "Description",
                 "cron": "* * * * *",
@@ -428,7 +428,7 @@ class TestAppApiWeb(TestBaseAppWeb):
 
             self.assertEqual(
                 get_common_view(rs.json["result"][0]),
-                get_common_view(run_1.to_dict())
+                get_common_view(run_1.to_dict()),
             )
 
     def test_api_task_run_get_last(self) -> None:
@@ -475,7 +475,7 @@ class TestAppApiWeb(TestBaseAppWeb):
 
             self.assertEqual(
                 get_common_view(rs.json["result"][0]),
-                get_common_view(run_1.to_dict())
+                get_common_view(run_1.to_dict()),
             )
 
     def test_api_task_run_do_stop(self) -> None:

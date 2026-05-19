@@ -19,15 +19,11 @@ class SchedulerUnit(BaseUnit):
 
     @classmethod
     def _get_scheduled_date(cls, cron: str) -> datetime:
-        return next(
-            get_scheduled_date_generator(cron)
-        )
+        return next(get_scheduled_date_generator(cron))
 
     def process(self) -> None:
         for task in Task.select().where(Task.is_enabled == True):
-            if task.is_infinite and not task.get_runs_by(
-                [TaskRunStatusEnum.RUNNING]
-            ):
+            if task.is_infinite and not task.get_runs_by([TaskRunStatusEnum.RUNNING]):
                 # Без запланированного времени
                 scheduled_date = None
             elif task.cron:

@@ -15,7 +15,6 @@ from cron_converter import Cron
 from run_tasks.config import CONFIG
 from run_tasks.third_party.cron_converter__examples.from_jenkins import do_convert
 
-
 CONFIG_EMAIL: dict[str, Any] = CONFIG["notification"]["email"]
 EMAIL_HOST: str = CONFIG_EMAIL["host"]
 EMAIL_PORT: int = CONFIG_EMAIL["port"]

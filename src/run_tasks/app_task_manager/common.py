@@ -6,5 +6,4 @@ __author__ = "ipetrash"
 
 import logging
 
-
 log_manager = logging.getLogger("task_manager")

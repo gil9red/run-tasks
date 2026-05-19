@@ -180,7 +180,10 @@ class Task(BaseModel):
     def get_last_started_run(self) -> Optional["TaskRun"]:
         return self.get_last_run(filters=[TaskRun.status != TaskRunStatusEnum.PENDING])
 
-    def get_last_run(self, filters: list[Expression] | None = None) -> Optional["TaskRun"]:
+    def get_last_run(
+        self,
+        filters: list[Expression] | None = None,
+    ) -> Optional["TaskRun"]:
         query = self.runs
         if filters:
             query = query.where(*filters)

@@ -7,7 +7,6 @@ __author__ = "ipetrash"
 from typing import Any
 from run_tasks.config import CONFIG
 
-
 CONFIG_WEB: dict[str, Any] = CONFIG["web"]
 
 HOST: str = CONFIG_WEB["host"]

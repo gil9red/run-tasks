@@ -10,7 +10,6 @@ __author__ = "ipetrash"
 from playhouse.migrate import SqliteDatabase, SqliteMigrator, migrate
 from run_tasks.db import DB_FILE_NAME, Notification, DateTimeField
 
-
 db = SqliteDatabase(DB_FILE_NAME)
 migrator = SqliteMigrator(db)
 

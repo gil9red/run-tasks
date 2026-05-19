@@ -9,9 +9,10 @@ from typing import Any
 
 from run_tasks.config import CONFIG
 
-
 CONFIG_MANAGER: dict[str, Any] = CONFIG["manager"]
 
 ENCODING: str = CONFIG_MANAGER["encoding"] or sys.getdefaultencoding()
 PATTERN_FILE_TASK_COMMAND: str = CONFIG_MANAGER["pattern_file_task_command"]
-STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS: int = CONFIG_MANAGER["storage_period"]["task_run_in_days"]
+STORAGE_PERIOD_OF_TASK_RUN_IN_DAYS: int = CONFIG_MANAGER["storage_period"][
+    "task_run_in_days"
+]

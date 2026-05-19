@@ -14,7 +14,6 @@ from run_tasks.config import CONFIG
 from run_tasks.db import Task
 from run_tasks.third_party.get_gist_file import get_gist_file
 
-
 CONFIG_GIST: dict[str, Any] = CONFIG["manager"]["external_task_storage"]["gist"]
 
 
@@ -102,9 +101,7 @@ def download_and_process() -> None:
 
     text = get_gist_file(gist_url, file_name)
     tasks: dict[str, dict] = {
-        k: v
-        for k, v in yaml.safe_load(text).items()
-        if not k.startswith("__")
+        k: v for k, v in yaml.safe_load(text).items() if not k.startswith("__")
     }
 
     process(tasks)

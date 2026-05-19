@@ -22,7 +22,6 @@ from run_tasks.app_task_manager.config import ENCODING, PATTERN_FILE_TASK_COMMAN
 from run_tasks.db import Task, TaskRun, TaskRunStatusEnum, StopReasonEnum
 from run_tasks.config import PROJECT_NAME
 
-
 IS_WIN: bool = sys.platform == "win32"
 
 
@@ -167,7 +166,10 @@ class ThreadRunProcess(threading.Thread):
             if self.stop_on():
                 return
 
-            def read_stream(stream: IO[AnyStr], on_callback: Callable[[str], None]) -> None:
+            def read_stream(
+                stream: IO[AnyStr],
+                on_callback: Callable[[str], None],
+            ) -> None:
                 for text in iter(stream.readline, ""):
                     on_callback(text)
                     if self.stop_on():
@@ -310,7 +312,11 @@ class TaskThread(threading.Thread):
                 TaskRunStatusEnum.ERROR,
             ]
             if need_stop:
-                reason_text = actual_task_run.stop_reason.value if actual_task_run.stop_reason else 'неизвестна'
+                reason_text = (
+                    actual_task_run.stop_reason.value
+                    if actual_task_run.stop_reason
+                    else "неизвестна"
+                )
                 log.debug(
                     f"{log_prefix} нужно остановить задачу (причина {reason_text}),"
                     f" текущий статус {status.value}"
@@ -363,7 +369,9 @@ class TaskThread(threading.Thread):
                 final_status = TaskRunStatusEnum.FINISHED
             task_run.set_status(final_status)
 
-            task_run.add_log_out(f"\nProcess return code: {task_run.process_return_code}")
+            task_run.add_log_out(
+                f"\nProcess return code: {task_run.process_return_code}"
+            )
             task_run.add_log_out(f"Finished: {task_run.work_status.value}")
 
             task_run.save()
