@@ -82,8 +82,9 @@ $(function() {
     new DataTable('#table-task-runs', {
         ajax: {
             url: `/api/task/${TASK_ID}/runs`,
-            dataSrc: '',
+            data: prepare_data_for_server_side,
         },
+        serverSide: true,
         rowId: 'id',
         columns: [
             {
@@ -99,18 +100,18 @@ $(function() {
                 orderable: false,
                 title: 'Статус',
             },
-            { data: 'id', title: 'Ид.', visible: false, },
-            { data: 'task', title: 'Задача', visible: false, },
-            { data: 'seq', title: '#', },
-            { data: 'command', title: 'Команда', },
-            { data: 'status', title: 'Статус из БД', visible: false, },
-            { data: 'stop_reason', title: 'Причина отмены', visible: false, },
-            { data: 'process_id', title: 'Ид. процесса', visible: false, },
-            { data: 'process_return_code', title: 'Код возврата процесса', visible: false, },
-            { data: 'create_date', title: 'Создано', render: date_render, visible: false, },
-            { data: 'start_date', title: 'Запущено', render: date_render, },
-            { data: 'finish_date', title: 'Завершено', render: date_render, },
-            { data: 'scheduled_date', title: 'Запланировано', render: date_render, visible: false, },
+            { data: 'id', name: 'id', title: 'Ид.', visible: false, },
+            { data: 'task', name: 'task', title: 'Задача', visible: false, },
+            { data: 'seq', name: 'seq', title: '#', },
+            { data: 'command', name: 'command', title: 'Команда', },
+            { data: 'status', name: 'status', title: 'Статус из БД', visible: false, },
+            { data: 'stop_reason', name: 'stop_reason', title: 'Причина отмены', visible: false, },
+            { data: 'process_id', name: 'process_id', title: 'Ид. процесса', visible: false, },
+            { data: 'process_return_code', name: 'process_return_code', title: 'Код возврата процесса', visible: false, },
+            { data: 'create_date', name: 'create_date', title: 'Создано', render: date_render, visible: false, },
+            { data: 'start_date', name: 'start_date', title: 'Запущено', render: date_render, },
+            { data: 'finish_date', name: 'finish_date', title: 'Завершено', render: date_render, },
+            { data: 'scheduled_date', name: 'scheduled_date', title: 'Запланировано', render: date_render, visible: false, },
         ],
         order: [
             // Сортировка по убыванию seq

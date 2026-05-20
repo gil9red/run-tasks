@@ -8,12 +8,12 @@ from functools import reduce
 from dataclasses import dataclass, field
 from http import HTTPStatus
 from operator import or_
-from typing import Self, Any
+from typing import Self, Any, Callable
 
 from flask import Blueprint, Request, Response, jsonify, request, abort
 from werkzeug.exceptions import BadRequest
 
-from peewee import Model, Expression, SQL, ColumnBase, fn, JOIN
+from peewee import Model, Field, Expression, SQL, ColumnBase, ModelSelect, JOIN, fn
 from playhouse.shortcuts import model_to_dict
 
 from querystring_parser import parser
@@ -51,8 +51,12 @@ class DataTableRequest:
         cls,
         request: Request,
         models: list[type[Model]],
-        allowed_columns: list[str],
+        allowed_columns: list[str | Field],
     ) -> Self:
+        allowed_columns: list[str] = [
+            field if isinstance(field, str) else field.name for field in allowed_columns
+        ]
+
         nested_args: dict[str, Any] = parser.parse(
             request.query_string.decode("utf-8"),
             normalized=True,
@@ -109,6 +113,46 @@ class DataTableRequest:
             search_value=search_value,
             order_by=order_list,
         )
+
+
+def prepare_datatables_response(
+    query: ModelSelect,
+    request: Request,
+    models: list[type[Model]],
+    allowed_columns: list[str | Field],
+    search_fields: list[Field],
+    to_dict: Callable[[Model], dict[str, Any]],
+) -> Response:
+    data_table_rq = DataTableRequest.from_request(
+        request,
+        models=models,
+        allowed_columns=allowed_columns,
+    )
+
+    total_records = query.count()
+
+    if data_table_rq.search_value and search_fields:
+        conditions = [
+            field.contains(data_table_rq.search_value) for field in search_fields
+        ]
+        query = query.where(reduce(or_, conditions))
+
+    records_filtered = query.count()
+
+    query = (
+        query.order_by(*data_table_rq.order_by)
+        .offset(data_table_rq.start)
+        .limit(data_table_rq.length)
+    )
+
+    return jsonify(
+        {
+            "draw": data_table_rq.draw,
+            "recordsTotal": total_records,
+            "recordsFiltered": records_filtered,
+            "data": [to_dict(obj) for obj in query.objects()],
+        }
+    )
 
 
 api_bp = Blueprint("api", __name__)
@@ -171,47 +215,7 @@ def tasks() -> Response:
         )
     )
 
-    data_table_rq = DataTableRequest.from_request(
-        request,
-        models=[Task, TaskRun],
-        allowed_columns=[
-            "id",
-            "name",
-            "command",
-            "description",
-            "is_enabled",
-            "cron",
-            "is_infinite",
-            "db_last_started_run_start_date",
-            "db_number_of_runs",
-            "db_last_started_run_seq",
-            "db_next_scheduled_date",
-        ],
-    )
-
-    total_records = query.count()
-
-    if data_table_rq.search_value:
-        search_fields = [
-            Task.name,
-            Task.command,
-            Task.description,
-            Task.cron,
-        ]
-        conditions = [
-            field.contains(data_table_rq.search_value) for field in search_fields
-        ]
-        query = query.where(reduce(or_, conditions))
-
-    records_filtered = query.count()
-
-    query = (
-        query.order_by(*data_table_rq.order_by)
-        .offset(data_table_rq.start)
-        .limit(data_table_rq.length)
-    )
-
-    def to_dict(obj) -> dict[str, Any]:
+    def to_dict(obj: Model) -> dict[str, Any]:
         return {
             **model_to_dict(obj, recurse=False),
             **{
@@ -223,13 +227,30 @@ def tasks() -> Response:
             },
         }
 
-    return jsonify(
-        {
-            "draw": data_table_rq.draw,
-            "recordsTotal": total_records,
-            "recordsFiltered": records_filtered,
-            "data": [to_dict(obj) for obj in query.objects()],
-        }
+    return prepare_datatables_response(
+        query=query,
+        request=request,
+        models=[Task],
+        allowed_columns=[
+            Task.id,
+            Task.name,
+            Task.command,
+            Task.description,
+            Task.is_enabled,
+            Task.cron,
+            Task.is_infinite,
+            "db_last_started_run_start_date",
+            "db_number_of_runs",
+            "db_last_started_run_seq",
+            "db_next_scheduled_date",
+        ],
+        search_fields=[
+            Task.name,
+            Task.command,
+            Task.description,
+            Task.cron,
+        ],
+        to_dict=to_dict,
     )
 
 
@@ -332,8 +353,31 @@ def task_delete(task_id: int) -> Response:
 
 @api_bp.route("/task/<int:task_id>/runs")
 def task_runs(task_id: int) -> Response:
-    return jsonify(
-        [obj.to_dict() for obj in get_task(task_id).runs.order_by(TaskRun.id)]
+    return prepare_datatables_response(
+        query=get_task(task_id).runs,
+        request=request,
+        models=[TaskRun],
+        allowed_columns=[
+            TaskRun.id,
+            TaskRun.task,
+            TaskRun.seq,
+            TaskRun.command,
+            TaskRun.status,
+            TaskRun.stop_reason,
+            TaskRun.process_id,
+            TaskRun.process_return_code,
+            TaskRun.create_date,
+            TaskRun.start_date,
+            TaskRun.finish_date,
+            TaskRun.scheduled_date,
+        ],
+        search_fields=[
+            TaskRun.command,
+            TaskRun.status,
+            TaskRun.stop_reason,
+            TaskRun.process_id,
+        ],
+        to_dict=lambda obj: obj.to_dict(),
     )
 
 

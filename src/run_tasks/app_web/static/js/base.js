@@ -300,10 +300,26 @@ function get_state_key(settings) {
 }
 
 
+function prepare_data_for_server_side(d) {
+    d.order = d
+        .order
+        .filter(obj => obj.name && obj.name.trim() !== '')
+        .map(obj => { return {
+            column: obj.column,
+            name: obj.name,
+            dir: obj.dir,
+        }})
+    ;
+    d.search = {value: d.search.value};
+    delete d.columns;
+    return d;
+}
+
+
 COMMON_PROPS_DATA_TABLE = {
     lengthMenu: [
-        [10, 25, 50, -1],
-        ["10 записей", "25 записей", "50 записей", "Все записи"]
+        [10, 25, 50, 100],
+        ["10 записей", "25 записей", "50 записей", "100 записей"],
     ],
     colReorder: true,
     stateSave: true,

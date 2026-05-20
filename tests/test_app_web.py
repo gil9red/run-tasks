@@ -5,6 +5,7 @@ __author__ = "ipetrash"
 
 
 from datetime import datetime
+from enum import Enum
 from unittest import TestCase
 from typing import Any
 
@@ -19,6 +20,7 @@ from run_tasks.db import (
     TaskRunStatusEnum,
     TaskRunWorkStatusEnum,
     NotificationKindEnum,
+    StopReasonEnum,
 )
 
 from run_tasks.app_web.config import USERS
@@ -314,47 +316,6 @@ class TestAppApiWeb(TestBaseAppWeb):
             rs = self.client.delete(uri)
             self.assertEqual(rs.status_code, 200)
             self.assertIsNone(task.get_by_name(task.name))
-
-    def test_api_task_runs(self) -> None:
-        with self.subTest("404 - Not Found"):
-            uri: str = "/api/task/99999/runs"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-            self.assertEqual(rs.json["status"], "error")
-
-        with self.subTest("200 - Ok"):
-            task_1 = Task.add(
-                name="1",
-                command="ping 127.0.0.1",
-                description="description ping",
-                cron="* * * * *",
-            )
-            run_1 = task_1.add_or_get_run()
-            run_1.set_status(TaskRunStatusEnum.RUNNING)
-
-            run_2 = task_1.add_or_get_run(datetime.now())
-
-            run_3 = task_1.add_or_get_run()
-
-            uri: str = f"/api/task/{task_1.id}/runs"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-
-            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-                return dict(id=d["id"], task=d["task"])
-
-            self.assertEqual(
-                [get_common_view(obj) for obj in rs.json],
-                [
-                    get_common_view(obj.to_dict())
-                    for obj in task_1.runs.order_by(TaskRun.id)
-                ],
-            )
-            self.assertEqual(
-                [get_common_view(obj) for obj in rs.json],
-                [get_common_view(obj.to_dict()) for obj in [run_1, run_2, run_3]],
-            )
 
     def test_api_task_do_run(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
@@ -1288,3 +1249,210 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_3.work_status)
             self.assert_tasks(expected_tasks=[(task, overrides)])
+
+
+class TestAppApiWebTaskRuns(TestBaseAppWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.task = Task.add(
+            name="ping",
+            command="ping 127.0.0.1",
+            description="description ping",
+            cron="* * * * *",
+        )
+
+        self.uri: str = f"/api/task/{self.task.id}/runs"
+
+    def _create_runs(self, n: int, status: TaskRunStatusEnum) -> list[TaskRun]:
+        runs = []
+        for _ in range(n):
+            run = self.task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.RUNNING)
+            run.set_status(status)
+
+            runs.append(run)
+
+        return runs
+
+    def assert_task_runs(
+        self,
+        params: dict | None = None,
+        records_filtered: int | None = None,
+        expected_task_runs: list[TaskRun] | None = None,
+        draw: int = 1,
+    ):
+        rs = self.client.get(self.uri, query_string=params or dict())
+        self.assertEqual(200, rs.status_code)
+
+        rs_data = rs.json
+        self.assertEqual(draw, rs_data["draw"])
+        self.assertEqual(TaskRun.select().count(), rs_data["recordsTotal"])
+
+        if records_filtered is None:
+            records_filtered = rs_data["recordsTotal"]
+
+        self.assertEqual(records_filtered, rs_data["recordsFiltered"])
+
+        if expected_task_runs is not None:
+            expected_data: list[dict[str, Any]] = []
+            for item in expected_task_runs:
+                data: dict[str, Any] = dict()
+                for k, v in item.to_dict().items():
+                    if isinstance(v, Enum):
+                        v = v.value
+                    elif isinstance(v, datetime):
+                        v = v.isoformat()
+
+                    data[k] = v
+
+                expected_data.append(data)
+
+            self.assertEqual(expected_data, rs_data["data"])
+
+    def test_empty(self) -> None:
+        self.assert_task_runs(expected_task_runs=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_task_runs(params={"draw": 999}, expected_task_runs=[], draw=999)
+        self.assert_task_runs(params={"draw": "999"}, expected_task_runs=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+        with self.subTest("404 Not Found", code=404):
+            rs = self.client.get("/api/task/404/runs")
+            self.assertEqual(404, rs.status_code)
+
+    def test_main(self) -> None:
+        runs = self._create_runs(n=3, status=TaskRunStatusEnum.FINISHED)
+        self.assert_task_runs(expected_task_runs=runs)
+
+    def test_pagination(self) -> None:
+        """Проверка базовой пагинации"""
+
+        runs = self._create_runs(n=10, status=TaskRunStatusEnum.FINISHED)
+
+        with self.subTest("Первая страница (start=0, length=5)"):
+            self.assert_task_runs(
+                params={"start": 0, "length": 5},
+                expected_task_runs=runs[:5],
+            )
+
+        with self.subTest("Вторая страница (start=5, length=5)"):
+            self.assert_task_runs(
+                params={"start": 5, "length": 5},
+                expected_task_runs=runs[5:10],
+            )
+
+    def test_search_filtering(self) -> None:
+        """Проверка поиска по всем полям: command, status, stop_reason, process_id"""
+
+        # Создаем специфичные запуски
+        r1 = self.task.add_or_get_run()
+        r1.command = "python script.py"
+        r1.set_status(TaskRunStatusEnum.RUNNING)
+        r1.process_id = 1234
+        r1.set_status(TaskRunStatusEnum.FINISHED)
+        r1.save()
+
+        r2 = self.task.add_or_get_run()
+        r2.command = "bash script.sh"
+        r2.set_status(TaskRunStatusEnum.RUNNING)
+        r2.process_id = 5678
+        r2.set_stop(StopReasonEnum.SERVER_API)
+        r2.save()
+
+        with self.subTest("Поиск по command"):
+            self.assert_task_runs(
+                params={"search[value]": "python"},
+                records_filtered=1,
+                expected_task_runs=[r1],
+            )
+
+        with self.subTest("Поиск по status"):
+            self.assert_task_runs(
+                params={"search[value]": TaskRunStatusEnum.FINISHED.value},
+                records_filtered=1,
+                expected_task_runs=[r1],
+            )
+
+        with self.subTest("Поиск по stop_reason"):
+            self.assert_task_runs(
+                params={"search[value]": StopReasonEnum.SERVER_API.value},
+                records_filtered=1,
+                expected_task_runs=[r2],
+            )
+
+        with self.subTest("Поиск по process_id"):
+            self.assert_task_runs(
+                params={"search[value]": "5678"},
+                records_filtered=1,
+                expected_task_runs=[r2],
+            )
+
+    def test_search_with_pagination(self) -> None:
+        """Проверка совместной работы фильтрации и пагинации."""
+
+        # Создаем 5 'ошибочных' запусков и 5 'успешных'
+        error_runs = self._create_runs(n=5, status=TaskRunStatusEnum.ERROR)
+        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
+
+        params = {
+            "search[value]": TaskRunStatusEnum.ERROR.value,
+            "start": 0,
+            "length": 3,
+            "order[0][column]": 0,
+            "order[0][name]": "id",
+            "order[0][dir]": "asc",
+        }
+        # Ожидаем 5 найденных, но в выдаче только первые 3
+        self.assert_task_runs(
+            params=params, records_filtered=5, expected_task_runs=error_runs[:3]
+        )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки"""
+
+        runs = self._create_runs(n=10, status=TaskRunStatusEnum.FINISHED)
+
+        with self.subTest("Sort by seq ASC"):
+            params = {
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "asc",
+            }
+            self.assert_task_runs(params=params, expected_task_runs=runs)
+
+        with self.subTest("Sort by seq DESC"):
+            params = {
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "desc",
+            }
+            self.assert_task_runs(params=params, expected_task_runs=runs[::-1])
+
+    def test_multi_column_sorting(self) -> None:
+        """Проверка сортировки по нескольким колонкам одновременно"""
+
+        r1, r2 = self._create_runs(n=2, status=TaskRunStatusEnum.FINISHED)
+
+        params = {
+            "order[0][column]": 0,
+            "order[0][name]": "status",
+            "order[0][dir]": "asc",
+            "order[1][column]": 1,
+            "order[1][name]": "seq",
+            "order[1][dir]": "desc",
+        }
+        # Сначала по статусу (одинаковые), потом по seq (desc)
+        self.assert_task_runs(params=params, expected_task_runs=[r2, r1])
