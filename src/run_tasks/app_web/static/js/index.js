@@ -109,20 +109,7 @@ $(function() {
     let table = new DataTable(TABLE_ID, {
         ajax: {
             url: '/api/tasks',
-            data: function (d) {
-                d.order = d
-                    .order
-                    .filter(obj => obj.name && obj.name.trim() !== '')
-                    .map(obj => { return {
-                        column: obj.column,
-                        name: obj.name,
-                        dir: obj.dir,
-                    }})
-                ;
-                d.search = {value: d.search.value};
-                delete d.columns;
-                return d;
-            }
+            data: prepare_data_for_server_side,
         },
         serverSide: true,
         rowId: 'id',
