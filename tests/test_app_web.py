@@ -1066,7 +1066,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             )
 
     def test_sorting(self) -> None:
-        """Проверка сортировки, включая специфику cron"""
+        """Проверка сортировки"""
 
         task_1 = Task.add(name="Alpha", command="1", cron=None)
         task_2 = Task.add(name="Beta", command="2", cron="@hourly")
