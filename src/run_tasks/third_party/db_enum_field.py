@@ -25,7 +25,10 @@ class EnumField(CharField):
         if value is None:
             return
 
-        return value.value
+        if isinstance(value, enum.Enum):
+            return value.value
+
+        return value
 
     def python_value(self, value: Any) -> Any:
         if value is None:
