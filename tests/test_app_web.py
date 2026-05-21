@@ -614,16 +614,16 @@ class TestAppApiWeb(TestBaseAppWeb):
                     id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
                 )
 
-            items = []
+            items: list[TaskRunLog] = []
             for i in range(5):
                 items.append(run_1.add_log_out(f"out={i}"))
-                items.append(run_1.add_log_err(f"out={i}"))
+                items.append(run_1.add_log_err(f"err={i}"))
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(
-                [get_common_view(obj) for obj in rs.json],
                 [get_common_view(obj.to_dict()) for obj in items],
+                [get_common_view(obj) for obj in rs.json],
             )
 
     def test_api_task_run_last_logs(self) -> None:
@@ -654,16 +654,16 @@ class TestAppApiWeb(TestBaseAppWeb):
                     id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
                 )
 
-            items = []
+            items: list[TaskRunLog] = []
             for i in range(5):
                 items.append(run_1.add_log_out(f"out={i}"))
-                items.append(run_1.add_log_err(f"out={i}"))
+                items.append(run_1.add_log_err(f"err={i}"))
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(
-                [get_common_view(obj) for obj in rs.json],
                 [get_common_view(obj.to_dict()) for obj in items],
+                [get_common_view(obj) for obj in rs.json],
             )
 
     def test_api_notifications(self) -> None:
@@ -676,11 +676,11 @@ class TestAppApiWeb(TestBaseAppWeb):
             return dict(id=d["id"], kind=d["kind"], text=d["text"])
 
         self.assertEqual(
-            [get_common_view(obj) for obj in rs.json],
             [
                 get_common_view(obj.to_dict())
                 for obj in Notification.select().order_by(Notification.id)
             ],
+            [get_common_view(obj) for obj in rs.json],
         )
 
     def test_api_notification_create(self) -> None:
