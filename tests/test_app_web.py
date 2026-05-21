@@ -21,6 +21,7 @@ from run_tasks.db import (
     TaskRunWorkStatusEnum,
     NotificationKindEnum,
     StopReasonEnum,
+    TaskRunLog,
 )
 
 from run_tasks.app_web.config import USERS
@@ -520,6 +521,62 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.json["status"], "ok")
 
             self.assertNotEqual(run_1.notifications.count(), 0)
+
+    def test_api_task_logs(self) -> None:
+        with self.subTest("404 - Not Found"):
+            uri: str = "/api/task/99999/logs"
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+            return dict(
+                id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
+            )
+
+        task = Task.add(
+            name="ping",
+            command="ping 127.0.0.1",
+        )
+        uri: str = f"/api/task/{task.id}/logs"
+
+        run_1 = task.add_or_get_run()
+        run_1.set_status(TaskRunStatusEnum.RUNNING)
+
+        with self.subTest("200 - Ok - empty"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json, [])
+
+        items: list[TaskRunLog] = []
+
+        with self.subTest("200 - Ok - 1 runs, 10 logs"):
+            for i in range(5):
+                items.append(run_1.add_log_out(f"out={i}"))
+                items.append(run_1.add_log_err(f"err={i}"))
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in items],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        run_1.set_status(TaskRunStatusEnum.FINISHED)
+
+        run_2 = task.add_or_get_run()
+        with self.subTest("200 - Ok - 2 runs, 20 logs"):
+            for i in range(5):
+                items.append(run_2.add_log_out(f"out={i}"))
+                items.append(run_2.add_log_err(f"err={i}"))
+
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in items],
+                [get_common_view(obj) for obj in rs.json],
+            )
 
     def test_api_task_run_logs(self) -> None:
         with self.subTest("404 - Not Found"):
