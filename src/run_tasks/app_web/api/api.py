@@ -18,6 +18,7 @@ from playhouse.shortcuts import model_to_dict
 
 from querystring_parser import parser
 
+from run_tasks.app_web.config import API_PAGE_LENGTH_DEFAULT
 from run_tasks.app_web.common import (
     StatusEnum,
     prepare_response,
@@ -65,7 +66,7 @@ class DataTableRequest:
 
         draw = int(nested_args.get("draw", 1))
         start = int(nested_args.get("start", 0))
-        length = int(nested_args.get("length", 10))
+        length = int(nested_args.get("length", API_PAGE_LENGTH_DEFAULT))
 
         search_dict = nested_args.get("search", dict())
         search_value = search_dict.get("value", "").strip()
@@ -150,6 +151,8 @@ def prepare_datatables_response(
         .offset(data_table_rq.start)
         .limit(data_table_rq.length)
     )
+
+    print("query", query)
 
     return jsonify(
         {
@@ -342,6 +345,33 @@ def task_logs(task_id: int) -> Response:
                 items_per_page=999_999_999  # TODO: Временное решение для возврата всех записей
             )
         ]
+    )
+
+
+@api_bp.route("/v2/task/<int:task_id>/logs")
+def task_logs_v2(task_id: int) -> Response:
+    task: Task = get_task(task_id)
+    query = TaskRunLog.select().where(
+        TaskRunLog.task_run.in_(TaskRun.select().where(TaskRun.task == task)),
+    )
+
+    return prepare_datatables_response(
+        query=query,
+        request=request,
+        models=[TaskRunLog],
+        allowed_columns=[
+            TaskRunLog.id,
+            TaskRunLog.task_run,
+            TaskRunLog.text,
+            TaskRunLog.kind,
+            TaskRunLog.date,
+        ],
+        search_fields=[
+            TaskRunLog.text,
+            TaskRunLog.kind,
+        ],
+        default_order=TaskRunLog.id.asc(),
+        to_dict=lambda obj: obj.to_dict(),
     )
 
 

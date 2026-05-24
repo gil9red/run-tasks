@@ -17,3 +17,6 @@ SECRET_KEY: str | None = CONFIG_WEB["secret_key"]
 USERS: dict[str, str] = {
     CONFIG_WEB["login"]: CONFIG_WEB["password"],
 }
+
+# TODO: Вынести в CONFIG
+API_PAGE_LENGTH_DEFAULT: int = 10
