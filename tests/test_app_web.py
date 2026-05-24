@@ -7,7 +7,7 @@ __author__ = "ipetrash"
 from datetime import datetime
 from enum import Enum
 from unittest import TestCase
-from typing import Any
+from typing import Any, Callable
 
 from playhouse.sqlite_ext import SqliteExtDatabase
 from playhouse.shortcuts import model_to_dict
@@ -24,7 +24,7 @@ from run_tasks.db import (
     TaskRunLog,
 )
 
-from run_tasks.app_web.config import USERS
+from run_tasks.app_web.config import USERS, API_PAGE_LENGTH_DEFAULT
 from run_tasks.app_web.main import app
 
 
@@ -184,6 +184,59 @@ class TestAppWeb(TestBaseAppWeb):
         # NOTE: Полный путь не работает с тестовым клиентом
         rs = self.client.get(run.get_url(full=False))
         self.assertEqual(rs.status_code, 200)
+
+
+class TestBaseAppApiWeb(TestBaseAppWeb):
+    def assert_datatables_response(
+        self,
+        uri: str,
+        records_total: int,
+        to_dict: Callable[[Any], dict[str, Any]],
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[Any] | None = None,
+        draw: int = 1,
+        check_only_id: bool = False,
+    ) -> None:
+        if not params:
+            params = dict()
+
+        rs = self.client.get(uri, query_string=params)
+        self.assertEqual(200, rs.status_code)
+
+        rs_data = rs.json
+        self.assertEqual(draw, rs_data["draw"])
+        self.assertEqual(records_total, rs_data["recordsTotal"])
+
+        if records_filtered is None:
+            records_filtered = rs_data["recordsTotal"]
+
+        self.assertEqual(records_filtered, rs_data["recordsFiltered"])
+
+        if expected is not None:
+            expected_data: list[dict[str, Any]] = []
+            for item in expected:
+                data: dict[str, Any] = dict()
+                for k, v in to_dict(item).items():
+                    if isinstance(v, Enum):
+                        v = v.value
+                    elif isinstance(v, datetime):
+                        v = v.isoformat()
+
+                    data[k] = v
+
+                expected_data.append(data)
+
+            if length := int(params.get("length", API_PAGE_LENGTH_DEFAULT)):
+                expected_data = expected_data[:length]
+
+            if check_only_id:
+                self.assertEqual(
+                    [obj["id"] for obj in expected_data],
+                    [obj["id"] for obj in rs_data["data"]],
+                )
+            else:
+                self.assertEqual(expected_data, rs_data["data"])
 
 
 class TestAppApiWeb(TestBaseAppWeb):
@@ -895,14 +948,16 @@ class TestAppApiWeb(TestBaseAppWeb):
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
 
-class TestAppApiWebTasks(TestBaseAppWeb):
+class TestAppApiWebTasks(TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
         self.uri: str = "/api/tasks"
 
     @staticmethod
-    def _get_expected_json(task: Task, overrides: dict | None = None) -> dict[str, Any]:
+    def _get_expected_json(
+        task: Task, overrides: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Преобразует модель Task в ожидаемый API словарь"""
 
         base = {
@@ -919,50 +974,36 @@ class TestAppApiWebTasks(TestBaseAppWeb):
 
     def assert_tasks(
         self,
-        params: dict | None = None,
+        params: dict[str, Any] | None = None,
         records_filtered: int | None = None,
-        expected_tasks: list[Task | tuple[Task, dict]] | None = None,
+        expected: list[Task | tuple[Task, dict]] | None = None,
         draw: int = 1,
         check_only_id: bool = False,
-    ):
-        rs = self.client.get(self.uri, query_string=params or dict())
-        self.assertEqual(200, rs.status_code)
+    ) -> None:
+        def _to_dict(obj: Task | tuple[Task, dict]) -> dict[str, Any]:
+            if isinstance(obj, tuple):
+                task, overrides = obj
+                return self._get_expected_json(task, overrides)
 
-        data = rs.json
-        self.assertEqual(draw, data["draw"])
-        self.assertEqual(Task.select().count(), data["recordsTotal"])
+            return self._get_expected_json(obj)
 
-        if records_filtered is None:
-            records_filtered = data["recordsTotal"]
-
-        self.assertEqual(records_filtered, data["recordsFiltered"])
-
-        if expected_tasks is not None:
-            expected_data: list[dict[str, Any]] = []
-            for item in expected_tasks:
-                json_data: dict[str, Any]
-                if isinstance(item, tuple):
-                    task, overrides = item
-                    json_data = self._get_expected_json(task, overrides)
-                else:
-                    json_data = self._get_expected_json(item)
-
-                expected_data.append(json_data)
-
-            if check_only_id:
-                self.assertEqual(
-                    [obj["id"] for obj in expected_data],
-                    [obj["id"] for obj in data["data"]],
-                )
-            else:
-                self.assertEqual(expected_data, data["data"])
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=Task.select().count(),
+            to_dict=_to_dict,
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+            check_only_id=check_only_id,
+        )
 
     def test_empty(self) -> None:
-        self.assert_tasks(expected_tasks=[])
+        self.assert_tasks(expected=[])
 
     def test_draw_echo(self) -> None:
-        self.assert_tasks(params={"draw": 999}, expected_tasks=[], draw=999)
-        self.assert_tasks(params={"draw": "999"}, expected_tasks=[], draw=999)
+        self.assert_tasks(params={"draw": 999}, expected=[], draw=999)
+        self.assert_tasks(params={"draw": "999"}, expected=[], draw=999)
 
     def test_errors(self) -> None:
         with self.subTest("Missing name for column index", code=400):
@@ -977,33 +1018,44 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             self.assertEqual(403, rs.status_code)
 
     def test_main(self) -> None:
-        t_tg = Task.add(
-            name="tg_bot",
-            command="python bot.py",
-            description="ping",
-            is_infinite=True,
-        )
-        t_web = Task.add(
-            name="web_parser",
-            command="uvicorn main:app",
-            description="https://127.0.0.1",
-            cron="@hourly",
-        )
-        t_win = Task.add(
-            name="ping_srv",
-            command=r"C:\Users\admin",
-            description="bot",
-            cron="0 */8 * * *",
-        )
-        t_token = Task.add(
-            name="vk_tool",
-            command="set TOKEN=123",
-            description="t.me/link",
-            cron="*/5 * * * *",
-        )
-        self.assert_tasks(
-            expected_tasks=[t_tg, t_web, t_win, t_token],
-        )
+        tasks = []
+
+        for i in range(5):
+            t_tg = Task.add(
+                name=f"tg_bot_{i}",
+                command="python bot.py",
+                description="ping",
+                is_infinite=True,
+            )
+            t_web = Task.add(
+                name=f"web_parser_{i}",
+                command="uvicorn main:app",
+                description="https://127.0.0.1",
+                cron="@hourly",
+            )
+            t_win = Task.add(
+                name=f"ping_srv_{i}",
+                command=r"C:\Users\admin",
+                description="bot",
+                cron="0 */8 * * *",
+            )
+            t_token = Task.add(
+                name=f"vk_tool_{i}",
+                command="set TOKEN=123",
+                description="t.me/link",
+                cron="*/5 * * * *",
+            )
+
+            tasks.append(t_tg)
+            tasks.append(t_web)
+            tasks.append(t_win)
+            tasks.append(t_token)
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_tasks(expected=tasks)
+
+        with self.subTest("Все записи"):
+            self.assert_tasks(expected=tasks, params=dict(length=999_999_999))
 
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
@@ -1013,19 +1065,15 @@ class TestAppApiWebTasks(TestBaseAppWeb):
         ]
 
         with self.subTest("Первая страница"):
-            self.assert_tasks(
-                params={"start": 0, "length": 5}, expected_tasks=tasks[:5]
-            )
+            self.assert_tasks(params={"start": 0, "length": 5}, expected=tasks[:5])
 
         with self.subTest("Вторая страница"):
-            self.assert_tasks(
-                params={"start": 5, "length": 5}, expected_tasks=tasks[5:10]
-            )
+            self.assert_tasks(params={"start": 5, "length": 5}, expected=tasks[5:10])
 
         with self.subTest("Пустой результат при запредельном смещении"):
             self.assert_tasks(
                 params={"start": 999, "length": 5},
-                expected_tasks=[],
+                expected=[],
             )
 
     def test_search_filtering(self) -> None:
@@ -1070,7 +1118,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
                 self.assert_tasks(
                     params={"search[value]": query},
                     records_filtered=filtered,
-                    expected_tasks=expected,
+                    expected=expected,
                 )
 
     def test_search_with_pagination(self) -> None:
@@ -1090,9 +1138,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
                 "order[0][dir]": "asc",
             }
             # Ожидаем первые 3 из 5 найденных
-            self.assert_tasks(
-                params=params, records_filtered=5, expected_tasks=bot_tasks[:3]
-            )
+            self.assert_tasks(params=params, records_filtered=5, expected=bot_tasks[:3])
 
         with self.subTest("Вторая страница поиска (оставшиеся 2 элемента)"):
             params = {
@@ -1104,7 +1150,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             # Ожидаем последние 2 из 5 найденных
             self.assert_tasks(
-                params=params, records_filtered=5, expected_tasks=bot_tasks[3:5]
+                params=params, records_filtered=5, expected=bot_tasks[3:5]
             )
 
         with self.subTest("Поиск 'bot' с сортировкой DESC и пагинацией"):
@@ -1119,7 +1165,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             self.assert_tasks(
                 params=params,
                 records_filtered=5,
-                expected_tasks=[bot_tasks[4], bot_tasks[3]],
+                expected=[bot_tasks[4], bot_tasks[3]],
             )
 
     def test_sorting(self) -> None:
@@ -1141,7 +1187,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
         with self.subTest("Сортировка по имени DESC"):
             self.assert_tasks(
                 params={"order[0][name]": "name", "order[0][dir]": "desc"},
-                expected_tasks=[task_3, task_2, task_1],
+                expected=[task_3, task_2, task_1],
                 check_only_id=True,
             )
 
@@ -1149,21 +1195,21 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             # Логика ASC ставит значения выше NULL
             self.assert_tasks(
                 params={"order[0][name]": "cron", "order[0][dir]": "asc"},
-                expected_tasks=[task_1, task_3, task_2],
+                expected=[task_1, task_3, task_2],
                 check_only_id=True,
             )
 
         with self.subTest("Сортировка db_number_of_runs по возрастанию"):
             self.assert_tasks(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "asc"},
-                expected_tasks=[task_3, task_1, task_2],
+                expected=[task_3, task_1, task_2],
                 check_only_id=True,
             )
 
         with self.subTest("Сортировка db_number_of_runs по убыванию"):
             self.assert_tasks(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "desc"},
-                expected_tasks=[task_2, task_1, task_3],
+                expected=[task_2, task_1, task_3],
                 check_only_id=True,
             )
 
@@ -1179,7 +1225,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             "order[1][name]": "is_infinite",
             "order[1][dir]": "desc",
         }
-        self.assert_tasks(params=params, expected_tasks=[t_b, t_a])
+        self.assert_tasks(params=params, expected=[t_b, t_a])
 
     def test_task_with_execution_history(self) -> None:
         """Тест отображения данных о запусках"""
@@ -1195,7 +1241,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
                 "last_work_status": TaskRunWorkStatusEnum.NONE.value,
             }
             self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         run_1 = task.add_or_get_run()
         with self.subTest("Запуск #1 в ожидании"):
@@ -1206,7 +1252,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_1.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #1 выполняется"):
             run_1.set_status(TaskRunStatusEnum.RUNNING)
@@ -1218,7 +1264,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_1.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #1 завершен"):
             run_1.process_return_code = 0
@@ -1231,7 +1277,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, run_1.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         run_2 = task.add_or_get_run()
         with self.subTest("Запуск #2 в ожидании"):
@@ -1243,7 +1289,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_2.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #2 выполняется"):
             run_2.set_status(TaskRunStatusEnum.RUNNING)
@@ -1255,7 +1301,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_2.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #2 завершен не успешно"):
             run_2.process_return_code = 999
@@ -1268,7 +1314,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_2.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         run_3 = task.add_or_get_run()
         with self.subTest("Запуск #3 в ожидании"):
@@ -1280,7 +1326,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_3.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #3 выполняется"):
             run_3.set_status(TaskRunStatusEnum.RUNNING)
@@ -1292,7 +1338,7 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_3.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
         with self.subTest("Запуск #3 завершен не успешно"):
             run_3.process_return_code = 0
@@ -1305,10 +1351,10 @@ class TestAppApiWebTasks(TestBaseAppWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_3.work_status)
-            self.assert_tasks(expected_tasks=[(task, overrides)])
+            self.assert_tasks(expected=[(task, overrides)])
 
 
-class TestAppApiWebTaskRuns(TestBaseAppWeb):
+class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1334,45 +1380,27 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
 
     def assert_task_runs(
         self,
-        params: dict | None = None,
+        params: dict[str, Any] | None = None,
         records_filtered: int | None = None,
-        expected_task_runs: list[TaskRun] | None = None,
+        expected: list[TaskRun] | None = None,
         draw: int = 1,
-    ):
-        rs = self.client.get(self.uri, query_string=params or dict())
-        self.assertEqual(200, rs.status_code)
-
-        rs_data = rs.json
-        self.assertEqual(draw, rs_data["draw"])
-        self.assertEqual(TaskRun.select().count(), rs_data["recordsTotal"])
-
-        if records_filtered is None:
-            records_filtered = rs_data["recordsTotal"]
-
-        self.assertEqual(records_filtered, rs_data["recordsFiltered"])
-
-        if expected_task_runs is not None:
-            expected_data: list[dict[str, Any]] = []
-            for item in expected_task_runs:
-                data: dict[str, Any] = dict()
-                for k, v in item.to_dict().items():
-                    if isinstance(v, Enum):
-                        v = v.value
-                    elif isinstance(v, datetime):
-                        v = v.isoformat()
-
-                    data[k] = v
-
-                expected_data.append(data)
-
-            self.assertEqual(expected_data, rs_data["data"])
+    ) -> None:
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=TaskRun.select().count(),
+            to_dict=lambda obj: obj.to_dict(),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+        )
 
     def test_empty(self) -> None:
-        self.assert_task_runs(expected_task_runs=[])
+        self.assert_task_runs(expected=[])
 
     def test_draw_echo(self) -> None:
-        self.assert_task_runs(params={"draw": 999}, expected_task_runs=[], draw=999)
-        self.assert_task_runs(params={"draw": "999"}, expected_task_runs=[], draw=999)
+        self.assert_task_runs(params={"draw": 999}, expected=[], draw=999)
+        self.assert_task_runs(params={"draw": "999"}, expected=[], draw=999)
 
     def test_errors(self) -> None:
         with self.subTest("Missing name for column index", code=400):
@@ -1391,8 +1419,16 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
             self.assertEqual(404, rs.status_code)
 
     def test_main(self) -> None:
-        runs = self._create_runs(n=3, status=TaskRunStatusEnum.FINISHED)
-        self.assert_task_runs(expected_task_runs=runs)
+        runs = self._create_runs(n=20, status=TaskRunStatusEnum.FINISHED)
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_task_runs(expected=runs)
+
+        with self.subTest("Все записи"):
+            self.assert_task_runs(
+                expected=runs,
+                params=dict(length=999_999_999),
+            )
 
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
@@ -1402,13 +1438,13 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
         with self.subTest("Первая страница (start=0, length=5)"):
             self.assert_task_runs(
                 params={"start": 0, "length": 5},
-                expected_task_runs=runs[:5],
+                expected=runs[:5],
             )
 
         with self.subTest("Вторая страница (start=5, length=5)"):
             self.assert_task_runs(
                 params={"start": 5, "length": 5},
-                expected_task_runs=runs[5:10],
+                expected=runs[5:10],
             )
 
     def test_search_filtering(self) -> None:
@@ -1433,28 +1469,28 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
             self.assert_task_runs(
                 params={"search[value]": "python"},
                 records_filtered=1,
-                expected_task_runs=[r1],
+                expected=[r1],
             )
 
         with self.subTest("Поиск по status"):
             self.assert_task_runs(
                 params={"search[value]": TaskRunStatusEnum.FINISHED.value},
                 records_filtered=1,
-                expected_task_runs=[r1],
+                expected=[r1],
             )
 
         with self.subTest("Поиск по stop_reason"):
             self.assert_task_runs(
                 params={"search[value]": StopReasonEnum.SERVER_API.value},
                 records_filtered=1,
-                expected_task_runs=[r2],
+                expected=[r2],
             )
 
         with self.subTest("Поиск по process_id"):
             self.assert_task_runs(
                 params={"search[value]": "5678"},
                 records_filtered=1,
-                expected_task_runs=[r2],
+                expected=[r2],
             )
 
     def test_search_with_pagination(self) -> None:
@@ -1474,7 +1510,7 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
         }
         # Ожидаем 5 найденных, но в выдаче только первые 3
         self.assert_task_runs(
-            params=params, records_filtered=5, expected_task_runs=error_runs[:3]
+            params=params, records_filtered=5, expected=error_runs[:3]
         )
 
     def test_sorting(self) -> None:
@@ -1488,7 +1524,7 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
                 "order[0][name]": "seq",
                 "order[0][dir]": "asc",
             }
-            self.assert_task_runs(params=params, expected_task_runs=runs)
+            self.assert_task_runs(params=params, expected=runs)
 
         with self.subTest("Sort by seq DESC"):
             params = {
@@ -1496,7 +1532,7 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
                 "order[0][name]": "seq",
                 "order[0][dir]": "desc",
             }
-            self.assert_task_runs(params=params, expected_task_runs=runs[::-1])
+            self.assert_task_runs(params=params, expected=runs[::-1])
 
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
@@ -1513,3 +1549,4 @@ class TestAppApiWebTaskRuns(TestBaseAppWeb):
         }
         # Сначала по статусу (одинаковые), потом по seq (desc)
         self.assert_task_runs(params=params, expected_task_runs=[r2, r1])
+        self.assert_task_runs(params=params, expected=[r2, r1])
