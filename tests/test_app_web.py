@@ -4,6 +4,7 @@
 __author__ = "ipetrash"
 
 
+import time
 from datetime import datetime
 from enum import Enum
 from unittest import TestCase
@@ -26,6 +27,10 @@ from run_tasks.db import (
 
 from run_tasks.app_web.config import USERS, API_PAGE_LENGTH_DEFAULT
 from run_tasks.app_web.main import app
+
+
+# Минимальное время задержки между вызовами datetime.now(), чтобы даты не совпали
+DATETIME_DELAY_SECS: float = 0.001
 
 
 class TestBaseAppWeb(TestCase):
@@ -1548,5 +1553,202 @@ class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
             "order[1][dir]": "desc",
         }
         # Сначала по статусу (одинаковые), потом по seq (desc)
-        self.assert_task_runs(params=params, expected_task_runs=[r2, r1])
         self.assert_task_runs(params=params, expected=[r2, r1])
+
+
+class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        # TODO: Общий тест для тестов по задачам
+        self.task = Task.add(
+            name="ping",
+            command="ping 127.0.0.1",
+            description="description ping",
+            cron="* * * * *",
+        )
+
+        self.uri: str = f"/api/task/{self.task.id}/logs"
+
+    # TODO: create_logs?
+    def _create_runs_with_logs(self, n_runs: int, n_logs: int) -> list[TaskRunLog]:
+        logs = []
+        for _ in range(n_runs):
+            run = self.task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.RUNNING)
+            run.set_status(TaskRunStatusEnum.FINISHED)
+
+            for i in range(n_logs):
+                logs.append(run.add_log_out(f"out={i}"))
+                logs.append(run.add_log_err(f"err={i}"))
+
+                # TODO: Словарь по логам?
+
+        return logs
+
+    def assert_task_logs(
+        self,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[TaskRunLog] | None = None,
+        draw: int = 1,
+    ) -> None:
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=TaskRunLog.select().count(),
+            to_dict=lambda obj: obj.to_dict(),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+        )
+
+    def test_empty(self) -> None:
+        self.assert_task_logs(expected=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
+        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+        with self.subTest("404 Not Found", code=404):
+            rs = self.client.get("/api/task/404/logs")
+            self.assertEqual(404, rs.status_code)
+
+    def test_main(self) -> None:
+        logs = self._create_runs_with_logs(n_runs=5, n_logs=3)
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_task_logs(expected=logs)
+
+        with self.subTest("Все записи"):
+            self.assert_task_logs(expected=logs, params=dict(length=999_999_999))
+
+    def test_pagination(self) -> None:
+        """Проверка базовой пагинации"""
+
+        # Создаст 10 логов (5 out + 5 err)
+        logs = self._create_runs_with_logs(n_runs=1, n_logs=5)
+
+        with self.subTest("Первая страница (length=3)"):
+            self.assert_task_logs(params={"start": 0, "length": 3}, expected=logs[:3])
+
+        with self.subTest("Смещение на вторую страницу"):
+            self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
+
+    def test_search_filtering(self) -> None:
+        """Проверка поиска по всем полям: text, kind"""
+
+        run = self.task.add_or_get_run()
+        log_out_1 = run.add_log_out("system status ok")
+        log_out_2 = run.add_log_out("api status ok")
+        log_err = run.add_log_err("critical database error")
+
+        with self.subTest("Поиск по тексту 'status ok'"):
+            self.assert_task_logs(
+                params={"search[value]": "status ok"},
+                records_filtered=2,
+                expected=[log_out_1, log_out_2],
+            )
+
+        with self.subTest("Поиск по тексту 'critical'"):
+            self.assert_task_logs(
+                params={"search[value]": "critical"},
+                records_filtered=1,
+                expected=[log_err],
+            )
+
+        with self.subTest("Поиск по типу потока 'stderr'"):
+            # Предполагается, что в БД kind хранится как 'err' или 'stderr'
+            self.assert_task_logs(
+                params={"search[value]": "err"}, records_filtered=1, expected=[log_err]
+            )
+
+    def test_search_with_pagination(self) -> None:
+        """Проверка совместной работы фильтрации и пагинации."""
+
+        run = self.task.add_or_get_run()
+        # Создаем 10 записей с общим словом 'ping'
+        ping_logs = [run.add_log_out(f"ping response {i}") for i in range(10)]
+        # И одну лишнюю
+        run.add_log_out("other data")
+
+        params = {
+            "search[value]": "ping",
+            "start": 0,
+            "length": 5,
+            "order[0][column]": 0,
+            "order[0][name]": "id",
+            "order[0][dir]": "asc",
+        }
+
+        # Всего 11, отфильтровано 10, на странице 5
+        self.assert_task_logs(
+            params=params, records_filtered=10, expected=ping_logs[:5]
+        )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки по полям id, task_run, text, kind, date"""
+
+        run_1 = self.task.add_or_get_run()
+        run_2 = self.task.add_or_get_run()
+
+        l1 = run_1.add_log_out("AAA")
+        time.sleep(DATETIME_DELAY_SECS)
+        l2 = run_2.add_log_err("BBB")
+
+        sort_cases: list[tuple[str, str, str, list[TaskRunLog]]] = [
+            ("По ID DESC", "id", "desc", [l2, l1]),
+            ("По тексту ASC", "text", "asc", [l1, l2]),
+            ("По типу (kind) DESC", "kind", "desc", [l1, l2]),  # NOTE: В сортировке по тексту: out -> err
+            ("По дате DESC", "date", "desc", [l2, l1]),
+            ("По ID запуска DESC", "task_run", "desc", [l2, l1]),
+        ]
+
+        for msg, field, direction, expected_list in sort_cases:
+            with self.subTest(msg):
+                self.assert_task_logs(
+                    params={
+                        "order[0][column]": 0,
+                        "order[0][name]": field,
+                        "order[0][dir]": direction,
+                    },
+                    expected=expected_list,
+                )
+
+    def test_multi_column_sorting(self) -> None:
+        """Проверка сортировки по нескольким колонкам одновременно (text и kind)"""
+
+        run = self.task.add_or_get_run()
+
+        # Одинаковый текст, разные типы
+        l1 = run.add_log_out("same_text")
+        l2 = run.add_log_err("same_text")
+
+        # Разный текст
+        l3 = run.add_log_out("another_text")
+
+        params = {
+            "order[0][column]": 0,
+            "order[0][name]": "text",
+            "order[0][dir]": "asc",
+            "order[1][column]": 1,
+            "order[1][name]": "kind",
+            "order[1][dir]": "desc",
+        }
+
+        # Ожидаемый порядок:
+        # 1. 'another_text' (по алфавиту текста первый)
+        # 2. 'same_text' (одинаковые, поэтому по типу DESC: out -> err)
+        self.assert_task_logs(params=params, expected=[l3, l1, l2])

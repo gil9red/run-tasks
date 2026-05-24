@@ -7,8 +7,9 @@ $(function() {
     new DataTable(`#${tableId}`, {
         ajax: {
             url: `/api/task/${TASK_ID}/logs`,
-            dataSrc: '',
+            data: prepare_data_for_server_side,
         },
+        serverSide: true,
         rowId: 'id',
         columnDefs: [
             {
@@ -29,15 +30,21 @@ $(function() {
                 title: getTableHeaderTitleWithMenu(), // TODO: Перенести кнопку создания?
                 width: '0px',
             },
-            { data: 'id', title: 'Ид.', },
-            { data: 'task_run', title: 'Запуск', },
-            { data: 'kind', title: 'Тип', },
+            { data: 'id', name: 'id', title: 'Ид.', },
+            { data: 'task_run', name: 'task_run', title: 'Запуск', },
+            { data: 'kind', name: 'kind', title: 'Тип', },
             {
                 data: 'text',
+                name: 'text',
                 title: 'Текст',
                 render: DataTable.render.text(), // Экранирует HTML
             },
-            { data: 'date', title: 'Дата', render: date_render, },
+            {
+                data: 'date',
+                name: 'date',
+                title: 'Дата',
+                render: date_render,
+            },
         ],
         order: [
             // Сортировка по возрастанию id
