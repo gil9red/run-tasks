@@ -52,6 +52,7 @@ class DataTableRequest:
         request: Request,
         models: list[type[Model]],
         allowed_columns: list[str | Field],
+        default_order: Expression,
     ) -> Self:
         allowed_columns: list[str] = [
             field if isinstance(field, str) else field.name for field in allowed_columns
@@ -106,6 +107,9 @@ class DataTableRequest:
                 field_obj.desc() if direction == "desc" else field_obj.asc()
             )
 
+        if not order_list:
+            order_list.append(default_order)
+
         return cls(
             draw=draw,
             start=start,
@@ -121,12 +125,14 @@ def prepare_datatables_response(
     models: list[type[Model]],
     allowed_columns: list[str | Field],
     search_fields: list[Field],
+    default_order: Expression,
     to_dict: Callable[[Model], dict[str, Any]],
 ) -> Response:
     data_table_rq = DataTableRequest.from_request(
         request,
         models=models,
         allowed_columns=allowed_columns,
+        default_order=default_order,
     )
 
     total_records = query.count()
@@ -250,6 +256,7 @@ def tasks() -> Response:
             Task.description,
             Task.cron,
         ],
+        default_order=Task.id.asc(),
         to_dict=to_dict,
     )
 
@@ -377,6 +384,7 @@ def task_runs(task_id: int) -> Response:
             TaskRun.stop_reason,
             TaskRun.process_id,
         ],
+        default_order=TaskRun.id.asc(),
         to_dict=lambda obj: obj.to_dict(),
     )
 
