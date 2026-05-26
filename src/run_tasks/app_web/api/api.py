@@ -476,8 +476,8 @@ def task_run_logs(task_id: int, task_run_seq: int) -> Response:
 
 @api_bp.route("/task/<int:task_id>/run/last/logs")
 def task_run_logs_last(task_id: int) -> Response:
-    task = get_task(task_id)
-    task_run: TaskRun | None = task.get_last_run()
+    task: Task = get_task(task_id)
+    task_run: TaskRun | None = task.get_last_started_run()
     if not task_run:
         abort(404)
     return task_run_logs(task_id, task_run.seq)
