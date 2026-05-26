@@ -1583,7 +1583,6 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
         sort_cases: list[tuple[str, str, str, list[TaskRunLog]]] = [
             ("По ID DESC", "id", "desc", [l2, l1]),
             ("По тексту ASC", "text", "asc", [l1, l2]),
-            ("По типу (kind) DESC", "kind", "desc", [l1, l2]),  # NOTE: В сортировке по тексту: out -> err
             (
                 # NOTE: В сортировке по тексту: out -> err
                 "По типу (kind) DESC",
