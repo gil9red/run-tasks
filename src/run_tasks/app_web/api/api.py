@@ -479,7 +479,7 @@ def task_run_logs_last(task_id: int) -> Response:
     task: Task = get_task(task_id)
     task_run: TaskRun | None = task.get_last_started_run()
     if not task_run:
-        abort(404)
+        return jsonify([])
     return task_run_logs(task_id, task_run.seq)
 
 
