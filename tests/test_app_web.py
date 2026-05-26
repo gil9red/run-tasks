@@ -638,33 +638,96 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 404)
             self.assertEqual(rs.json["status"], "error")
 
-        with self.subTest("200 - Ok"):
-            task_1 = Task.add(
-                name="2",
-                command="ping 127.0.0.1",
+        task_1 = Task.add(
+            name="2",
+            command="ping 127.0.0.1",
+        )
+        uri: str = uri_template.format(task_id=task_1.id)
+
+        def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
+            return dict(
+                id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
             )
-            run_1 = task_1.add_or_get_run()
 
-            uri: str = uri_template.format(task_id=task_1.id)
+        def _add_logs(run: TaskRun) -> list[TaskRunLog]:
+            items: list[TaskRunLog] = []
+            for i in range(5):
+                items.append(run.add_log_out(f"out={i}"))
+                items.append(run.add_log_err(f"err={i}"))
+            return items
 
+        with self.subTest("No runs: 200 - Ok"):
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json, [])
 
-            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-                return dict(
-                    id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
-                )
+        run_1 = task_1.add_or_get_run()
 
-            items: list[TaskRunLog] = []
-            for i in range(5):
-                items.append(run_1.add_log_out(f"out={i}"))
-                items.append(run_1.add_log_err(f"err={i}"))
+        with self.subTest("Run1-PENDING (0 logs): 200 - Ok"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json, [])
 
+        run1_logs: list[TaskRunLog] = _add_logs(run_1)
+
+        with self.subTest("Run1-PENDING (10 logs): 200 - Ok"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.json, [])
+
+        with self.subTest("Run1-RUNNING (10 logs): 200 - Ok"):
+            run_1.set_status(TaskRunStatusEnum.RUNNING)
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in items],
+                [get_common_view(obj.to_dict()) for obj in run1_logs],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        with self.subTest("Run1-FINISHED (10 logs): 200 - Ok"):
+            run_1.set_status(TaskRunStatusEnum.FINISHED)
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in run1_logs],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        run_2 = task_1.add_or_get_run()
+
+        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (0 logs): 200 - Ok"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in run1_logs],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        run2_logs: list[TaskRunLog] = _add_logs(run_2)
+
+        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (10 logs): 200 - Ok"):
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in run1_logs],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        with self.subTest("Run2-RUNNING (10 logs): 200 - Ok"):
+            run_2.set_status(TaskRunStatusEnum.RUNNING)
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in run2_logs],
+                [get_common_view(obj) for obj in rs.json],
+            )
+
+        with self.subTest("Run2-FINISHED (10 logs): 200 - Ok"):
+            run_2.set_status(TaskRunStatusEnum.FINISHED)
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(
+                [get_common_view(obj.to_dict()) for obj in run2_logs],
                 [get_common_view(obj) for obj in rs.json],
             )
 
