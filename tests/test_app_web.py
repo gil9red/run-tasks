@@ -29,7 +29,6 @@ from run_tasks.app_web.app import limiter
 from run_tasks.app_web.config import USERS, API_PAGE_LENGTH_DEFAULT
 from run_tasks.app_web.main import app
 
-
 # Минимальное время задержки между вызовами datetime.now(), чтобы даты не совпали
 DATETIME_DELAY_SECS: float = 0.001
 
@@ -1293,6 +1292,7 @@ class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
         with self.subTest("404 Not Found", code=404):
             rs = self.client.get("/api/task/404/runs")
             self.assertEqual(404, rs.status_code)
+            self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
         runs = self._create_runs(n=20, status=TaskRunStatusEnum.FINISHED)
@@ -1496,6 +1496,7 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
         with self.subTest("404 Not Found", code=404):
             rs = self.client.get("/api/task/404/logs")
             self.assertEqual(404, rs.status_code)
+            self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
         logs = self._create_runs_with_logs(n_runs=5, n_logs=3)
@@ -1583,6 +1584,13 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
             ("По ID DESC", "id", "desc", [l2, l1]),
             ("По тексту ASC", "text", "asc", [l1, l2]),
             ("По типу (kind) DESC", "kind", "desc", [l1, l2]),  # NOTE: В сортировке по тексту: out -> err
+            (
+                # NOTE: В сортировке по тексту: out -> err
+                "По типу (kind) DESC",
+                "kind",
+                "desc",
+                [l1, l2],
+            ),
             ("По дате DESC", "date", "desc", [l2, l1]),
             ("По ID запуска DESC", "task_run", "desc", [l2, l1]),
         ]

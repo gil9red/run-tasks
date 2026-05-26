@@ -466,19 +466,16 @@ def task_run_do_send_notifications(task_id: int, task_run_seq: int) -> Response:
 
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/logs")
 def task_run_logs(task_id: int, task_run_seq: int) -> Response:
-    return jsonify(
-        [
-            obj.to_dict()
-            for obj in get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
-        ]
     query = get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
 
+    # TODO: Совпадает с task /logs
     return prepare_datatables_response(
         query=query,
         request=request,
         models=[TaskRunLog],
         allowed_columns=[
             TaskRunLog.id,
+            # TaskRunLog.task_run,  # TODO: Не нужно
             TaskRunLog.text,
             TaskRunLog.kind,
             TaskRunLog.date,
@@ -495,12 +492,10 @@ def task_run_logs(task_id: int, task_run_seq: int) -> Response:
 @api_bp.route("/task/<int:task_id>/run/last/logs")
 def task_run_logs_last(task_id: int) -> Response:
     task: Task = get_task(task_id)
-    task_run: TaskRun | None = task.get_last_started_run()
-    if not task_run:
-        return jsonify([])
-    return task_run_logs(task_id, task_run.seq)
     task_run_seq: int | None = task.last_started_run_seq
     if not task_run_seq:
+        # TODO: Дублирует
+        # TODO: По другому вытаскивать draw из запроса
         data_table_rq = DataTableRequest.from_request(
             request,
             models=[TaskRunLog],
