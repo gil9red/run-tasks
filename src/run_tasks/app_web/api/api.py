@@ -429,10 +429,10 @@ def task_run_get(task_id: int, task_run_seq: int) -> Response:
 @api_bp.route("/task/<int:task_id>/run/last")
 def task_run_get_last(task_id: int) -> Response:
     task = get_task(task_id)
-    task_run: TaskRun | None = task.get_last_run()
-    if not task_run:
+    task_run_seq: int | None = task.last_started_run_seq
+    if not task_run_seq:
         abort(404)
-    return task_run_get(task_id, task_run.seq)
+    return task_run_get(task_id, task_run_seq)
 
 
 @api_bp.route("/task/<int:task_id>/run/<int:task_run_seq>/do-stop", methods=["POST"])
@@ -471,6 +471,24 @@ def task_run_logs(task_id: int, task_run_seq: int) -> Response:
             obj.to_dict()
             for obj in get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
         ]
+    query = get_task_run(task_id, task_run_seq).logs.order_by(TaskRunLog.id)
+
+    return prepare_datatables_response(
+        query=query,
+        request=request,
+        models=[TaskRunLog],
+        allowed_columns=[
+            TaskRunLog.id,
+            TaskRunLog.text,
+            TaskRunLog.kind,
+            TaskRunLog.date,
+        ],
+        search_fields=[
+            TaskRunLog.text,
+            TaskRunLog.kind,
+        ],
+        default_order=TaskRunLog.id.asc(),
+        to_dict=lambda obj: obj.to_dict(),
     )
 
 
@@ -481,6 +499,29 @@ def task_run_logs_last(task_id: int) -> Response:
     if not task_run:
         return jsonify([])
     return task_run_logs(task_id, task_run.seq)
+    task_run_seq: int | None = task.last_started_run_seq
+    if not task_run_seq:
+        data_table_rq = DataTableRequest.from_request(
+            request,
+            models=[TaskRunLog],
+            allowed_columns=[
+                TaskRunLog.id,
+                TaskRunLog.text,
+                TaskRunLog.kind,
+                TaskRunLog.date,
+            ],
+            default_order=TaskRunLog.id.asc(),
+        )
+        return jsonify(
+            {
+                "draw": data_table_rq.draw,
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": [],
+            }
+        )
+
+    return task_run_logs(task_id, task_run_seq)
 
 
 @api_bp.route("/notifications")

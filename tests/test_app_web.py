@@ -463,13 +463,25 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 405)
             self.assertEqual(rs.json["status"], "error")
 
-        with self.subTest("404 - Not Found"):
+        with self.subTest("[0 tasks, 0 runs] 404 - Not Found"):
             uri: str = uri_template.format(task_id=99999)
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
             self.assertEqual(rs.json["status"], "error")
 
+        with self.subTest("[1 tasks, 0 runs] 404 - Not Found"):
+            task_1 = Task.add(
+                name="1",
+                command="ping 127.0.0.1",
+            )
+
+            uri: str = uri_template.format(task_id=task_1.id)
+            rs = self.client.get(uri)
+            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("[1 tasks, 1 pending runs] 404 - Not Found"):
             task_1 = Task.add(
                 name="1",
                 command="ping 127.0.0.1",
@@ -486,6 +498,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                 command="ping 127.0.0.1",
             )
             run_1 = task_2.add_or_get_run()
+            run_1.set_status(TaskRunStatusEnum.RUNNING)
 
             uri: str = uri_template.format(task_id=task_2.id)
 
@@ -581,157 +594,6 @@ class TestAppApiWeb(TestBaseAppWeb):
             self.assertEqual(rs.json["status"], "ok")
 
             self.assertNotEqual(run_1.notifications.count(), 0)
-
-    def test_api_task_run_logs(self) -> None:
-        with self.subTest("404 - Not Found"):
-            uri: str = "/api/task/99999/run/99999/logs"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-            self.assertEqual(rs.json["status"], "error")
-
-            task_1 = Task.add(
-                name="1",
-                command="ping 127.0.0.1",
-            )
-
-            uri: str = f"/api/task/{task_1.id}/run/99999/logs"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-            self.assertEqual(rs.json["status"], "error")
-
-        with self.subTest("200 - Ok"):
-            task_2 = Task.add(
-                name="2",
-                command="ping 127.0.0.1",
-            )
-            run_1 = task_2.add_or_get_run()
-
-            uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/logs"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(rs.json, [])
-
-            def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-                return dict(
-                    id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
-                )
-
-            items: list[TaskRunLog] = []
-            for i in range(5):
-                items.append(run_1.add_log_out(f"out={i}"))
-                items.append(run_1.add_log_err(f"err={i}"))
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in items],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-    def test_api_task_run_last_logs(self) -> None:
-        uri_template: str = "/api/task/{task_id}/run/last/logs"
-
-        with self.subTest("404 - Not Found"):
-            uri: str = uri_template.format(task_id=99999)
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-            self.assertEqual(rs.json["status"], "error")
-
-        task_1 = Task.add(
-            name="2",
-            command="ping 127.0.0.1",
-        )
-        uri: str = uri_template.format(task_id=task_1.id)
-
-        def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-            return dict(
-                id=d["id"], task_run=d["task_run"], text=d["text"], kind=d["kind"]
-            )
-
-        def _add_logs(run: TaskRun) -> list[TaskRunLog]:
-            items: list[TaskRunLog] = []
-            for i in range(5):
-                items.append(run.add_log_out(f"out={i}"))
-                items.append(run.add_log_err(f"err={i}"))
-            return items
-
-        with self.subTest("No runs: 200 - Ok"):
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(rs.json, [])
-
-        run_1 = task_1.add_or_get_run()
-
-        with self.subTest("Run1-PENDING (0 logs): 200 - Ok"):
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(rs.json, [])
-
-        run1_logs: list[TaskRunLog] = _add_logs(run_1)
-
-        with self.subTest("Run1-PENDING (10 logs): 200 - Ok"):
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(rs.json, [])
-
-        with self.subTest("Run1-RUNNING (10 logs): 200 - Ok"):
-            run_1.set_status(TaskRunStatusEnum.RUNNING)
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run1_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-        with self.subTest("Run1-FINISHED (10 logs): 200 - Ok"):
-            run_1.set_status(TaskRunStatusEnum.FINISHED)
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run1_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-        run_2 = task_1.add_or_get_run()
-
-        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (0 logs): 200 - Ok"):
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run1_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-        run2_logs: list[TaskRunLog] = _add_logs(run_2)
-
-        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (10 logs): 200 - Ok"):
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run1_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-        with self.subTest("Run2-RUNNING (10 logs): 200 - Ok"):
-            run_2.set_status(TaskRunStatusEnum.RUNNING)
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run2_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
-
-        with self.subTest("Run2-FINISHED (10 logs): 200 - Ok"):
-            run_2.set_status(TaskRunStatusEnum.FINISHED)
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-            self.assertEqual(
-                [get_common_view(obj.to_dict()) for obj in run2_logs],
-                [get_common_view(obj) for obj in rs.json],
-            )
 
     def test_api_notifications(self) -> None:
         uri: str = "/api/notifications"
@@ -1761,3 +1623,328 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
         # 1. 'another_text' (по алфавиту текста первый)
         # 2. 'same_text' (одинаковые, поэтому по типу DESC: out -> err)
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
+
+
+class TestAppApiWebTaskRunLogs(TestBaseAppApiWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.task = Task.add(
+            name="ping",
+            command="ping 127.0.0.1",
+            description="description ping",
+            cron="* * * * *",
+        )
+
+        self.run = self.task.add_or_get_run()
+        self.uri: str = f"/api/task/{self.task.id}/run/{self.run.seq}/logs"
+
+    def _add_logs(self, run: TaskRun, n: int) -> list[TaskRunLog]:
+        items: list[TaskRunLog] = []
+        for i in range(n):
+            items.append(run.add_log_out(f"out={i}"))
+            items.append(run.add_log_err(f"err={i}"))
+        return items
+
+    def assert_task_logs(
+        self,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[TaskRunLog] | None = None,
+        draw: int = 1,
+    ) -> None:
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=self.run.logs.count(),
+            to_dict=lambda obj: obj.to_dict(),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+        )
+
+    def test_empty(self) -> None:
+        self.assert_task_logs(expected=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
+        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+        with self.subTest("Task: 404 Not Found", code=404):
+            rs = self.client.get("/api/task/404/run/404/logs")
+            self.assertEqual(404, rs.status_code)
+            self.assertEqual("error", rs.json["status"])
+
+        with self.subTest("TaskRun: 404 Not Found", code=404):
+            rs = self.client.get(f"/api/task/{self.task.id}/run/404/logs")
+            self.assertEqual(404, rs.status_code)
+            self.assertEqual("error", rs.json["status"])
+
+    def test_main(self) -> None:
+        logs = self._add_logs(self.run, n=10)
+        self.assertEqual(20, len(logs))
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_task_logs(expected=logs)
+
+        with self.subTest("Все записи"):
+            self.assert_task_logs(expected=logs, params=dict(length=999_999_999))
+
+    def test_pagination(self) -> None:
+        """Проверка базовой пагинации"""
+
+        logs = self._add_logs(self.run, n=10)
+        self.assertEqual(20, len(logs))
+
+        with self.subTest("Первая страница (length=3)"):
+            self.assert_task_logs(params={"start": 0, "length": 3}, expected=logs[:3])
+
+        with self.subTest("Смещение на вторую страницу"):
+            self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
+
+    def test_search_filtering(self) -> None:
+        """Проверка поиска по всем полям: text, kind"""
+
+        log_out_1 = self.run.add_log_out("system status ok")
+        log_out_2 = self.run.add_log_out("api status ok")
+        log_err = self.run.add_log_err("critical database error")
+
+        with self.subTest("Поиск по тексту 'status ok'"):
+            self.assert_task_logs(
+                params={"search[value]": "status ok"},
+                records_filtered=2,
+                expected=[log_out_1, log_out_2],
+            )
+
+        with self.subTest("Поиск по тексту 'critical'"):
+            self.assert_task_logs(
+                params={"search[value]": "critical"},
+                records_filtered=1,
+                expected=[log_err],
+            )
+
+        with self.subTest("Поиск по типу потока 'stderr'"):
+            # Предполагается, что в БД kind хранится как 'err' или 'stderr'
+            self.assert_task_logs(
+                params={"search[value]": "err"}, records_filtered=1, expected=[log_err]
+            )
+
+    def test_search_with_pagination(self) -> None:
+        """Проверка совместной работы фильтрации и пагинации."""
+
+        # Создаем 10 записей с общим словом 'ping'
+        ping_logs = [self.run.add_log_out(f"ping response {i}") for i in range(10)]
+        # И одну лишнюю
+        self.run.add_log_out("other data")
+
+        params = {
+            "search[value]": "ping",
+            "start": 0,
+            "length": 5,
+            "order[0][column]": 0,
+            "order[0][name]": "id",
+            "order[0][dir]": "asc",
+        }
+
+        # Всего 11, отфильтровано 10, на странице 5
+        self.assert_task_logs(
+            params=params, records_filtered=10, expected=ping_logs[:5]
+        )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки по полям id, task_run, text, kind, date"""
+
+        l1 = self.run.add_log_out("AAA")
+        time.sleep(DATETIME_DELAY_SECS)
+        l2 = self.run.add_log_err("BBB")
+
+        sort_cases: list[tuple[str, str, str, list[TaskRunLog]]] = [
+            ("По ID DESC", "id", "desc", [l2, l1]),
+            ("По тексту ASC", "text", "asc", [l1, l2]),
+            (
+                "По типу (kind) DESC",
+                "kind",
+                "desc",
+                [l1, l2],
+            ),  # NOTE: В сортировке по тексту: out -> err
+            ("По дате DESC", "date", "desc", [l2, l1]),
+        ]
+
+        for msg, field, direction, expected_list in sort_cases:
+            with self.subTest(msg):
+                self.assert_task_logs(
+                    params={
+                        "order[0][column]": 0,
+                        "order[0][name]": field,
+                        "order[0][dir]": direction,
+                    },
+                    expected=expected_list,
+                )
+
+    def test_multi_column_sorting(self) -> None:
+        """Проверка сортировки по нескольким колонкам одновременно (text и kind)"""
+
+        # Одинаковый текст, разные типы
+        l1 = self.run.add_log_out("same_text")
+        l2 = self.run.add_log_err("same_text")
+
+        # Разный текст
+        l3 = self.run.add_log_out("another_text")
+
+        params = {
+            "order[0][column]": 0,
+            "order[0][name]": "text",
+            "order[0][dir]": "asc",
+            "order[1][column]": 1,
+            "order[1][name]": "kind",
+            "order[1][dir]": "desc",
+        }
+
+        # Ожидаемый порядок:
+        # 1. 'another_text' (по алфавиту текста первый)
+        # 2. 'same_text' (одинаковые, поэтому по типу DESC: out -> err)
+        self.assert_task_logs(params=params, expected=[l3, l1, l2])
+
+
+class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.task = Task.add(
+            name="ping",
+            command="ping 127.0.0.1",
+            description="description ping",
+            cron="* * * * *",
+        )
+
+        self.uri: str = f"/api/task/{self.task.id}/run/last/logs"
+
+    def _add_logs(self, run: TaskRun, n: int) -> list[TaskRunLog]:
+        items: list[TaskRunLog] = []
+        for i in range(n):
+            items.append(run.add_log_out(f"out={i}"))
+            items.append(run.add_log_err(f"err={i}"))
+        return items
+
+    def assert_task_logs(
+        self,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[TaskRunLog] | None = None,
+        draw: int = 1,
+    ) -> None:
+        run: TaskRun | None = self.task.get_last_started_run()
+
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=run.logs.count() if run else 0,
+            to_dict=lambda obj: obj.to_dict(),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+        )
+
+    def test_empty(self) -> None:
+        with self.subTest("No runs"):
+            self.assert_task_logs(expected=[])
+
+        run = self.task.add_or_get_run()
+        with self.subTest("Run1-PENDING (0 logs)"):
+            self.assert_task_logs(expected=[])
+
+        run1_logs: list[TaskRunLog] = self._add_logs(run, n=10)
+        self.assertEqual(20, len(run1_logs))
+
+        with self.subTest("Run1-PENDING (10 logs)"):
+            self.assert_task_logs(
+                expected=[],
+            )
+
+    def test_draw_echo(self) -> None:
+        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
+        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+        with self.subTest("Task: 404 Not Found", code=404):
+            rs = self.client.get("/api/task/404/run/last/logs")
+            self.assertEqual(404, rs.status_code)
+            self.assertEqual("error", rs.json["status"])
+
+    def test_main(self) -> None:
+        run = self.task.add_or_get_run()
+        run.set_status(TaskRunStatusEnum.RUNNING)
+
+        logs = self._add_logs(run, n=10)
+        self.assertEqual(20, len(logs))
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_task_logs(expected=logs)
+
+        with self.subTest("Все записи"):
+            self.assert_task_logs(
+                expected=logs,
+                params=dict(length=999_999_999),
+            )
+
+    def test_status(self) -> None:
+        run_1 = self.task.add_or_get_run()
+
+        with self.subTest("Run1-PENDING (0 logs)"):
+            self.assert_task_logs(expected=[])
+
+        run1_logs: list[TaskRunLog] = self._add_logs(run_1, n=10)
+        self.assertEqual(20, len(run1_logs))
+
+        with self.subTest("Run1-PENDING (10 logs)"):
+            self.assert_task_logs(expected=[])
+
+        with self.subTest("Run1-RUNNING (10 logs)"):
+            run_1.set_status(TaskRunStatusEnum.RUNNING)
+            self.assert_task_logs(expected=run1_logs)
+
+        with self.subTest("Run1-FINISHED (10 logs)"):
+            run_1.set_status(TaskRunStatusEnum.FINISHED)
+            self.assert_task_logs(expected=run1_logs)
+
+        run_2 = self.task.add_or_get_run()
+
+        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (0 logs)"):
+            self.assert_task_logs(expected=run1_logs)
+
+        run2_logs: list[TaskRunLog] = self._add_logs(run_2, n=10)
+        self.assertEqual(20, len(run2_logs))
+
+        with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (10 logs)"):
+            self.assert_task_logs(expected=run1_logs)
+
+        with self.subTest("Run2-RUNNING (10 logs)"):
+            run_2.set_status(TaskRunStatusEnum.RUNNING)
+            self.assert_task_logs(expected=run2_logs)
+
+        with self.subTest("Run2-FINISHED (10 logs)"):
+            run_2.set_status(TaskRunStatusEnum.FINISHED)
+            self.assert_task_logs(expected=run2_logs)
