@@ -25,6 +25,7 @@ from run_tasks.db import (
     TaskRunLog,
 )
 
+from run_tasks.app_web.app import limiter
 from run_tasks.app_web.config import USERS, API_PAGE_LENGTH_DEFAULT
 from run_tasks.app_web.main import app
 
@@ -36,6 +37,7 @@ DATETIME_DELAY_SECS: float = 0.001
 class TestBaseAppWeb(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        limiter.enabled = False
         app.testing = True
         cls.client = app.test_client()
 
