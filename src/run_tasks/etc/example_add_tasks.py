@@ -4,64 +4,63 @@
 __author__ = "ipetrash"
 
 
-import time
-from run_tasks import db
-
-task = db.Task.add(
-    name="test cron",
-    command=r"""
-set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
-%PYTHON% -c "from datetime import datetime;print(datetime.now())"
-""",
-    cron="* * * * *",
-)
-task.set_enabled(True)
-
-# quit()
-
-# TODO: Пример создания/обновления мультистроковой задачи
-task = db.Task.add(
-    name="multiline command",
-    command=r"""
-set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
-%PYTHON% -V
-%PYTHON% -c "import time;sleep = 10;print(f'Start sleep {sleep} secs');time.sleep(sleep);print('Finish')"
-""",
-)
-task.set_enabled(True)
-run = task.add_or_get_run()
-
-# quit()
-command = r'"C:\Users\ipetrash\AppData\Local\Programs\Python\Python310\python.exe" "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"'
-task = db.Task.add(
-    name="example python pyqt gui",
-    command=command,
-    is_infinite=True,
-)
-task.set_command(command)
-task.set_enabled(True)
-task.set_is_infinite(True)
-
-
-task = db.Task.add(
-    name="ping this",
-    command="ping 127.0.0.1",
-    description="ping",
-    cron="@hourly",
-)
-task.set_enabled(True)
-# task.add_or_get_run()
-
-
-# time.sleep(3)
-# # TODO: Вариант теста остановки запуска через отключение задачи
-# # task.set_enabled(False)
+# import time
+# from run_tasks import db
 #
-# # TODO: Вариант теста остановки запуска через выставление статуса у запуска
-# run.set_status(db.TaskStatusEnum.Stopped)
-
-quit()
-
+# task = db.Task.add(
+#     name="test cron",
+#     command=r"""
+# set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
+# %PYTHON% -c "from datetime import datetime;print(datetime.now())"
+# """,
+#     cron="* * * * *",
+# )
+# task.set_enabled(True)
+#
+# # quit()
+#
+# # TODO: Пример создания/обновления мультистроковой задачи
+# task = db.Task.add(
+#     name="multiline command",
+#     command=r"""
+# set PYTHON=C:\Users\ipetrash\PycharmProjects\run-tasks\venv\Scripts\python.exe
+# %PYTHON% -V
+# %PYTHON% -c "import time;sleep = 10;print(f'Start sleep {sleep} secs');time.sleep(sleep);print('Finish')"
+# """,
+# )
+# task.set_enabled(True)
+# run = task.add_or_get_run()
+#
+# # quit()
+# command = r'"C:\Users\ipetrash\AppData\Local\Programs\Python\Python310\python.exe" "C:\Users\ipetrash\PycharmProjects\SimplePyScripts\Base64_examples\gui_base64.py"'
+# task = db.Task.add(
+#     name="example python pyqt gui",
+#     command=command,
+#     is_infinite=True,
+# )
+# task.set_command(command)
+# task.set_enabled(True)
+# task.set_is_infinite(True)
+#
+#
+# task = db.Task.add(
+#     name="ping this",
+#     command="ping 127.0.0.1",
+#     description="ping",
+#     cron="@hourly",
+# )
+# task.set_enabled(True)
+# # task.add_or_get_run()
+#
+#
+# # time.sleep(3)
+# # # TODO: Вариант теста остановки запуска через отключение задачи
+# # # task.set_enabled(False)
+# #
+# # # TODO: Вариант теста остановки запуска через выставление статуса у запуска
+# # run.set_status(db.TaskStatusEnum.Stopped)
+#
+# quit()
 
 
 # TODO: Пример создания/обновления задач
@@ -89,13 +88,13 @@ quit()
 # run.status = db.TaskStatusEnum.Stopped
 # run.save()
 # print(run)
-task = db.Task.get_by_id(1)
-print(task)
-task.add_or_get_run()
-time.sleep(5)
-task.is_enabled = False
-task.save()
-print(task)
+# task = db.Task.get_by_id(1)
+# print(task)
+# task.add_or_get_run()
+# time.sleep(5)
+# task.is_enabled = False
+# task.save()
+# print(task)
 
 
 # TODO:
