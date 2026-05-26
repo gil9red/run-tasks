@@ -136,28 +136,33 @@ def prepare_datatables_response(
         default_order=default_order,
     )
 
-    total_records = query.count()
+    total_records: int = query.count()
+    records_filtered: int = total_records
+    items: list[dict[str, Any]] = []
 
-    if data_table_rq.search_value and search_fields:
-        conditions = [
-            field.contains(data_table_rq.search_value) for field in search_fields
-        ]
-        query = query.where(reduce(or_, conditions))
+    # Фильтрация, пагинация, сортировки имеют смысл только, если есть записи
+    if total_records > 0:
+        if data_table_rq.search_value and search_fields:
+            conditions = [
+                field.contains(data_table_rq.search_value) for field in search_fields
+            ]
+            query = query.where(reduce(or_, conditions))
 
-    records_filtered = query.count()
+        records_filtered = query.count()
 
-    query = (
-        query.order_by(*data_table_rq.order_by)
-        .offset(data_table_rq.start)
-        .limit(data_table_rq.length)
-    )
+        query = (
+            query.order_by(*data_table_rq.order_by)
+            .offset(data_table_rq.start)
+            .limit(data_table_rq.length)
+        )
+        items = [to_dict(obj) for obj in query.objects()]
 
     return jsonify(
         {
             "draw": data_table_rq.draw,
             "recordsTotal": total_records,
             "recordsFiltered": records_filtered,
-            "data": [to_dict(obj) for obj in query.objects()],
+            "data": items,
         }
     )
 
