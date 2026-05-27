@@ -1229,7 +1229,7 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
             self.assert_tasks(expected=[(task, overrides)])
 
 
-class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
+class TestBaseAppApiWebTask(TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1239,6 +1239,37 @@ class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
             description="description ping",
             cron="* * * * *",
         )
+
+    def _add_logs(self, run: TaskRun, n: int) -> list[TaskRunLog]:
+        items: list[TaskRunLog] = []
+        for i in range(n):
+            items.append(run.add_log_out(f"out={i}"))
+            items.append(run.add_log_err(f"err={i}"))
+        return items
+
+    def assert_task_logs_common(
+        self,
+        uri: str,
+        records_total: int,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[TaskRunLog] | None = None,
+        draw: int = 1,
+    ) -> None:
+        self.assert_datatables_response(
+            uri=uri,
+            records_total=records_total,
+            to_dict=lambda obj: obj.to_dict(),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+        )
+
+
+class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
+    def setUp(self) -> None:
+        super().setUp()
 
         self.uri: str = f"/api/task/{self.task.id}/runs"
 
@@ -1427,21 +1458,12 @@ class TestAppApiWebTaskRuns(TestBaseAppApiWeb):
         self.assert_task_runs(params=params, expected=[r2, r1])
 
 
-class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
+class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
-        # TODO: Общий тест для тестов по задачам
-        self.task = Task.add(
-            name="ping",
-            command="ping 127.0.0.1",
-            description="description ping",
-            cron="* * * * *",
-        )
-
         self.uri: str = f"/api/task/{self.task.id}/logs"
 
-    # TODO: create_logs?
     def _create_runs_with_logs(self, n_runs: int, n_logs: int) -> list[TaskRunLog]:
         logs = []
         for _ in range(n_runs):
@@ -1453,8 +1475,6 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
                 logs.append(run.add_log_out(f"out={i}"))
                 logs.append(run.add_log_err(f"err={i}"))
 
-                # TODO: Словарь по логам?
-
         return logs
 
     def assert_task_logs(
@@ -1464,10 +1484,9 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
         expected: list[TaskRunLog] | None = None,
         draw: int = 1,
     ) -> None:
-        self.assert_datatables_response(
+        self.assert_task_logs_common(
             uri=self.uri,
             records_total=TaskRunLog.select().count(),
-            to_dict=lambda obj: obj.to_dict(),
             params=params,
             records_filtered=records_filtered,
             expected=expected,
@@ -1632,26 +1651,12 @@ class TestAppApiWebTaskLogs(TestBaseAppApiWeb):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestAppApiWebTaskRunLogs(TestBaseAppApiWeb):
+class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
-        self.task = Task.add(
-            name="ping",
-            command="ping 127.0.0.1",
-            description="description ping",
-            cron="* * * * *",
-        )
-
         self.run = self.task.add_or_get_run()
         self.uri: str = f"/api/task/{self.task.id}/run/{self.run.seq}/logs"
-
-    def _add_logs(self, run: TaskRun, n: int) -> list[TaskRunLog]:
-        items: list[TaskRunLog] = []
-        for i in range(n):
-            items.append(run.add_log_out(f"out={i}"))
-            items.append(run.add_log_err(f"err={i}"))
-        return items
 
     def assert_task_logs(
         self,
@@ -1660,10 +1665,9 @@ class TestAppApiWebTaskRunLogs(TestBaseAppApiWeb):
         expected: list[TaskRunLog] | None = None,
         draw: int = 1,
     ) -> None:
-        self.assert_datatables_response(
+        self.assert_task_logs_common(
             uri=self.uri,
             records_total=self.run.logs.count(),
-            to_dict=lambda obj: obj.to_dict(),
             params=params,
             records_filtered=records_filtered,
             expected=expected,
@@ -1825,25 +1829,11 @@ class TestAppApiWebTaskRunLogs(TestBaseAppApiWeb):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWeb):
+class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
-        self.task = Task.add(
-            name="ping",
-            command="ping 127.0.0.1",
-            description="description ping",
-            cron="* * * * *",
-        )
-
         self.uri: str = f"/api/task/{self.task.id}/run/last/logs"
-
-    def _add_logs(self, run: TaskRun, n: int) -> list[TaskRunLog]:
-        items: list[TaskRunLog] = []
-        for i in range(n):
-            items.append(run.add_log_out(f"out={i}"))
-            items.append(run.add_log_err(f"err={i}"))
-        return items
 
     def assert_task_logs(
         self,
@@ -1854,10 +1844,9 @@ class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWeb):
     ) -> None:
         run: TaskRun | None = self.task.get_last_started_run()
 
-        self.assert_datatables_response(
+        self.assert_task_logs_common(
             uri=self.uri,
             records_total=run.logs.count() if run else 0,
-            to_dict=lambda obj: obj.to_dict(),
             params=params,
             records_filtered=records_filtered,
             expected=expected,
