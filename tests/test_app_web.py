@@ -1544,7 +1544,7 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
         run = self.task.add_or_get_run()
         log_out_1 = run.add_log_out("system status ok")
         log_out_2 = run.add_log_out("api status ok")
-        log_err = run.add_log_err("critical database error")
+        log_err_1 = run.add_log_err("critical database error")
 
         with self.subTest("Поиск по тексту 'status ok'"):
             self.assert_task_logs(
@@ -1557,13 +1557,15 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
             self.assert_task_logs(
                 params={"search[value]": "critical"},
                 records_filtered=1,
-                expected=[log_err],
+                expected=[log_err_1],
             )
 
         with self.subTest("Поиск по типу потока 'stderr'"):
             # Предполагается, что в БД kind хранится как 'err' или 'stderr'
             self.assert_task_logs(
-                params={"search[value]": "err"}, records_filtered=1, expected=[log_err]
+                params={"search[value]": "err"},
+                records_filtered=1,
+                expected=[log_err_1],
             )
 
     def test_search_with_pagination(self) -> None:
