@@ -90,8 +90,9 @@ class DataTableRequest:
 
             if "." in col_name:
                 model_part, field_part = col_name.split(".", 1)
+                model_part = model_part.upper()
                 for m in models:
-                    if m._meta.name == model_part:
+                    if m._meta.name.upper() == model_part:
                         field_obj = m._meta.fields.get(field_part)
                         break
 
