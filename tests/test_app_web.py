@@ -600,23 +600,6 @@ class TestAppApiWeb(TestBaseAppWeb):
 
             self.assertNotEqual(run_1.notifications.count(), 0)
 
-    def test_api_notifications(self) -> None:
-        uri: str = "/api/notifications"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-
-        def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
-            return dict(id=d["id"], kind=d["kind"], text=d["text"])
-
-        self.assertEqual(
-            [
-                get_common_view(obj.to_dict())
-                for obj in Notification.select().order_by(Notification.id)
-            ],
-            [get_common_view(obj) for obj in rs.json],
-        )
-
     def test_api_notification_create(self) -> None:
         uri: str = "/api/notification/create"
 
@@ -1952,3 +1935,401 @@ class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
         with self.subTest("Run2-FINISHED (10 logs)"):
             run_2.set_status(TaskRunStatusEnum.FINISHED)
             self.assert_task_logs(expected=run2_logs)
+
+
+class TestAppApiWebNotifications(TestBaseAppApiWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        self.uri: str = "/api/notifications"
+
+    def assert_notifications(
+        self,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[Notification] | None = None,
+        draw: int = 1,
+        check_only_id: bool = False,
+    ) -> None:
+        def to_dict(obj: Notification) -> dict[str, Any]:
+            data: dict[str, Any] = obj.to_dict()
+
+            # Добавление task_run как объект, а не идентификатор
+            if obj.task_run:
+                data["task_run"] = obj.task_run.to_dict()
+
+            return data
+
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=Notification.select().count(),
+            to_dict=to_dict,
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+            check_only_id=check_only_id,
+        )
+
+    def _add_notifications(self, run: TaskRun | None, n: int) -> list[Notification]:
+        items: list[Notification] = []
+        for i in range(n):
+            items.append(
+                Notification.add(
+                    task_run=run,
+                    name=f"[email] {i}",
+                    text=f"email={i}",
+                    kind=NotificationKindEnum.EMAIL,
+                )
+            )
+            items.append(
+                Notification.add(
+                    task_run=run,
+                    name=f"[tg] {i}",
+                    text=f"tg={i}",
+                    kind=NotificationKindEnum.TELEGRAM,
+                )
+            )
+        return items
+
+    def test_empty(self) -> None:
+        self.assert_notifications(expected=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_notifications(params={"draw": 999}, expected=[], draw=999)
+        self.assert_notifications(params={"draw": "999"}, expected=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+    def test_main(self) -> None:
+        run = Task.add(name="*", command="*").add_or_get_run()
+
+        notifications: list[Notification] = []
+        notifications += self._add_notifications(run=None, n=10)
+        notifications += self._add_notifications(run, n=10)
+
+        self.assertEqual(40, len(notifications))
+
+        with self.subTest("Пагинация по умолчанию"):
+            self.assert_notifications(expected=notifications)
+
+        with self.subTest("Все записи"):
+            self.assert_notifications(
+                expected=notifications,
+                params=dict(length=999_999_999),
+            )
+
+    def test_pagination(self) -> None:
+        """Проверка базовой пагинации"""
+
+        for start in [0, 10, 999]:
+            with self.subTest("Пагинация в пустой таблице", start=start):
+                self.assert_notifications(
+                    params={"start": start},
+                    expected=[],
+                )
+
+        with self.subTest("Пагинация в пустой таблице", length=0):
+            self.assert_notifications(
+                params={"length": 0},
+                expected=[],
+            )
+
+        # 6 уведомлений (3 email + 3 tg)
+        items = self._add_notifications(run=None, n=3)
+
+        with self.subTest("Пагинация вернет пустой список", start=999):
+            self.assert_notifications(
+                params={"start": 999},
+                expected=[],
+            )
+
+        with self.subTest("Пагинация вернет пустой список", length=0):
+            self.assert_notifications(
+                params={"length": 0},
+                expected=[],
+            )
+
+        with self.subTest("Первая страница (length=4)"):
+            self.assert_notifications(
+                params={"start": 0, "length": 4}, expected=items[:4]
+            )
+
+        with self.subTest("Вторая страница (start=4)"):
+            self.assert_notifications(
+                params={"start": 4, "length": 4}, expected=items[4:6]
+            )
+
+    def test_search_filtering(self) -> None:
+        """Проверка поиска по полям: name, text, kind"""
+
+        with self.subTest("Поиск в пустой таблице"):
+            self.assert_notifications(
+                params={"search[value]": "Urgent"},
+                expected=[],
+            )
+
+        run = Task.add(name="test", command="*").add_or_get_run()
+
+        n_email = Notification.add(
+            task_run=run,
+            name="Urgent report",
+            text="Database connection failed",
+            kind=NotificationKindEnum.EMAIL,
+        )
+        n_tg = Notification.add(
+            task_run=run,
+            name="Daily stats",
+            text="All tasks finished successfully",
+            kind=NotificationKindEnum.TELEGRAM,
+        )
+
+        with self.subTest("Поиск вернет пустой список"):
+            self.assert_notifications(
+                params={"search[value]": "404! 404!"},
+                records_filtered=0,
+                expected=[],
+            )
+
+        with self.subTest("Поиск по полю name ('Urgent')"):
+            self.assert_notifications(
+                params={"search[value]": "Urgent"},
+                records_filtered=1,
+                expected=[n_email],
+            )
+
+        with self.subTest("Поиск по тексту в поле text ('successfully')"):
+            self.assert_notifications(
+                params={"search[value]": "successfully"},
+                records_filtered=1,
+                expected=[n_tg],
+            )
+
+        with self.subTest("Поиск по типу уведомления в поле kind"):
+            self.assert_notifications(
+                params={"search[value]": NotificationKindEnum.TELEGRAM.value},
+                records_filtered=1,
+                expected=[n_tg],
+            )
+
+    def test_search_with_pagination(self) -> None:
+        """Проверка совместной работы фильтрации и пагинации."""
+
+        for start in [0, 10, 999]:
+            with self.subTest("Пагинация в пустой таблице", start=start):
+                self.assert_notifications(
+                    params={"start": start},
+                    expected=[],
+                )
+
+        with self.subTest("Пагинация в пустой таблице", length=0):
+            self.assert_notifications(
+                params={"length": 0},
+                expected=[],
+            )
+
+        task = Task.add(name="SortTask", command="*")
+        run_1 = task.add_or_get_run()
+
+        # 10 уведомлений со словом 'alert' в тексте
+        alert_items = []
+        for i in range(5):
+            alert_items.append(
+                Notification.add(
+                    task_run=run_1,
+                    name="N",
+                    text=f"alert test {i}",
+                    kind=NotificationKindEnum.EMAIL,
+                )
+            )
+            alert_items.append(
+                Notification.add(
+                    task_run=None,
+                    name="N",
+                    text=f"alert message {i}",
+                    kind=NotificationKindEnum.TELEGRAM,
+                )
+            )
+
+        # И одно лишнее, которое не должно попасть под фильтр
+        Notification.add(
+            task_run=run_1, name="N", text="normal log", kind=NotificationKindEnum.EMAIL
+        )
+
+        params = {
+            "search[value]": "alert",  # records_filtered=10
+            "start": 0,
+            "length": 4,
+            "order[0][column]": 0,
+            "order[0][name]": "id",
+            "order[0][dir]": "asc",
+        }
+
+        with self.subTest("Пагинация вернет пустой список", start=999):
+            self.assert_notifications(
+                params=params | {"start": 999},
+                records_filtered=10,
+                expected=[],
+            )
+
+        with self.subTest("Пагинация вернет пустой список", length=0):
+            self.assert_notifications(
+                params=params | {"length": 0},
+                records_filtered=10,
+                expected=[],
+            )
+
+        # Всего в базе 11 записей, фильтр отбирает 10, пагинация выводит первые 4
+        with self.subTest("Пагинация вернет первую страницу с 4 элементами"):
+            self.assert_notifications(
+                params=params, records_filtered=10, expected=alert_items[:4]
+            )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки по разрешенным полям, включая поля связанной таблицы TaskRun"""
+
+        task = Task.add(name="SortTask", command="*")
+
+        run_1 = task.add_or_get_run()
+        run_1.set_status(TaskRunStatusEnum.RUNNING)
+        run_1.set_status(TaskRunStatusEnum.FINISHED)
+
+        run_2 = task.add_or_get_run()
+        run_2.set_status(TaskRunStatusEnum.RUNNING)
+        run_2.set_status(TaskRunStatusEnum.FINISHED)
+
+        n1 = Notification.add(
+            task_run=run_1, name="AAA", text="Z", kind=NotificationKindEnum.EMAIL
+        )
+        n2 = Notification.add(
+            task_run=run_2, name="BBB", text="Y", kind=NotificationKindEnum.TELEGRAM
+        )
+
+        sort_cases = [
+            ("По имени DESC", "name", "desc", [n2, n1]),
+            ("По тексту ASC", "text", "asc", [n2, n1]),  # Y перед Z
+            (  # Зависит от значений Enum
+                "По типу (kind) DESC",
+                "kind",
+                "desc",
+                [n2, n1],
+            ),
+            ("По связанному TaskRun.id DESC", "TaskRun.id", "desc", [n2, n1]),
+            ("По связанному TaskRun.seq DESC", "TaskRun.seq", "desc", [n2, n1]),
+        ]
+
+        for msg, field, direction, expected_list in sort_cases:
+            with self.subTest(msg):
+                self.assert_notifications(
+                    params={
+                        "order[0][column]": 0,
+                        "order[0][name]": field,
+                        "order[0][dir]": direction,
+                    },
+                    expected=expected_list,
+                )
+
+    def test_search_with_sorting_and_pagination(self) -> None:
+        task = Task.add(name="SortTask", command="*")
+        run_1 = task.add_or_get_run()
+
+        # Создание группы уведомлений со словом 'critical'
+        # Id и алфавит имен не совпадали (для проверки сортировки)
+        n_crit_3 = Notification.add(
+            task_run=run_1,
+            name="Z_critical",
+            text="Error 3",
+            kind=NotificationKindEnum.EMAIL,
+        )
+        n_crit_1 = Notification.add(
+            task_run=run_1,
+            name="A_critical",
+            text="Error 1",
+            kind=NotificationKindEnum.TELEGRAM,
+        )
+        n_crit_2 = Notification.add(
+            task_run=None,
+            name="M_critical",
+            text="Error 2",
+            kind=NotificationKindEnum.EMAIL,
+        )
+
+        for i in range(5):
+            Notification.add(
+                task_run=run_1,
+                name=f"Normal_{i}",
+                text="all links ok",
+                kind=NotificationKindEnum.TELEGRAM,
+            )
+
+        # Итого в базе: 8 записей (recordsTotal = 8)
+        # Подходят под фильтр 'critical': 3 записи (recordsFiltered = 3)
+        # Если отсортировать по имени ASC, порядок будет: n_crit_1 ("A"), n_crit_2 ("M"), n_crit_3 ("Z")
+        # Если взять length=2, то на первую страницу должны попасть только первые два элемента
+
+        params = {
+            "search[value]": "critical",  # Фильтр
+            "order[0][column]": 0,  # Сортировка
+            "order[0][name]": "name",
+            "order[0][dir]": "asc",
+            "start": 0,  # Пагинация
+            "length": 2,
+            "draw": 777,
+        }
+
+        self.assert_notifications(
+            params=params,
+            records_filtered=3,  # Должно быть 3, а не 2!
+            expected=[n_crit_1, n_crit_2],  # Только первые два отсортированных элемента
+            draw=777,
+        )
+
+    def test_multi_column_sorting(self) -> None:
+        """Проверка сортировки по нескольким колонкам одновременно"""
+
+        task = Task.add(name="SortTask", command="*")
+        run_1 = task.add_or_get_run()
+
+        n1 = Notification.add(
+            task_run=run_1,
+            name="SameName",
+            text="A",
+            kind=NotificationKindEnum.EMAIL,
+        )
+        n2 = Notification.add(
+            task_run=run_1,
+            name="SameName",
+            text="B",
+            kind=NotificationKindEnum.TELEGRAM,
+        )
+        n3 = Notification.add(
+            task_run=None,
+            name="AnotherName",
+            text="C",
+            kind=NotificationKindEnum.EMAIL,
+        )
+
+        params = {
+            "order[0][column]": 0,
+            "order[0][name]": "name",
+            "order[0][dir]": "asc",
+            "order[1][column]": 1,
+            "order[1][name]": "text",
+            "order[1][dir]": "desc",
+        }
+
+        # Ожидаемый порядок:
+        # 1. 'AnotherName' (первый по алфавиту имени)
+        # 2. 'SameName' с текстом 'B' (имена одинаковые, сортировка по тексту DESC)
+        # 3. 'SameName' с текстом 'A'
+        self.assert_notifications(params=params, expected=[n3, n2, n1])

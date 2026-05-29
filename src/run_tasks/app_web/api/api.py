@@ -527,18 +527,40 @@ def task_run_logs_last(task_id: int) -> Response:
 
 @api_bp.route("/notifications")
 def notifications() -> Response:
-    items: list[dict[str, Any]] = []
-
-    for obj in Notification.select().order_by(Notification.id):
+    def to_dict(obj: Notification) -> dict[str, Any]:
         data: dict[str, Any] = obj.to_dict()
 
         # Добавление task_run как объект, а не идентификатор
         if obj.task_run:
             data["task_run"] = obj.task_run.to_dict()
 
-        items.append(data)
+        return data
 
-    return jsonify(items)
+    query = Notification.select().join(TaskRun, join_type=JOIN.LEFT_OUTER)
+
+    return prepare_datatables_response(
+        query=query,
+        request=request,
+        models=[Notification, TaskRun],
+        allowed_columns=[
+            Notification.id,
+            Notification.name,
+            Notification.text,
+            Notification.kind,
+            Notification.append_date,
+            Notification.sending_date,
+            Notification.canceling_date,
+            "TaskRun.id",
+            "TaskRun.seq",
+        ],
+        search_fields=[
+            Notification.name,
+            Notification.text,
+            Notification.kind,
+        ],
+        default_order=Notification.id.asc(),
+        to_dict=to_dict,
+    )
 
 
 @api_bp.route("/notification/create", methods=["POST"])

@@ -113,8 +113,9 @@ $(function() {
     new DataTable('#table-notifications', {
         ajax: {
             url: '/api/notifications',
-            dataSrc: '',
+            data: prepare_data_for_server_side,
         },
+        serverSide: true,
         rowId: 'id',
         columns: [
             {
@@ -124,15 +125,15 @@ $(function() {
                 title: getTableHeaderTitleWithMenu(), // TODO: Перенести кнопку создания?
                 width: '0px',
             },
-            { data: 'id', title: 'Ид.', }, // TODO: Спрятать?
-            { data: 'task_run.id', title: 'Ид. запуска', }, // TODO: Спрятать? Заполнять ссылку на запуск (брать task_run_seq)?
-            { data: 'task_run.seq', title: 'Номер запуска', },
-            { data: 'name', title: 'Название', },
-            { data: 'text', title: 'Текст', },
-            { data: 'kind', title: 'Тип', render: kind_render, },
-            { data: 'append_date', title: 'Добавлено', render: date_render, },
-            { data: 'sending_date', title: 'Отправлено', render: date_render, },
-            { data: 'canceling_date', title: 'Отменено', render: date_render, },
+            { data: 'id', name: "id", title: 'Ид.', }, // TODO: Спрятать?
+            { data: 'task_run.id', name: "TaskRun.id", title: 'Ид. запуска', }, // TODO: Спрятать? Заполнять ссылку на запуск (брать task_run_seq)?
+            { data: 'task_run.seq', name: "TaskRun.seq", title: 'Номер запуска', },
+            { data: 'name', name: "name", title: 'Название', },
+            { data: 'text', name: "text", title: 'Текст', },
+            { data: 'kind', name: "kind", title: 'Тип', render: kind_render, },
+            { data: 'append_date', name: "append_date", title: 'Добавлено', render: date_render, },
+            { data: 'sending_date', name: "sending_date", title: 'Отправлено', render: date_render, },
+            { data: 'canceling_date', name: "canceling_date", title: 'Отменено', render: date_render, },
         ],
         order: [
             // Сортировка по убыванию id
