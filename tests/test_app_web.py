@@ -952,7 +952,7 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
             )
 
     def test_search_filtering(self) -> None:
-        """Проверка поиска по всем полям: name, command, description, cron"""
+        """Проверка поиска по полям: name, command, description, cron"""
 
         t_tg = Task.add(
             name="tg_bot",
@@ -1355,7 +1355,7 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
             )
 
     def test_search_filtering(self) -> None:
-        """Проверка поиска по всем полям: command, status, stop_reason, process_id"""
+        """Проверка поиска по полям: command, status, stop_reason, process_id"""
 
         # Создаем специфичные запуски
         r1 = self.task.add_or_get_run()
@@ -1539,7 +1539,7 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
             self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
 
     def test_search_filtering(self) -> None:
-        """Проверка поиска по всем полям: text, kind"""
+        """Проверка поиска по полям: text, kind"""
 
         run = self.task.add_or_get_run()
         log_out_1 = run.add_log_out("system status ok")
@@ -1728,7 +1728,7 @@ class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
             self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
 
     def test_search_filtering(self) -> None:
-        """Проверка поиска по всем полям: text, kind"""
+        """Проверка поиска по полям: text, kind"""
 
         log_out_1 = self.run.add_log_out("system status ok")
         log_out_2 = self.run.add_log_out("api status ok")
