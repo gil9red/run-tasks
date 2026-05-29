@@ -836,6 +836,12 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
             base.update(overrides)
         return base
 
+    def _run_n_runs(self, task: Task, n_times: int) -> None:
+        for _ in range(n_times):
+            run = task.add_or_get_run()
+            run.set_status(TaskRunStatusEnum.RUNNING)
+            run.set_status(TaskRunStatusEnum.FINISHED)
+
     def assert_tasks(
         self,
         params: dict[str, Any] | None = None,
@@ -1039,14 +1045,8 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
         task_2 = Task.add(name="Beta", command="2", cron="@hourly")
         task_3 = Task.add(name="Gamma", command="3", cron=None)
 
-        def _run_n_runs(task: Task, n_times: int) -> None:
-            for _ in range(n_times):
-                run = task.add_or_get_run()
-                run.set_status(TaskRunStatusEnum.RUNNING)
-                run.set_status(TaskRunStatusEnum.FINISHED)
-
-        _run_n_runs(task_2, n_times=10)
-        _run_n_runs(task_1, n_times=5)
+        self._run_n_runs(task_2, n_times=10)
+        self._run_n_runs(task_1, n_times=5)
 
         with self.subTest("Сортировка по имени DESC"):
             self.assert_tasks(
@@ -1074,6 +1074,80 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
             self.assert_tasks(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "desc"},
                 expected=[task_2, task_1, task_3],
+                check_only_id=True,
+            )
+
+    def test_search_with_sorting_and_pagination(self) -> None:
+        # Задачи, которые подходят под фильтр 'bot'
+        # Id и алфавитный порядок не совпадают
+        task_bot_z = Task.add(name="z_bot", command="python")
+        task_bot_a = Task.add(name="a_bot", command="python")
+        task_bot_m = Task.add(name="m_bot", command="python")
+
+        # Задачи (не содержат 'bot'), чтобы проверить recordsTotal
+        for i in range(5):
+            Task.add(name=f"other_{i}", command="ping")
+
+        # Распределение количества запусков:
+        # task_bot_m -> 15 запусков (самый посещаемый bot)
+        # task_bot_z -> 10 запусков
+        # task_bot_a -> 5 запусков  (самый редкий bot)
+        self._run_n_runs(task_bot_m, n_times=15)
+        self._run_n_runs(task_bot_z, n_times=10)
+        self._run_n_runs(task_bot_a, n_times=5)
+
+        # Итого в базе: 8 задач (recordsTotal = 8)
+        # Подходят под фильтр 'bot': 3 задачи (recordsFiltered = 3)
+
+        with self.subTest("Фильтр 'bot' + Сортировка по запускам DESC + Первая страница пагинации (2 элемента)"):
+            # При сортировке db_number_of_runs DESC полный порядок отфильтрованных:
+            # [task_bot_m (15), task_bot_z (10), task_bot_a (5)]
+            # Берем length=2 -> ожидаем только первые две задачи
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_m, task_bot_z],
+                check_only_id=True,
+            )
+
+        with self.subTest("Фильтр 'bot' + Сортировка по запускам DESC + Смещение на вторую страницу"):
+            # Берем хвост отсортированного списка (индекс start=2)
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "desc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_a],
+                check_only_id=True,
+            )
+
+        with self.subTest("Фильтр 'bot' + Сортировка по запускам ASC + Первая страница"):
+            # При сортировке db_number_of_runs ASC полный порядок отфильтрованных:
+            # [task_bot_a (5), task_bot_z (10), task_bot_m (15)]
+            # Берем length=2 -> ожидаем только первые две задачи
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_a, task_bot_z],
                 check_only_id=True,
             )
 
