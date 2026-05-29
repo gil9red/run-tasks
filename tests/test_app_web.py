@@ -220,17 +220,23 @@ class TestBaseAppApiWeb(TestBaseAppWeb):
         self.assertEqual(records_filtered, rs_data["recordsFiltered"])
 
         if expected is not None:
+
+            def process_value(v: Any) -> Any:
+                match v:
+                    case dict():
+                        return {k: process_value(val) for k, val in v.items()}
+                    case list() | tuple():
+                        return [process_value(item) for item in v]
+                    case Enum():
+                        return v.value
+                    case datetime():
+                        return v.isoformat()
+                    case _:
+                        return v
+
             expected_data: list[dict[str, Any]] = []
             for item in expected:
-                data: dict[str, Any] = dict()
-                for k, v in to_dict(item).items():
-                    if isinstance(v, Enum):
-                        v = v.value
-                    elif isinstance(v, datetime):
-                        v = v.isoformat()
-
-                    data[k] = v
-
+                data: dict[str, Any] = process_value(to_dict(item))
                 expected_data.append(data)
 
             if length := int(params.get("length", API_PAGE_LENGTH_DEFAULT)):
