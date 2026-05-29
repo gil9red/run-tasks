@@ -1504,6 +1504,76 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
             }
             self.assert_task_runs(params=params, expected=runs[::-1])
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        # Запуски со статусом ERROR, но с разным seq (через перезапись полей после создания)
+        error_runs = self._create_runs(n=3, status=TaskRunStatusEnum.ERROR)
+
+        # Поля seq вручную, чтобы нарушить последовательность ID:
+        # Индексы: error_runs[0] -> seq 30, error_runs[1] -> seq 10, error_runs[2] -> seq 20
+        for seq, run in zip([30, 10, 20], error_runs):
+            run.seq = seq
+            run.save()
+
+        # Фоновые успешные запуски, чтобы проверить recordsTotal
+        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
+
+        # Итого в базе: 8 запусков (recordsTotal = 8)
+        # Подходят под фильтр по статусу ERROR: 3 запуска (recordsFiltered = 3)
+
+        with self.subTest("Фильтр ERROR + Сортировка seq ASC + Пагинация (первые 2 элемента)"):
+            # При сортировке seq ASC ожидаемый полный порядок найденных:
+            # 1. error_runs[1] (seq=10)
+            # 2. error_runs[2] (seq=20)
+            # 3. error_runs[0] (seq=30)
+            # Берем length=2 -> должны вернуться только первые два
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params,
+                records_filtered=3,
+                expected=[error_runs[1], error_runs[2]]
+            )
+
+        with self.subTest("Фильтр ERROR + Сортировка seq ASC + Вторая страница пагинации"):
+            # Берем хвост отсортированного списка (смещение start=2)
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "asc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params,
+                records_filtered=3,
+                expected=[error_runs[0]]
+            )
+
+        with self.subTest("Фильтр ERROR + Сортировка seq DESC + Первая страница пагинации"):
+            # При сортировке seq DESC ожидаемый полный порядок найденных:
+            # [error_runs[0] (seq=30), error_runs[2] (seq=20), error_runs[1] (seq=10)]
+            # Берем length=2 -> ожидаем первые две
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params,
+                records_filtered=3,
+                expected=[error_runs[0], error_runs[2]]
+            )
+
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
 
