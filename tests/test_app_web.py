@@ -1759,6 +1759,76 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
                     expected=expected_list,
                 )
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        run = self.task.add_or_get_run()
+
+        # Логи, содержащие ключевое слово 'ping'
+        # Намеренно пишем тексты так, чтобы их алфавитный порядок не совпадал с порядком создания (ID)
+        log_ping_z = run.add_log_out("z_ping_message")
+        log_ping_a = run.add_log_out("a_ping_message")
+        log_ping_m = run.add_log_out("m_ping_message")
+
+        # Фоновые логи (без слова 'ping') для контроля общего счетчика recordsTotal
+        for i in range(5):
+            run.add_log_out(f"other system log {i}")
+
+        # Итого в базе: 8 логов (recordsTotal = 8)
+        # Подходят под фильтр 'ping': 3 лога (recordsFiltered = 3)
+
+        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Пагинация (первые 2 элемента)"):
+            # При сортировке по text ASC полный ожидаемый порядок найденных:
+            # 1. log_ping_a ("a_ping_message")
+            # 2. log_ping_m ("m_ping_message")
+            # 3. log_ping_z ("z_ping_message")
+            # Запрашиваем length=2 -> ожидаем только первые два лога
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params,
+                records_filtered=3,
+                expected=[log_ping_a, log_ping_m]
+            )
+
+        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Вторая страница пагинации"):
+            # Смещение start=2 -> забираем оставшийся хвост отсортированного списка
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params,
+                records_filtered=3,
+                expected=[log_ping_z]
+            )
+
+        with self.subTest("Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"):
+            # При сортировке по text DESC полный ожидаемый порядок найденных:
+            # [log_ping_z, log_ping_m, log_ping_a]
+            # Запрашиваем length=2 -> ожидаем первые два
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params,
+                records_filtered=3,
+                expected=[log_ping_z, log_ping_m]
+            )
+
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно (text и kind)"""
 
