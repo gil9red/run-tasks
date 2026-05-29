@@ -7,14 +7,11 @@ __author__ = "ipetrash"
 import time
 from datetime import datetime
 from enum import Enum
-from unittest import TestCase
 from typing import Any, Callable
 
-from playhouse.sqlite_ext import SqliteExtDatabase
 from playhouse.shortcuts import model_to_dict
 
 from run_tasks.db import (
-    BaseModel,
     Task,
     TaskRun,
     Notification,
@@ -25,171 +22,45 @@ from run_tasks.db import (
     TaskRunLog,
 )
 
-from run_tasks.app_web.app import limiter
-from run_tasks.app_web.config import USERS, API_PAGE_LENGTH_DEFAULT
-from run_tasks.app_web.main import app
+from run_tasks.app_web.config import API_PAGE_LENGTH_DEFAULT
+from tests import DATETIME_DELAY_SECS
+from tests.test_web_pages import TestBaseAppWeb
 
-# Минимальное время задержки между вызовами datetime.now(), чтобы даты не совпали
-DATETIME_DELAY_SECS: float = 0.001
-
-
-class TestBaseAppWeb(TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        limiter.enabled = False
-        app.testing = True
-        cls.client = app.test_client()
-
-        rs = cls.client.get("/login")
-        assert rs.status_code == 200
 
         login: str = list(USERS.keys())[0]
         password: str = USERS[login]
         cls.client.post("/login", data=dict(login=login, password=password))
         assert rs.status_code == 200
+class BaseAppApiDatatablesTestMixin:
+    def test_empty(self) -> None:
+        raise NotImplementedError()
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        cls.client.get("/logout")
+    def test_draw_echo(self) -> None:
+        raise NotImplementedError()
 
-    def setUp(self) -> None:
-        self.models = BaseModel.get_inherited_models()
-        self.test_db = SqliteExtDatabase(
-            ":memory:",
-            pragmas={
-                "foreign_keys": 1,
-            },
-        )
-        self.test_db.bind(self.models, bind_refs=False, bind_backrefs=False)
-        self.test_db.connect()
-        self.test_db.create_tables(self.models)
+    def test_errors(self) -> None:
+        raise NotImplementedError()
 
-    def tearDown(self) -> None:
-        self.test_db.drop_tables(self.models)
-        self.test_db.close()
+    def test_main(self) -> None:
+        raise NotImplementedError()
 
+    def test_pagination(self) -> None:
+        raise NotImplementedError()
 
-class TestAppWeb(TestBaseAppWeb):
-    def test_index(self) -> None:
-        uri: str = "/"
+    def test_search(self) -> None:
+        raise NotImplementedError()
 
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+    def test_search_with_pagination(self) -> None:
+        raise NotImplementedError()
 
-    def test_task(self) -> None:
-        with self.subTest("404 - Not Found"):
-            rs = self.client.get("/task/99999")
-            self.assertEqual(rs.status_code, 404)
+    def test_search_with_sorting_and_pagination(self) -> None:
+        raise NotImplementedError()
 
-        with self.subTest("200 - Ok"):
-            task = Task.add(
-                name="1",
-                command="ping 127.0.0.1",
-            )
-            uri: str = f"/task/{task.id}"
+    def test_sorting(self) -> None:
+        raise NotImplementedError()
 
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-
-    def test_task_create(self) -> None:
-        uri: str = "/task/create"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-
-    def test_task_update(self) -> None:
-        with self.subTest("404 - Not Found"):
-            uri: str = "/task/99999/update"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-        with self.subTest("200 - Ok"):
-            task = Task.add(
-                name="200",
-                command="ping 127.0.0.1",
-            )
-            uri: str = f"/task/{task.id}/update"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-
-    def test_task_run_last(self) -> None:
-        with self.subTest("404 - Not Found"):
-            uri: str = "/task/99999/run/last"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-            task = Task.add(
-                name="404",
-                command="ping 127.0.0.1",
-            )
-            uri: str = f"/task/{task.id}/run/last"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-            run = task.add_or_get_run()
-            self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
-
-            uri: str = f"/task/{task.id}/run/last"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-        with self.subTest("200 - Ok"):
-            task = Task.add(
-                name="200",
-                command="ping 127.0.0.1",
-            )
-            run = task.add_or_get_run()
-            run.set_status(TaskRunStatusEnum.RUNNING)
-
-            uri: str = f"/task/{task.id}/run/last"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-
-    def test_task_run(self) -> None:
-        with self.subTest("404 - Not Found"):
-            uri: str = "/task/99999/run/99999"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-            task = Task.add(
-                name="404",
-                command="ping 127.0.0.1",
-            )
-            uri: str = f"/task/{task.id}/run/99999"
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
-
-        with self.subTest("200 - Ok"):
-            task = Task.add(
-                name="200",
-                command="ping 127.0.0.1",
-            )
-            run = task.add_or_get_run()
-            uri: str = f"/task/{task.id}/run/{run.seq}"
-
-            rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
-
-    def test_notifications(self) -> None:
-        uri: str = "/notifications"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-
-    def test_favicon(self) -> None:
-        uri: str = "/favicon.ico"
-
-        rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
-
-    def test_task_run_get_url(self) -> None:
-        run = Task.add(name="*", command="*").add_or_get_run()
-
-        # NOTE: Полный путь не работает с тестовым клиентом
-        rs = self.client.get(run.get_url(full=False))
-        self.assertEqual(rs.status_code, 200)
+    def test_multi_column_sorting(self) -> None:
+        raise NotImplementedError()
 
 
 class TestBaseAppApiWeb(TestBaseAppWeb):
@@ -251,7 +122,7 @@ class TestBaseAppApiWeb(TestBaseAppWeb):
                 self.assertEqual(expected_data, rs_data["data"])
 
 
-class TestAppApiWeb(TestBaseAppWeb):
+class TestBase(TestBaseAppWeb):
     def test_api_task_create(self) -> None:
         uri: str = "/api/task/create"
 
@@ -812,7 +683,7 @@ class TestAppApiWeb(TestBaseAppWeb):
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
 
-class TestAppApiWebTasks(TestBaseAppApiWeb):
+class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -946,7 +817,7 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
                 expected=[],
             )
 
-    def test_search_filtering(self) -> None:
+    def test_search(self) -> None:
         """Проверка поиска по полям: name, command, description, cron"""
 
         t_tg = Task.add(
@@ -1038,6 +909,86 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
                 expected=[bot_tasks[4], bot_tasks[3]],
             )
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        # Задачи, которые подходят под фильтр 'bot'
+        # Id и алфавитный порядок не совпадают
+        task_bot_z = Task.add(name="z_bot", command="python")
+        task_bot_a = Task.add(name="a_bot", command="python")
+        task_bot_m = Task.add(name="m_bot", command="python")
+
+        # Задачи (не содержат 'bot'), чтобы проверить recordsTotal
+        for i in range(5):
+            Task.add(name=f"other_{i}", command="ping")
+
+        # Распределение количества запусков:
+        # task_bot_m -> 15 запусков (самый посещаемый bot)
+        # task_bot_z -> 10 запусков
+        # task_bot_a -> 5 запусков  (самый редкий bot)
+        self._run_n_runs(task_bot_m, n_times=15)
+        self._run_n_runs(task_bot_z, n_times=10)
+        self._run_n_runs(task_bot_a, n_times=5)
+
+        # Итого в базе: 8 задач (recordsTotal = 8)
+        # Подходят под фильтр 'bot': 3 задачи (recordsFiltered = 3)
+
+        with self.subTest(
+            "Фильтр 'bot' + Сортировка по запускам DESC + Первая страница пагинации (2 элемента)"
+        ):
+            # При сортировке db_number_of_runs DESC полный порядок отфильтрованных:
+            # [task_bot_m (15), task_bot_z (10), task_bot_a (5)]
+            # Берем length=2 -> ожидаем только первые две задачи
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_m, task_bot_z],
+                check_only_id=True,
+            )
+
+        with self.subTest(
+            "Фильтр 'bot' + Сортировка по запускам DESC + Смещение на вторую страницу"
+        ):
+            # Берем хвост отсортированного списка (индекс start=2)
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "desc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_a],
+                check_only_id=True,
+            )
+
+        with self.subTest(
+            "Фильтр 'bot' + Сортировка по запускам ASC + Первая страница"
+        ):
+            # При сортировке db_number_of_runs ASC полный порядок отфильтрованных:
+            # [task_bot_a (5), task_bot_z (10), task_bot_m (15)]
+            # Берем length=2 -> ожидаем только первые две задачи
+            params = {
+                "search[value]": "bot",
+                "order[0][name]": "db_number_of_runs",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_tasks(
+                params=params,
+                records_filtered=3,
+                expected=[task_bot_a, task_bot_z],
+                check_only_id=True,
+            )
+
     def test_sorting(self) -> None:
         """Проверка сортировки"""
 
@@ -1074,80 +1025,6 @@ class TestAppApiWebTasks(TestBaseAppApiWeb):
             self.assert_tasks(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "desc"},
                 expected=[task_2, task_1, task_3],
-                check_only_id=True,
-            )
-
-    def test_search_with_sorting_and_pagination(self) -> None:
-        # Задачи, которые подходят под фильтр 'bot'
-        # Id и алфавитный порядок не совпадают
-        task_bot_z = Task.add(name="z_bot", command="python")
-        task_bot_a = Task.add(name="a_bot", command="python")
-        task_bot_m = Task.add(name="m_bot", command="python")
-
-        # Задачи (не содержат 'bot'), чтобы проверить recordsTotal
-        for i in range(5):
-            Task.add(name=f"other_{i}", command="ping")
-
-        # Распределение количества запусков:
-        # task_bot_m -> 15 запусков (самый посещаемый bot)
-        # task_bot_z -> 10 запусков
-        # task_bot_a -> 5 запусков  (самый редкий bot)
-        self._run_n_runs(task_bot_m, n_times=15)
-        self._run_n_runs(task_bot_z, n_times=10)
-        self._run_n_runs(task_bot_a, n_times=5)
-
-        # Итого в базе: 8 задач (recordsTotal = 8)
-        # Подходят под фильтр 'bot': 3 задачи (recordsFiltered = 3)
-
-        with self.subTest("Фильтр 'bot' + Сортировка по запускам DESC + Первая страница пагинации (2 элемента)"):
-            # При сортировке db_number_of_runs DESC полный порядок отфильтрованных:
-            # [task_bot_m (15), task_bot_z (10), task_bot_a (5)]
-            # Берем length=2 -> ожидаем только первые две задачи
-            params = {
-                "search[value]": "bot",
-                "order[0][name]": "db_number_of_runs",
-                "order[0][dir]": "desc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_tasks(
-                params=params,
-                records_filtered=3,
-                expected=[task_bot_m, task_bot_z],
-                check_only_id=True,
-            )
-
-        with self.subTest("Фильтр 'bot' + Сортировка по запускам DESC + Смещение на вторую страницу"):
-            # Берем хвост отсортированного списка (индекс start=2)
-            params = {
-                "search[value]": "bot",
-                "order[0][name]": "db_number_of_runs",
-                "order[0][dir]": "desc",
-                "start": 2,
-                "length": 2,
-            }
-            self.assert_tasks(
-                params=params,
-                records_filtered=3,
-                expected=[task_bot_a],
-                check_only_id=True,
-            )
-
-        with self.subTest("Фильтр 'bot' + Сортировка по запускам ASC + Первая страница"):
-            # При сортировке db_number_of_runs ASC полный порядок отфильтрованных:
-            # [task_bot_a (5), task_bot_z (10), task_bot_m (15)]
-            # Берем length=2 -> ожидаем только первые две задачи
-            params = {
-                "search[value]": "bot",
-                "order[0][name]": "db_number_of_runs",
-                "order[0][dir]": "asc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_tasks(
-                params=params,
-                records_filtered=3,
-                expected=[task_bot_a, task_bot_z],
                 check_only_id=True,
             )
 
@@ -1330,7 +1207,7 @@ class TestBaseAppApiWebTask(TestBaseAppApiWeb):
         )
 
 
-class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
+class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1417,7 +1294,7 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
                 expected=runs[5:10],
             )
 
-    def test_search_filtering(self) -> None:
+    def test_search(self) -> None:
         """Проверка поиска по полям: command, status, stop_reason, process_id"""
 
         # Создаем специфичные запуски
@@ -1483,6 +1360,80 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
             params=params, records_filtered=5, expected=error_runs[:3]
         )
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        # Запуски со статусом ERROR, но с разным seq (через перезапись полей после создания)
+        error_runs = self._create_runs(n=3, status=TaskRunStatusEnum.ERROR)
+
+        # Поля seq вручную, чтобы нарушить последовательность ID:
+        # Индексы: error_runs[0] -> seq 30, error_runs[1] -> seq 10, error_runs[2] -> seq 20
+        for seq, run in zip([30, 10, 20], error_runs):
+            run.seq = seq
+            run.save()
+
+        # Фоновые успешные запуски, чтобы проверить recordsTotal
+        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
+
+        # Итого в базе: 8 запусков (recordsTotal = 8)
+        # Подходят под фильтр по статусу ERROR: 3 запуска (recordsFiltered = 3)
+
+        with self.subTest(
+            "Фильтр ERROR + Сортировка seq ASC + Пагинация (первые 2 элемента)"
+        ):
+            # При сортировке seq ASC ожидаемый полный порядок найденных:
+            # 1. error_runs[1] (seq=10)
+            # 2. error_runs[2] (seq=20)
+            # 3. error_runs[0] (seq=30)
+            # Берем length=2 -> должны вернуться только первые два
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params,
+                records_filtered=3,
+                expected=[error_runs[1], error_runs[2]],
+            )
+
+        with self.subTest(
+            "Фильтр ERROR + Сортировка seq ASC + Вторая страница пагинации"
+        ):
+            # Берем хвост отсортированного списка (смещение start=2)
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "asc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params, records_filtered=3, expected=[error_runs[0]]
+            )
+
+        with self.subTest(
+            "Фильтр ERROR + Сортировка seq DESC + Первая страница пагинации"
+        ):
+            # При сортировке seq DESC ожидаемый полный порядок найденных:
+            # [error_runs[0] (seq=30), error_runs[2] (seq=20), error_runs[1] (seq=10)]
+            # Берем length=2 -> ожидаем первые две
+            params = {
+                "search[value]": TaskRunStatusEnum.ERROR.value,
+                "order[0][column]": 0,
+                "order[0][name]": "seq",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_runs(
+                params=params,
+                records_filtered=3,
+                expected=[error_runs[0], error_runs[2]],
+            )
+
     def test_sorting(self) -> None:
         """Проверка сортировки"""
 
@@ -1504,76 +1455,6 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
             }
             self.assert_task_runs(params=params, expected=runs[::-1])
 
-    def test_search_with_sorting_and_pagination(self) -> None:
-        # Запуски со статусом ERROR, но с разным seq (через перезапись полей после создания)
-        error_runs = self._create_runs(n=3, status=TaskRunStatusEnum.ERROR)
-
-        # Поля seq вручную, чтобы нарушить последовательность ID:
-        # Индексы: error_runs[0] -> seq 30, error_runs[1] -> seq 10, error_runs[2] -> seq 20
-        for seq, run in zip([30, 10, 20], error_runs):
-            run.seq = seq
-            run.save()
-
-        # Фоновые успешные запуски, чтобы проверить recordsTotal
-        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
-
-        # Итого в базе: 8 запусков (recordsTotal = 8)
-        # Подходят под фильтр по статусу ERROR: 3 запуска (recordsFiltered = 3)
-
-        with self.subTest("Фильтр ERROR + Сортировка seq ASC + Пагинация (первые 2 элемента)"):
-            # При сортировке seq ASC ожидаемый полный порядок найденных:
-            # 1. error_runs[1] (seq=10)
-            # 2. error_runs[2] (seq=20)
-            # 3. error_runs[0] (seq=30)
-            # Берем length=2 -> должны вернуться только первые два
-            params = {
-                "search[value]": TaskRunStatusEnum.ERROR.value,
-                "order[0][column]": 0,
-                "order[0][name]": "seq",
-                "order[0][dir]": "asc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_runs(
-                params=params,
-                records_filtered=3,
-                expected=[error_runs[1], error_runs[2]]
-            )
-
-        with self.subTest("Фильтр ERROR + Сортировка seq ASC + Вторая страница пагинации"):
-            # Берем хвост отсортированного списка (смещение start=2)
-            params = {
-                "search[value]": TaskRunStatusEnum.ERROR.value,
-                "order[0][column]": 0,
-                "order[0][name]": "seq",
-                "order[0][dir]": "asc",
-                "start": 2,
-                "length": 2,
-            }
-            self.assert_task_runs(
-                params=params,
-                records_filtered=3,
-                expected=[error_runs[0]]
-            )
-
-        with self.subTest("Фильтр ERROR + Сортировка seq DESC + Первая страница пагинации"):
-            # При сортировке seq DESC ожидаемый полный порядок найденных:
-            # [error_runs[0] (seq=30), error_runs[2] (seq=20), error_runs[1] (seq=10)]
-            # Берем length=2 -> ожидаем первые две
-            params = {
-                "search[value]": TaskRunStatusEnum.ERROR.value,
-                "order[0][column]": 0,
-                "order[0][name]": "seq",
-                "order[0][dir]": "desc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_runs(
-                params=params,
-                records_filtered=3,
-                expected=[error_runs[0], error_runs[2]]
-            )
-
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
 
@@ -1591,7 +1472,7 @@ class TestAppApiWebRunsTask(TestBaseAppApiWebTask):
         self.assert_task_runs(params=params, expected=[r2, r1])
 
 
-class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
+class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1671,7 +1552,7 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
         with self.subTest("Смещение на вторую страницу"):
             self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
 
-    def test_search_filtering(self) -> None:
+    def test_search(self) -> None:
         """Проверка поиска по полям: text, kind"""
 
         run = self.task.add_or_get_run()
@@ -1724,6 +1605,76 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
             params=params, records_filtered=10, expected=ping_logs[:5]
         )
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        run = self.task.add_or_get_run()
+
+        # Логи, содержащие ключевое слово 'ping'
+        # Намеренно пишем тексты так, чтобы их алфавитный порядок не совпадал с порядком создания (ID)
+        log_ping_z = run.add_log_out("z_ping_message")
+        log_ping_a = run.add_log_out("a_ping_message")
+        log_ping_m = run.add_log_out("m_ping_message")
+
+        # Фоновые логи (без слова 'ping') для контроля общего счетчика recordsTotal
+        for i in range(5):
+            run.add_log_out(f"other system log {i}")
+
+        # Итого в базе: 8 логов (recordsTotal = 8)
+        # Подходят под фильтр 'ping': 3 лога (recordsFiltered = 3)
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text ASC + Пагинация (первые 2 элемента)"
+        ):
+            # При сортировке по text ASC полный ожидаемый порядок найденных:
+            # 1. log_ping_a ("a_ping_message")
+            # 2. log_ping_m ("m_ping_message")
+            # 3. log_ping_z ("z_ping_message")
+            # Запрашиваем length=2 -> ожидаем только первые два лога
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_a, log_ping_m]
+            )
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text ASC + Вторая страница пагинации"
+        ):
+            # Смещение start=2 -> забираем оставшийся хвост отсортированного списка
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_z]
+            )
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"
+        ):
+            # При сортировке по text DESC полный ожидаемый порядок найденных:
+            # [log_ping_z, log_ping_m, log_ping_a]
+            # Запрашиваем length=2 -> ожидаем первые два
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_z, log_ping_m]
+            )
+
     def test_sorting(self) -> None:
         """Проверка сортировки по полям id, task_run, text, kind, date"""
 
@@ -1759,76 +1710,6 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
                     expected=expected_list,
                 )
 
-    def test_search_with_sorting_and_pagination(self) -> None:
-        run = self.task.add_or_get_run()
-
-        # Логи, содержащие ключевое слово 'ping'
-        # Намеренно пишем тексты так, чтобы их алфавитный порядок не совпадал с порядком создания (ID)
-        log_ping_z = run.add_log_out("z_ping_message")
-        log_ping_a = run.add_log_out("a_ping_message")
-        log_ping_m = run.add_log_out("m_ping_message")
-
-        # Фоновые логи (без слова 'ping') для контроля общего счетчика recordsTotal
-        for i in range(5):
-            run.add_log_out(f"other system log {i}")
-
-        # Итого в базе: 8 логов (recordsTotal = 8)
-        # Подходят под фильтр 'ping': 3 лога (recordsFiltered = 3)
-
-        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Пагинация (первые 2 элемента)"):
-            # При сортировке по text ASC полный ожидаемый порядок найденных:
-            # 1. log_ping_a ("a_ping_message")
-            # 2. log_ping_m ("m_ping_message")
-            # 3. log_ping_z ("z_ping_message")
-            # Запрашиваем length=2 -> ожидаем только первые два лога
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "asc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_a, log_ping_m]
-            )
-
-        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Вторая страница пагинации"):
-            # Смещение start=2 -> забираем оставшийся хвост отсортированного списка
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "asc",
-                "start": 2,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_z]
-            )
-
-        with self.subTest("Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"):
-            # При сортировке по text DESC полный ожидаемый порядок найденных:
-            # [log_ping_z, log_ping_m, log_ping_a]
-            # Запрашиваем length=2 -> ожидаем первые два
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "desc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_z, log_ping_m]
-            )
-
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно (text и kind)"""
 
@@ -1856,7 +1737,7 @@ class TestAppApiWebLogsTask(TestBaseAppApiWebTask):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
+class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1930,7 +1811,7 @@ class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
         with self.subTest("Смещение на вторую страницу"):
             self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
 
-    def test_search_filtering(self) -> None:
+    def test_search(self) -> None:
         """Проверка поиска по полям: text, kind"""
 
         log_out_1 = self.run.add_log_out("system status ok")
@@ -1979,6 +1860,73 @@ class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
             params=params, records_filtered=10, expected=ping_logs[:5]
         )
 
+    def test_search_with_sorting_and_pagination(self) -> None:
+        # Целевые логи со словом 'ping' в случайном алфавитном порядке
+        log_ping_z = self.run.add_log_out("z_ping_error_occurred")
+        log_ping_a = self.run.add_log_out("a_ping_success_result")
+        log_ping_m = self.run.add_log_out("m_ping_warning_timeout")
+
+        # Фоновые логи (без слова 'ping') для контроля recordsTotal
+        for i in range(5):
+            self.run.add_log_out(f"system background message {i}")
+
+        # Итого в базе: 8 логов (recordsTotal = 8)
+        # Подходят под фильтр 'ping': 3 лога (recordsFiltered = 3)
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text ASC + Пагинация (первые 2 элемента)"
+        ):
+            # При сортировке по text ASC полный порядок отфильтрованных строк:
+            # 1. log_ping_a ("a_ping_success_result")
+            # 2. log_ping_m ("m_ping_warning_timeout")
+            # 3. log_ping_z ("z_ping_error_occurred")
+            # Длина страницы length=2 -> ожидаем только первые два лога
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_a, log_ping_m]
+            )
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text ASC + Вторая страница пагинации"
+        ):
+            # Смещение start=2 -> забираем оставшийся хвост отсортированного списка (3-й элемент)
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "asc",
+                "start": 2,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_z]
+            )
+
+        with self.subTest(
+            "Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"
+        ):
+            # При сортировке по text DESC полный порядок отфильтрованных строк:
+            # [log_ping_z, log_ping_m, log_ping_a]
+            # Длина страницы length=2 -> ожидаем первые два лога из этого списка
+            params = {
+                "search[value]": "ping",
+                "order[0][column]": 0,
+                "order[0][name]": "text",
+                "order[0][dir]": "desc",
+                "start": 0,
+                "length": 2,
+            }
+            self.assert_task_logs(
+                params=params, records_filtered=3, expected=[log_ping_z, log_ping_m]
+            )
+
     def test_sorting(self) -> None:
         """Проверка сортировки по полям id, task_run, text, kind, date"""
 
@@ -2009,73 +1957,6 @@ class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
                     expected=expected_list,
                 )
 
-    def test_search_with_sorting_and_pagination(self) -> None:
-        # Целевые логи со словом 'ping' в случайном алфавитном порядке
-        log_ping_z = self.run.add_log_out("z_ping_error_occurred")
-        log_ping_a = self.run.add_log_out("a_ping_success_result")
-        log_ping_m = self.run.add_log_out("m_ping_warning_timeout")
-
-        # Фоновые логи (без слова 'ping') для контроля recordsTotal
-        for i in range(5):
-            self.run.add_log_out(f"system background message {i}")
-
-        # Итого в базе: 8 логов (recordsTotal = 8)
-        # Подходят под фильтр 'ping': 3 лога (recordsFiltered = 3)
-
-        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Пагинация (первые 2 элемента)"):
-            # При сортировке по text ASC полный порядок отфильтрованных строк:
-            # 1. log_ping_a ("a_ping_success_result")
-            # 2. log_ping_m ("m_ping_warning_timeout")
-            # 3. log_ping_z ("z_ping_error_occurred")
-            # Длина страницы length=2 -> ожидаем только первые два лога
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "asc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_a, log_ping_m]
-            )
-
-        with self.subTest("Фильтр 'ping' + Сортировка text ASC + Вторая страница пагинации"):
-            # Смещение start=2 -> забираем оставшийся хвост отсортированного списка (3-й элемент)
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "asc",
-                "start": 2,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_z]
-            )
-
-        with self.subTest("Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"):
-            # При сортировке по text DESC полный порядок отфильтрованных строк:
-            # [log_ping_z, log_ping_m, log_ping_a]
-            # Длина страницы length=2 -> ожидаем первые два лога из этого списка
-            params = {
-                "search[value]": "ping",
-                "order[0][column]": 0,
-                "order[0][name]": "text",
-                "order[0][dir]": "desc",
-                "start": 0,
-                "length": 2,
-            }
-            self.assert_task_logs(
-                params=params,
-                records_filtered=3,
-                expected=[log_ping_z, log_ping_m]
-            )
-
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно (text и kind)"""
 
@@ -2102,6 +1983,7 @@ class TestAppApiWebRunLogsTask(TestBaseAppApiWebTask):
 
 
 class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
+class TestTaskRunLastLogs(TestBaseAppApiWebTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -2218,7 +2100,7 @@ class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
             self.assert_task_logs(expected=run2_logs)
 
 
-class TestAppApiWebNotifications(TestBaseAppApiWeb):
+class TestNotifications(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -2351,7 +2233,7 @@ class TestAppApiWebNotifications(TestBaseAppApiWeb):
                 params={"start": 4, "length": 4}, expected=items[4:6]
             )
 
-    def test_search_filtering(self) -> None:
+    def test_search(self) -> None:
         """Проверка поиска по полям: name, text, kind"""
 
         with self.subTest("Поиск в пустой таблице"):
@@ -2476,50 +2358,6 @@ class TestAppApiWebNotifications(TestBaseAppApiWeb):
                 params=params, records_filtered=10, expected=alert_items[:4]
             )
 
-    def test_sorting(self) -> None:
-        """Проверка сортировки по разрешенным полям, включая поля связанной таблицы TaskRun"""
-
-        task = Task.add(name="SortTask", command="*")
-
-        run_1 = task.add_or_get_run()
-        run_1.set_status(TaskRunStatusEnum.RUNNING)
-        run_1.set_status(TaskRunStatusEnum.FINISHED)
-
-        run_2 = task.add_or_get_run()
-        run_2.set_status(TaskRunStatusEnum.RUNNING)
-        run_2.set_status(TaskRunStatusEnum.FINISHED)
-
-        n1 = Notification.add(
-            task_run=run_1, name="AAA", text="Z", kind=NotificationKindEnum.EMAIL
-        )
-        n2 = Notification.add(
-            task_run=run_2, name="BBB", text="Y", kind=NotificationKindEnum.TELEGRAM
-        )
-
-        sort_cases = [
-            ("По имени DESC", "name", "desc", [n2, n1]),
-            ("По тексту ASC", "text", "asc", [n2, n1]),  # Y перед Z
-            (  # Зависит от значений Enum
-                "По типу (kind) DESC",
-                "kind",
-                "desc",
-                [n2, n1],
-            ),
-            ("По связанному TaskRun.id DESC", "TaskRun.id", "desc", [n2, n1]),
-            ("По связанному TaskRun.seq DESC", "TaskRun.seq", "desc", [n2, n1]),
-        ]
-
-        for msg, field, direction, expected_list in sort_cases:
-            with self.subTest(msg):
-                self.assert_notifications(
-                    params={
-                        "order[0][column]": 0,
-                        "order[0][name]": field,
-                        "order[0][dir]": direction,
-                    },
-                    expected=expected_list,
-                )
-
     def test_search_with_sorting_and_pagination(self) -> None:
         task = Task.add(name="SortTask", command="*")
         run_1 = task.add_or_get_run()
@@ -2574,6 +2412,50 @@ class TestAppApiWebNotifications(TestBaseAppApiWeb):
             expected=[n_crit_1, n_crit_2],  # Только первые два отсортированных элемента
             draw=777,
         )
+
+    def test_sorting(self) -> None:
+        """Проверка сортировки по разрешенным полям, включая поля связанной таблицы TaskRun"""
+
+        task = Task.add(name="SortTask", command="*")
+
+        run_1 = task.add_or_get_run()
+        run_1.set_status(TaskRunStatusEnum.RUNNING)
+        run_1.set_status(TaskRunStatusEnum.FINISHED)
+
+        run_2 = task.add_or_get_run()
+        run_2.set_status(TaskRunStatusEnum.RUNNING)
+        run_2.set_status(TaskRunStatusEnum.FINISHED)
+
+        n1 = Notification.add(
+            task_run=run_1, name="AAA", text="Z", kind=NotificationKindEnum.EMAIL
+        )
+        n2 = Notification.add(
+            task_run=run_2, name="BBB", text="Y", kind=NotificationKindEnum.TELEGRAM
+        )
+
+        sort_cases = [
+            ("По имени DESC", "name", "desc", [n2, n1]),
+            ("По тексту ASC", "text", "asc", [n2, n1]),  # Y перед Z
+            (  # Зависит от значений Enum
+                "По типу (kind) DESC",
+                "kind",
+                "desc",
+                [n2, n1],
+            ),
+            ("По связанному TaskRun.id DESC", "TaskRun.id", "desc", [n2, n1]),
+            ("По связанному TaskRun.seq DESC", "TaskRun.seq", "desc", [n2, n1]),
+        ]
+
+        for msg, field, direction, expected_list in sort_cases:
+            with self.subTest(msg):
+                self.assert_notifications(
+                    params={
+                        "order[0][column]": 0,
+                        "order[0][name]": field,
+                        "order[0][dir]": direction,
+                    },
+                    expected=expected_list,
+                )
 
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
