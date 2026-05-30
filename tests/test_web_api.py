@@ -12,6 +12,7 @@ from typing import Any, Callable
 from playhouse.shortcuts import model_to_dict
 
 from run_tasks.db import (
+    BaseModel,
     Task,
     TaskRun,
     Notification,
@@ -43,40 +44,9 @@ def create_runs(
     return runs
 
 
-class BaseAppApiDatatablesTestMixin:
-class BaseDatatablesTestMixin:
-    def test_empty(self) -> None:
-        raise NotImplementedError()
+class TestBaseDatatablesMixin:
+    uri: str = ...
 
-    def test_draw_echo(self) -> None:
-        raise NotImplementedError()
-
-    def test_errors(self) -> None:
-        raise NotImplementedError()
-
-    def test_main(self) -> None:
-        raise NotImplementedError()
-
-    def test_pagination(self) -> None:
-        raise NotImplementedError()
-
-    def test_search(self) -> None:
-        raise NotImplementedError()
-
-    def test_search_with_pagination(self) -> None:
-        raise NotImplementedError()
-
-    def test_search_with_sorting_and_pagination(self) -> None:
-        raise NotImplementedError()
-
-    def test_sorting(self) -> None:
-        raise NotImplementedError()
-
-    def test_multi_column_sorting(self) -> None:
-        raise NotImplementedError()
-
-
-class TestBaseAppApiWeb(TestBaseAppWeb):
     def assert_datatables_response(
         self,
         uri: str,
@@ -134,9 +104,74 @@ class TestBaseAppApiWeb(TestBaseAppWeb):
             else:
                 self.assertEqual(expected_data, rs_data["data"])
 
+    def assert_table(
+        self,
+        params: dict[str, Any] | None = None,
+        records_filtered: int | None = None,
+        expected: list[Any] | None = None,
+        draw: int = 1,
+        check_only_id: bool = False,
+    ) -> None:
+        self.assert_datatables_response(
+            uri=self.uri,
+            records_total=self.get_records_total(),
+            to_dict=lambda obj: self.to_dict(obj),
+            params=params,
+            records_filtered=records_filtered,
+            expected=expected,
+            draw=draw,
+            check_only_id=check_only_id,
+        )
+
+    def get_records_total(self) -> int:
+        raise NotImplementedError()
+
+    def to_dict(self, obj: BaseModel) -> dict[str, Any]:
+        return obj.to_dict()
+
+    def test_empty(self) -> None:
+        self.assert_table(expected=[])
+
+    def test_draw_echo(self) -> None:
+        self.assert_table(params={"draw": 999}, expected=[], draw=999)
+        self.assert_table(params={"draw": "999"}, expected=[], draw=999)
+
+    def test_errors(self) -> None:
+        with self.subTest("Missing name for column index", code=400):
+            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
+            self.assertEqual(400, rs.status_code)
+
+        with self.subTest("Sorting by field '...' is forbidden", code=403):
+            rs = self.client.get(
+                self.uri,
+                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
+            )
+            self.assertEqual(403, rs.status_code)
+
+    def test_main(self) -> None:
+        raise NotImplementedError()
+
+    def test_pagination(self) -> None:
+        raise NotImplementedError()
+
+    def test_search(self) -> None:
+        raise NotImplementedError()
+
+    def test_search_with_pagination(self) -> None:
+        raise NotImplementedError()
+
+    def test_search_with_sorting_and_pagination(self) -> None:
+        raise NotImplementedError()
+
+    def test_sorting(self) -> None:
+        raise NotImplementedError()
+
+    def test_multi_column_sorting(self) -> None:
+        raise NotImplementedError()
+
 
 class TestBase(TestBaseAppWeb):
-    def test_api_task_create(self) -> None:
+    def test_task_create(self) -> None:
         uri: str = "/api/task/create"
 
         data = {
@@ -171,7 +206,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
-    def test_api_task_get(self) -> None:
+    def test_task_get(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "api/task/99999"
             rs = self.client.get(uri)
@@ -194,7 +229,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json["result"], [task.to_dict()])
 
-    def test_api_task_update(self) -> None:
+    def test_task_update(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/404/update"
             rs = self.client.get(uri)
@@ -239,7 +274,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
-    def test_api_task_delete(self) -> None:
+    def test_task_delete(self) -> None:
         uri: str = f"/api/task/404/delete"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -267,7 +302,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertIsNone(task.get_by_name(task.name))
 
-    def test_api_task_do_run(self) -> None:
+    def test_task_do_run(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/do-run"
 
@@ -297,7 +332,7 @@ class TestBase(TestBaseAppWeb):
 
             self.assertIsNotNone(task_1.get_last_run())
 
-    def test_api_task_run_get(self) -> None:
+    def test_task_run_get(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999"
 
@@ -342,7 +377,7 @@ class TestBase(TestBaseAppWeb):
                 get_common_view(run_1.to_dict()),
             )
 
-    def test_api_task_run_get_last(self) -> None:
+    def test_task_run_get_last(self) -> None:
         uri_template: str = "/api/task/{task_id}/run/last"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -402,7 +437,7 @@ class TestBase(TestBaseAppWeb):
                 get_common_view(run_1.to_dict()),
             )
 
-    def test_api_task_run_do_stop(self) -> None:
+    def test_task_run_do_stop(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999/do-stop"
 
@@ -443,7 +478,7 @@ class TestBase(TestBaseAppWeb):
             run_1 = run_1.get_new()
             self.assertEqual(run_1.status, TaskRunStatusEnum.STOPPED)
 
-    def test_api_task_run_do_send_notifications(self) -> None:
+    def test_task_run_do_send_notifications(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/99999/run/99999/do-send-notifications"
 
@@ -484,7 +519,7 @@ class TestBase(TestBaseAppWeb):
 
             self.assertNotEqual(run_1.notifications.count(), 0)
 
-    def test_api_notification_create(self) -> None:
+    def test_notification_create(self) -> None:
         uri: str = "/api/notification/create"
 
         with self.subTest("405 - Method Not Allowed"):
@@ -509,7 +544,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs_data["result"][0]["kind"], data["kind"])
             self.assertEqual(rs_data["result"][0]["text"], data["text"])
 
-    def test_api_notifications_get_number_of_unsent(self) -> None:
+    def test_notifications_get_number_of_unsent(self) -> None:
         uri: str = "/api/notifications/get-number-of-unsent"
 
         rs = self.client.get(uri)
@@ -551,7 +586,7 @@ class TestBase(TestBaseAppWeb):
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 0)
 
-    def test_api_notifications_all_do_stop(self) -> None:
+    def test_notifications_all_do_stop(self) -> None:
         uri: str = "/api/notifications/all/do-stop"
 
         self.assertEqual(0, len(Notification.get_unsent()))
@@ -603,7 +638,7 @@ class TestBase(TestBaseAppWeb):
                 self.assertIsNotNone(obj.canceling_date)
                 self.assertIsNone(obj.sending_date)
 
-    def test_api_notification_do_stop(self) -> None:
+    def test_notification_do_stop(self) -> None:
         uri_format: str = "/api/notification/{id}/do-stop"
 
         with self.subTest("404 - Not Found"):
@@ -661,7 +696,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, 200)
             self.assertEqual(rs.json["status"], "error")
 
-    def test_api_cron_get_next_dates(self) -> None:
+    def test_cron_get_next_dates(self) -> None:
         uri: str = "/api/cron/get-next-dates"
 
         with self.subTest(msg="ERROR"):
@@ -696,7 +731,7 @@ class TestBase(TestBaseAppWeb):
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
 
-class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
+class TestTasks(TestBaseDatatablesMixin, TestBaseAppWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -720,50 +755,15 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             base.update(overrides)
         return base
 
-    def assert_tasks(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[Task | tuple[Task, dict]] | None = None,
-        draw: int = 1,
-        check_only_id: bool = False,
-    ) -> None:
-        def _to_dict(obj: Task | tuple[Task, dict]) -> dict[str, Any]:
-            if isinstance(obj, tuple):
-                task, overrides = obj
-                return self._get_expected_json(task, overrides)
+    def get_records_total(self) -> int:
+        return Task.select().count()
 
-            return self._get_expected_json(obj)
+    def to_dict(self, obj: Task | tuple[Task, dict]) -> dict[str, Any]:
+        if isinstance(obj, tuple):
+            task, overrides = obj
+            return self._get_expected_json(task, overrides)
 
-        self.assert_datatables_response(
-            uri=self.uri,
-            records_total=Task.select().count(),
-            to_dict=_to_dict,
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-            check_only_id=check_only_id,
-        )
-
-    def test_empty(self) -> None:
-        self.assert_tasks(expected=[])
-
-    def test_draw_echo(self) -> None:
-        self.assert_tasks(params={"draw": 999}, expected=[], draw=999)
-        self.assert_tasks(params={"draw": "999"}, expected=[], draw=999)
-
-    def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
+        return self._get_expected_json(obj)
 
     def test_main(self) -> None:
         tasks = []
@@ -800,10 +800,10 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             tasks.append(t_token)
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_tasks(expected=tasks)
+            self.assert_table(expected=tasks)
 
         with self.subTest("Все записи"):
-            self.assert_tasks(expected=tasks, params=dict(length=999_999_999))
+            self.assert_table(expected=tasks, params=dict(length=999_999_999))
 
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
@@ -813,13 +813,13 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         ]
 
         with self.subTest("Первая страница"):
-            self.assert_tasks(params={"start": 0, "length": 5}, expected=tasks[:5])
+            self.assert_table(params={"start": 0, "length": 5}, expected=tasks[:5])
 
         with self.subTest("Вторая страница"):
-            self.assert_tasks(params={"start": 5, "length": 5}, expected=tasks[5:10])
+            self.assert_table(params={"start": 5, "length": 5}, expected=tasks[5:10])
 
         with self.subTest("Пустой результат при запредельном смещении"):
-            self.assert_tasks(
+            self.assert_table(
                 params={"start": 999, "length": 5},
                 expected=[],
             )
@@ -863,14 +863,14 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         ]
         for msg, query, filtered, expected in search_cases:
             with self.subTest(msg):
-                self.assert_tasks(
+                self.assert_table(
                     params={"search[value]": query},
                     records_filtered=filtered,
                     expected=expected,
                 )
 
     def test_search_with_pagination(self) -> None:
-        """Проверка совместной работы фильтрации и пагинации."""
+        """Проверка совместной работы фильтрации и пагинации"""
 
         bot_tasks = [Task.add(name=f"bot_{i}", command="python") for i in range(5)]
         for i in range(10):
@@ -886,7 +886,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "order[0][dir]": "asc",
             }
             # Ожидаем первые 3 из 5 найденных
-            self.assert_tasks(params=params, records_filtered=5, expected=bot_tasks[:3])
+            self.assert_table(params=params, records_filtered=5, expected=bot_tasks[:3])
 
         with self.subTest("Вторая страница поиска (оставшиеся 2 элемента)"):
             params = {
@@ -897,7 +897,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "order[0][dir]": "asc",
             }
             # Ожидаем последние 2 из 5 найденных
-            self.assert_tasks(
+            self.assert_table(
                 params=params, records_filtered=5, expected=bot_tasks[3:5]
             )
 
@@ -910,7 +910,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "order[0][dir]": "desc",
             }
             # Ожидаем bot_4, bot_3
-            self.assert_tasks(
+            self.assert_table(
                 params=params,
                 records_filtered=5,
                 expected=[bot_tasks[4], bot_tasks[3]],
@@ -951,7 +951,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_tasks(
+            self.assert_table(
                 params=params,
                 records_filtered=3,
                 expected=[task_bot_m, task_bot_z],
@@ -969,7 +969,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "start": 2,
                 "length": 2,
             }
-            self.assert_tasks(
+            self.assert_table(
                 params=params,
                 records_filtered=3,
                 expected=[task_bot_a],
@@ -989,7 +989,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_tasks(
+            self.assert_table(
                 params=params,
                 records_filtered=3,
                 expected=[task_bot_a, task_bot_z],
@@ -1007,7 +1007,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         create_runs(task_1, n=5)
 
         with self.subTest("Сортировка по имени DESC"):
-            self.assert_tasks(
+            self.assert_table(
                 params={"order[0][name]": "name", "order[0][dir]": "desc"},
                 expected=[task_3, task_2, task_1],
                 check_only_id=True,
@@ -1015,21 +1015,21 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
 
         with self.subTest("Сортировка по cron (задачи с cron первыми)"):
             # Логика ASC ставит значения выше NULL
-            self.assert_tasks(
+            self.assert_table(
                 params={"order[0][name]": "cron", "order[0][dir]": "asc"},
                 expected=[task_1, task_3, task_2],
                 check_only_id=True,
             )
 
         with self.subTest("Сортировка db_number_of_runs по возрастанию"):
-            self.assert_tasks(
+            self.assert_table(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "asc"},
                 expected=[task_3, task_1, task_2],
                 check_only_id=True,
             )
 
         with self.subTest("Сортировка db_number_of_runs по убыванию"):
-            self.assert_tasks(
+            self.assert_table(
                 params={"order[0][name]": "db_number_of_runs", "order[0][dir]": "desc"},
                 expected=[task_2, task_1, task_3],
                 check_only_id=True,
@@ -1047,7 +1047,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             "order[1][name]": "is_infinite",
             "order[1][dir]": "desc",
         }
-        self.assert_tasks(params=params, expected=[t_b, t_a])
+        self.assert_table(params=params, expected=[t_b, t_a])
 
     def test_task_with_execution_history(self) -> None:
         """Тест отображения данных о запусках"""
@@ -1063,7 +1063,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
                 "last_work_status": TaskRunWorkStatusEnum.NONE.value,
             }
             self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         run_1 = task.add_or_get_run()
         with self.subTest("Запуск #1 в ожидании"):
@@ -1074,7 +1074,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.NONE, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_1.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #1 выполняется"):
             run_1.set_status(TaskRunStatusEnum.RUNNING)
@@ -1086,7 +1086,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_1.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #1 завершен"):
             run_1.process_return_code = 0
@@ -1099,7 +1099,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, run_1.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         run_2 = task.add_or_get_run()
         with self.subTest("Запуск #2 в ожидании"):
@@ -1111,7 +1111,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.SUCCESSFUL, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_2.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #2 выполняется"):
             run_2.set_status(TaskRunStatusEnum.RUNNING)
@@ -1123,7 +1123,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_2.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #2 завершен не успешно"):
             run_2.process_return_code = 999
@@ -1136,7 +1136,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_2.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         run_3 = task.add_or_get_run()
         with self.subTest("Запуск #3 в ожидании"):
@@ -1148,7 +1148,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.NONE, run_3.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #3 выполняется"):
             run_3.set_status(TaskRunStatusEnum.RUNNING)
@@ -1160,7 +1160,7 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.IN_PROCESSED, run_3.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
         with self.subTest("Запуск #3 завершен не успешно"):
             run_3.process_return_code = 0
@@ -1173,10 +1173,10 @@ class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             }
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, task.last_work_status)
             self.assertEqual(TaskRunWorkStatusEnum.FAILED, run_3.work_status)
-            self.assert_tasks(expected=[(task, overrides)])
+            self.assert_table(expected=[(task, overrides)])
 
 
-class TestBaseTask(TestBaseAppApiWeb):
+class TestTaskMixin(TestBaseDatatablesMixin):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1194,67 +1194,18 @@ class TestBaseTask(TestBaseAppApiWeb):
             items.append(run.add_log_err(f"err={i}"))
         return items
 
-    def assert_task_logs_common(
-        self,
-        uri: str,
-        records_total: int,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[TaskRunLog] | None = None,
-        draw: int = 1,
-    ) -> None:
-        self.assert_datatables_response(
-            uri=uri,
-            records_total=records_total,
-            to_dict=lambda obj: obj.to_dict(),
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-        )
 
-
-class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
+class TestTaskRuns(TestTaskMixin, TestBaseAppWeb):
     def setUp(self) -> None:
         super().setUp()
 
         self.uri: str = f"/api/task/{self.task.id}/runs"
 
-    def assert_task_runs(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[TaskRun] | None = None,
-        draw: int = 1,
-    ) -> None:
-        self.assert_datatables_response(
-            uri=self.uri,
-            records_total=TaskRun.select().count(),
-            to_dict=lambda obj: obj.to_dict(),
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-        )
-
-    def test_empty(self) -> None:
-        self.assert_task_runs(expected=[])
-
-    def test_draw_echo(self) -> None:
-        self.assert_task_runs(params={"draw": 999}, expected=[], draw=999)
-        self.assert_task_runs(params={"draw": "999"}, expected=[], draw=999)
+    def get_records_total(self) -> int:
+        return TaskRun.select().count()
 
     def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
+        super().test_errors()
 
         with self.subTest("404 Not Found", code=404):
             rs = self.client.get("/api/task/404/runs")
@@ -1265,10 +1216,10 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
         runs = create_runs(self.task, n=20)
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_task_runs(expected=runs)
+            self.assert_table(expected=runs)
 
         with self.subTest("Все записи"):
-            self.assert_task_runs(
+            self.assert_table(
                 expected=runs,
                 params=dict(length=999_999_999),
             )
@@ -1279,13 +1230,13 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
         runs = create_runs(self.task, n=10)
 
         with self.subTest("Первая страница (start=0, length=5)"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"start": 0, "length": 5},
                 expected=runs[:5],
             )
 
         with self.subTest("Вторая страница (start=5, length=5)"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"start": 5, "length": 5},
                 expected=runs[5:10],
             )
@@ -1309,35 +1260,35 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
         r2.save()
 
         with self.subTest("Поиск по command"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"search[value]": "python"},
                 records_filtered=1,
                 expected=[r1],
             )
 
         with self.subTest("Поиск по status"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"search[value]": TaskRunStatusEnum.FINISHED.value},
                 records_filtered=1,
                 expected=[r1],
             )
 
         with self.subTest("Поиск по stop_reason"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"search[value]": StopReasonEnum.SERVER_API.value},
                 records_filtered=1,
                 expected=[r2],
             )
 
         with self.subTest("Поиск по process_id"):
-            self.assert_task_runs(
+            self.assert_table(
                 params={"search[value]": "5678"},
                 records_filtered=1,
                 expected=[r2],
             )
 
     def test_search_with_pagination(self) -> None:
-        """Проверка совместной работы фильтрации и пагинации."""
+        """Проверка совместной работы фильтрации и пагинации"""
 
         # Создаем 5 'ошибочных' запусков и 5 'успешных'
         error_runs = create_runs(self.task, n=5, status=TaskRunStatusEnum.ERROR)
@@ -1352,9 +1303,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
             "order[0][dir]": "asc",
         }
         # Ожидаем 5 найденных, но в выдаче только первые 3
-        self.assert_task_runs(
-            params=params, records_filtered=5, expected=error_runs[:3]
-        )
+        self.assert_table(params=params, records_filtered=5, expected=error_runs[:3])
 
     def test_search_with_sorting_and_pagination(self) -> None:
         # Запуски со статусом ERROR, но с разным seq (через перезапись полей после создания)
@@ -1388,7 +1337,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_runs(
+            self.assert_table(
                 params=params,
                 records_filtered=3,
                 expected=[error_runs[1], error_runs[2]],
@@ -1406,7 +1355,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 2,
                 "length": 2,
             }
-            self.assert_task_runs(
+            self.assert_table(
                 params=params, records_filtered=3, expected=[error_runs[0]]
             )
 
@@ -1424,7 +1373,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_runs(
+            self.assert_table(
                 params=params,
                 records_filtered=3,
                 expected=[error_runs[0], error_runs[2]],
@@ -1441,7 +1390,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
                 "order[0][name]": "seq",
                 "order[0][dir]": "asc",
             }
-            self.assert_task_runs(params=params, expected=runs)
+            self.assert_table(params=params, expected=runs)
 
         with self.subTest("Sort by seq DESC"):
             params = {
@@ -1449,7 +1398,7 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
                 "order[0][name]": "seq",
                 "order[0][dir]": "desc",
             }
-            self.assert_task_runs(params=params, expected=runs[::-1])
+            self.assert_table(params=params, expected=runs[::-1])
 
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
@@ -1465,10 +1414,10 @@ class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
             "order[1][dir]": "desc",
         }
         # Сначала по статусу (одинаковые), потом по seq (desc)
-        self.assert_task_runs(params=params, expected=[r2, r1])
+        self.assert_table(params=params, expected=[r2, r1])
 
 
-class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
+class TestTaskLogs(TestTaskMixin, TestBaseAppWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1487,40 +1436,11 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
 
         return logs
 
-    def assert_task_logs(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[TaskRunLog] | None = None,
-        draw: int = 1,
-    ) -> None:
-        self.assert_task_logs_common(
-            uri=self.uri,
-            records_total=TaskRunLog.select().count(),
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-        )
-
-    def test_empty(self) -> None:
-        self.assert_task_logs(expected=[])
-
-    def test_draw_echo(self) -> None:
-        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
-        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
+    def get_records_total(self) -> int:
+        return TaskRunLog.select().count()
 
     def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
+        super().test_errors()
 
         with self.subTest("404 Not Found", code=404):
             rs = self.client.get("/api/task/404/logs")
@@ -1531,10 +1451,10 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
         logs = self._create_runs_with_logs(n_runs=5, n_logs=3)
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_task_logs(expected=logs)
+            self.assert_table(expected=logs)
 
         with self.subTest("Все записи"):
-            self.assert_task_logs(expected=logs, params=dict(length=999_999_999))
+            self.assert_table(expected=logs, params=dict(length=999_999_999))
 
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
@@ -1543,10 +1463,10 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
         logs = self._create_runs_with_logs(n_runs=1, n_logs=5)
 
         with self.subTest("Первая страница (length=3)"):
-            self.assert_task_logs(params={"start": 0, "length": 3}, expected=logs[:3])
+            self.assert_table(params={"start": 0, "length": 3}, expected=logs[:3])
 
         with self.subTest("Смещение на вторую страницу"):
-            self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
+            self.assert_table(params={"start": 3, "length": 3}, expected=logs[3:6])
 
     def test_search(self) -> None:
         """Проверка поиска по полям: text, kind"""
@@ -1557,14 +1477,14 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
         log_err_1 = run.add_log_err("critical database error")
 
         with self.subTest("Поиск по тексту 'status ok'"):
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "status ok"},
                 records_filtered=2,
                 expected=[log_out_1, log_out_2],
             )
 
         with self.subTest("Поиск по тексту 'critical'"):
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "critical"},
                 records_filtered=1,
                 expected=[log_err_1],
@@ -1572,14 +1492,14 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
 
         with self.subTest("Поиск по типу потока 'stderr'"):
             # Предполагается, что в БД kind хранится как 'err' или 'stderr'
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "err"},
                 records_filtered=1,
                 expected=[log_err_1],
             )
 
     def test_search_with_pagination(self) -> None:
-        """Проверка совместной работы фильтрации и пагинации."""
+        """Проверка совместной работы фильтрации и пагинации"""
 
         run = self.task.add_or_get_run()
         # Создаем 10 записей с общим словом 'ping'
@@ -1597,9 +1517,7 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
         }
 
         # Всего 11, отфильтровано 10, на странице 5
-        self.assert_task_logs(
-            params=params, records_filtered=10, expected=ping_logs[:5]
-        )
+        self.assert_table(params=params, records_filtered=10, expected=ping_logs[:5])
 
     def test_search_with_sorting_and_pagination(self) -> None:
         run = self.task.add_or_get_run()
@@ -1633,7 +1551,7 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_logs(
+            self.assert_table(
                 params=params, records_filtered=3, expected=[log_ping_a, log_ping_m]
             )
 
@@ -1649,9 +1567,7 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 2,
                 "length": 2,
             }
-            self.assert_task_logs(
-                params=params, records_filtered=3, expected=[log_ping_z]
-            )
+            self.assert_table(params=params, records_filtered=3, expected=[log_ping_z])
 
         with self.subTest(
             "Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"
@@ -1667,7 +1583,7 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_logs(
+            self.assert_table(
                 params=params, records_filtered=3, expected=[log_ping_z, log_ping_m]
             )
 
@@ -1697,7 +1613,7 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
 
         for msg, field, direction, expected_list in sort_cases:
             with self.subTest(msg):
-                self.assert_task_logs(
+                self.assert_table(
                     params={
                         "order[0][column]": 0,
                         "order[0][name]": field,
@@ -1730,50 +1646,21 @@ class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
         # Ожидаемый порядок:
         # 1. 'another_text' (по алфавиту текста первый)
         # 2. 'same_text' (одинаковые, поэтому по типу DESC: out -> err)
-        self.assert_task_logs(params=params, expected=[l3, l1, l2])
+        self.assert_table(params=params, expected=[l3, l1, l2])
 
 
-class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
+class TestTaskRunLogs(TestTaskMixin, TestBaseAppWeb):
     def setUp(self) -> None:
         super().setUp()
 
         self.run = self.task.add_or_get_run()
         self.uri: str = f"/api/task/{self.task.id}/run/{self.run.seq}/logs"
 
-    def assert_task_logs(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[TaskRunLog] | None = None,
-        draw: int = 1,
-    ) -> None:
-        self.assert_task_logs_common(
-            uri=self.uri,
-            records_total=self.run.logs.count(),
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-        )
-
-    def test_empty(self) -> None:
-        self.assert_task_logs(expected=[])
-
-    def test_draw_echo(self) -> None:
-        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
-        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
+    def get_records_total(self) -> int:
+        return self.run.logs.count()
 
     def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
+        super().test_errors()
 
         with self.subTest("Task: 404 Not Found", code=404):
             rs = self.client.get("/api/task/404/run/404/logs")
@@ -1790,10 +1677,10 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
         self.assertEqual(20, len(logs))
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_task_logs(expected=logs)
+            self.assert_table(expected=logs)
 
         with self.subTest("Все записи"):
-            self.assert_task_logs(expected=logs, params=dict(length=999_999_999))
+            self.assert_table(expected=logs, params=dict(length=999_999_999))
 
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
@@ -1802,10 +1689,10 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
         self.assertEqual(20, len(logs))
 
         with self.subTest("Первая страница (length=3)"):
-            self.assert_task_logs(params={"start": 0, "length": 3}, expected=logs[:3])
+            self.assert_table(params={"start": 0, "length": 3}, expected=logs[:3])
 
         with self.subTest("Смещение на вторую страницу"):
-            self.assert_task_logs(params={"start": 3, "length": 3}, expected=logs[3:6])
+            self.assert_table(params={"start": 3, "length": 3}, expected=logs[3:6])
 
     def test_search(self) -> None:
         """Проверка поиска по полям: text, kind"""
@@ -1815,14 +1702,14 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
         log_err = self.run.add_log_err("critical database error")
 
         with self.subTest("Поиск по тексту 'status ok'"):
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "status ok"},
                 records_filtered=2,
                 expected=[log_out_1, log_out_2],
             )
 
         with self.subTest("Поиск по тексту 'critical'"):
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "critical"},
                 records_filtered=1,
                 expected=[log_err],
@@ -1830,12 +1717,12 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
 
         with self.subTest("Поиск по типу потока 'stderr'"):
             # Предполагается, что в БД kind хранится как 'err' или 'stderr'
-            self.assert_task_logs(
+            self.assert_table(
                 params={"search[value]": "err"}, records_filtered=1, expected=[log_err]
             )
 
     def test_search_with_pagination(self) -> None:
-        """Проверка совместной работы фильтрации и пагинации."""
+        """Проверка совместной работы фильтрации и пагинации"""
 
         # Создаем 10 записей с общим словом 'ping'
         ping_logs = [self.run.add_log_out(f"ping response {i}") for i in range(10)]
@@ -1852,9 +1739,7 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
         }
 
         # Всего 11, отфильтровано 10, на странице 5
-        self.assert_task_logs(
-            params=params, records_filtered=10, expected=ping_logs[:5]
-        )
+        self.assert_table(params=params, records_filtered=10, expected=ping_logs[:5])
 
     def test_search_with_sorting_and_pagination(self) -> None:
         # Целевые логи со словом 'ping' в случайном алфавитном порядке
@@ -1885,7 +1770,7 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_logs(
+            self.assert_table(
                 params=params, records_filtered=3, expected=[log_ping_a, log_ping_m]
             )
 
@@ -1901,9 +1786,7 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 2,
                 "length": 2,
             }
-            self.assert_task_logs(
-                params=params, records_filtered=3, expected=[log_ping_z]
-            )
+            self.assert_table(params=params, records_filtered=3, expected=[log_ping_z])
 
         with self.subTest(
             "Фильтр 'ping' + Сортировка text DESC + Первая страница пагинации"
@@ -1919,7 +1802,7 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
                 "start": 0,
                 "length": 2,
             }
-            self.assert_task_logs(
+            self.assert_table(
                 params=params, records_filtered=3, expected=[log_ping_z, log_ping_m]
             )
 
@@ -1944,7 +1827,7 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
 
         for msg, field, direction, expected_list in sort_cases:
             with self.subTest(msg):
-                self.assert_task_logs(
+                self.assert_table(
                     params={
                         "order[0][column]": 0,
                         "order[0][name]": field,
@@ -1975,65 +1858,41 @@ class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
         # Ожидаемый порядок:
         # 1. 'another_text' (по алфавиту текста первый)
         # 2. 'same_text' (одинаковые, поэтому по типу DESC: out -> err)
-        self.assert_task_logs(params=params, expected=[l3, l1, l2])
+        self.assert_table(params=params, expected=[l3, l1, l2])
 
 
-# TODO: class TestTaskRunLastLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
-class TestTaskRunLastLogs(TestBaseTask):
+class TestTaskRunLastLogs(TestTaskRunLogs):
     def setUp(self) -> None:
         super().setUp()
 
+        _, self.run = create_runs(self.task, n=2)
         self.uri: str = f"/api/task/{self.task.id}/run/last/logs"
 
-    def assert_task_logs(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[TaskRunLog] | None = None,
-        draw: int = 1,
-    ) -> None:
+    def get_records_total(self) -> int:
         run: TaskRun | None = self.task.get_last_started_run()
-
-        self.assert_task_logs_common(
-            uri=self.uri,
-            records_total=run.logs.count() if run else 0,
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-        )
+        return run.logs.count() if run else 0
 
     def test_empty(self) -> None:
-        with self.subTest("No runs"):
-            self.assert_task_logs(expected=[])
+        TaskRun.truncate_table()
+
+        with self.subTest("No runs, no logs"):
+            self.assert_table(expected=[])
 
         run = self.task.add_or_get_run()
         with self.subTest("Run1-PENDING (0 logs)"):
-            self.assert_task_logs(expected=[])
+            self.assert_table(expected=[])
 
         run1_logs: list[TaskRunLog] = self._add_logs(run, n=10)
         self.assertEqual(20, len(run1_logs))
 
         with self.subTest("Run1-PENDING (10 logs)"):
-            self.assert_task_logs(
+            self.assert_table(
                 expected=[],
             )
 
-    def test_draw_echo(self) -> None:
-        self.assert_task_logs(params={"draw": 999}, expected=[], draw=999)
-        self.assert_task_logs(params={"draw": "999"}, expected=[], draw=999)
-
     def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
+        # Вызовы напрямую у TestBaseDatatablesMixin, минуя TestTaskRunLogs
+        TestBaseDatatablesMixin.test_errors(self)
 
         with self.subTest("Task: 404 Not Found", code=404):
             rs = self.client.get("/api/task/404/run/last/logs")
@@ -2041,6 +1900,8 @@ class TestTaskRunLastLogs(TestBaseTask):
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
+        TaskRun.truncate_table()
+
         run = self.task.add_or_get_run()
         run.set_status(TaskRunStatusEnum.RUNNING)
 
@@ -2048,10 +1909,10 @@ class TestTaskRunLastLogs(TestBaseTask):
         self.assertEqual(20, len(logs))
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_task_logs(expected=logs)
+            self.assert_table(expected=logs)
 
         with self.subTest("Все записи"):
-            self.assert_task_logs(
+            self.assert_table(
                 expected=logs,
                 params=dict(length=999_999_999),
             )
@@ -2060,75 +1921,60 @@ class TestTaskRunLastLogs(TestBaseTask):
         run_1 = self.task.add_or_get_run()
 
         with self.subTest("Run1-PENDING (0 logs)"):
-            self.assert_task_logs(expected=[])
+            self.assert_table(expected=[])
 
         run1_logs: list[TaskRunLog] = self._add_logs(run_1, n=10)
         self.assertEqual(20, len(run1_logs))
 
         with self.subTest("Run1-PENDING (10 logs)"):
-            self.assert_task_logs(expected=[])
+            self.assert_table(expected=[])
 
         with self.subTest("Run1-RUNNING (10 logs)"):
             run_1.set_status(TaskRunStatusEnum.RUNNING)
-            self.assert_task_logs(expected=run1_logs)
+            self.assert_table(expected=run1_logs)
 
         with self.subTest("Run1-FINISHED (10 logs)"):
             run_1.set_status(TaskRunStatusEnum.FINISHED)
-            self.assert_task_logs(expected=run1_logs)
+            self.assert_table(expected=run1_logs)
 
         run_2 = self.task.add_or_get_run()
 
         with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (0 logs)"):
-            self.assert_task_logs(expected=run1_logs)
+            self.assert_table(expected=run1_logs)
 
         run2_logs: list[TaskRunLog] = self._add_logs(run_2, n=10)
         self.assertEqual(20, len(run2_logs))
 
         with self.subTest("Run1-FINISHED (return -> 10 logs), Run2-PENDING (10 logs)"):
-            self.assert_task_logs(expected=run1_logs)
+            self.assert_table(expected=run1_logs)
 
         with self.subTest("Run2-RUNNING (10 logs)"):
             run_2.set_status(TaskRunStatusEnum.RUNNING)
-            self.assert_task_logs(expected=run2_logs)
+            self.assert_table(expected=run2_logs)
 
         with self.subTest("Run2-FINISHED (10 logs)"):
             run_2.set_status(TaskRunStatusEnum.FINISHED)
-            self.assert_task_logs(expected=run2_logs)
+            self.assert_table(expected=run2_logs)
 
 
-class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
+class TestNotifications(TestBaseDatatablesMixin, TestBaseAppWeb):
     def setUp(self) -> None:
         super().setUp()
 
         self.uri: str = "/api/notifications"
 
-    def assert_notifications(
-        self,
-        params: dict[str, Any] | None = None,
-        records_filtered: int | None = None,
-        expected: list[Notification] | None = None,
-        draw: int = 1,
-        check_only_id: bool = False,
-    ) -> None:
-        def to_dict(obj: Notification) -> dict[str, Any]:
-            data: dict[str, Any] = obj.to_dict()
+    def get_records_total(self) -> int:
+        return Notification.select().count()
 
-            # Добавление task_run как объект, а не идентификатор
-            if obj.task_run:
-                data["task_run"] = obj.task_run.to_dict()
+    def to_dict(self, obj: Notification) -> dict[str, Any]:
+        # TODO: Дублирует из api notifications
+        data: dict[str, Any] = obj.to_dict()
 
-            return data
+        # Добавление task_run как объект, а не идентификатор
+        if obj.task_run:
+            data["task_run"] = obj.task_run.to_dict()
 
-        self.assert_datatables_response(
-            uri=self.uri,
-            records_total=Notification.select().count(),
-            to_dict=to_dict,
-            params=params,
-            records_filtered=records_filtered,
-            expected=expected,
-            draw=draw,
-            check_only_id=check_only_id,
-        )
+        return data
 
     def _add_notifications(self, run: TaskRun | None, n: int) -> list[Notification]:
         items: list[Notification] = []
@@ -2151,25 +1997,6 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             )
         return items
 
-    def test_empty(self) -> None:
-        self.assert_notifications(expected=[])
-
-    def test_draw_echo(self) -> None:
-        self.assert_notifications(params={"draw": 999}, expected=[], draw=999)
-        self.assert_notifications(params={"draw": "999"}, expected=[], draw=999)
-
-    def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
-            rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
-
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
-            rs = self.client.get(
-                self.uri,
-                query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
-            )
-            self.assertEqual(403, rs.status_code)
-
     def test_main(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
@@ -2180,10 +2007,10 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         self.assertEqual(40, len(notifications))
 
         with self.subTest("Пагинация по умолчанию"):
-            self.assert_notifications(expected=notifications)
+            self.assert_table(expected=notifications)
 
         with self.subTest("Все записи"):
-            self.assert_notifications(
+            self.assert_table(
                 expected=notifications,
                 params=dict(length=999_999_999),
             )
@@ -2193,13 +2020,13 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
 
         for start in [0, 10, 999]:
             with self.subTest("Пагинация в пустой таблице", start=start):
-                self.assert_notifications(
+                self.assert_table(
                     params={"start": start},
                     expected=[],
                 )
 
         with self.subTest("Пагинация в пустой таблице", length=0):
-            self.assert_notifications(
+            self.assert_table(
                 params={"length": 0},
                 expected=[],
             )
@@ -2208,32 +2035,28 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         items = self._add_notifications(run=None, n=3)
 
         with self.subTest("Пагинация вернет пустой список", start=999):
-            self.assert_notifications(
+            self.assert_table(
                 params={"start": 999},
                 expected=[],
             )
 
         with self.subTest("Пагинация вернет пустой список", length=0):
-            self.assert_notifications(
+            self.assert_table(
                 params={"length": 0},
                 expected=[],
             )
 
         with self.subTest("Первая страница (length=4)"):
-            self.assert_notifications(
-                params={"start": 0, "length": 4}, expected=items[:4]
-            )
+            self.assert_table(params={"start": 0, "length": 4}, expected=items[:4])
 
         with self.subTest("Вторая страница (start=4)"):
-            self.assert_notifications(
-                params={"start": 4, "length": 4}, expected=items[4:6]
-            )
+            self.assert_table(params={"start": 4, "length": 4}, expected=items[4:6])
 
     def test_search(self) -> None:
         """Проверка поиска по полям: name, text, kind"""
 
         with self.subTest("Поиск в пустой таблице"):
-            self.assert_notifications(
+            self.assert_table(
                 params={"search[value]": "Urgent"},
                 expected=[],
             )
@@ -2254,45 +2077,45 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         )
 
         with self.subTest("Поиск вернет пустой список"):
-            self.assert_notifications(
+            self.assert_table(
                 params={"search[value]": "404! 404!"},
                 records_filtered=0,
                 expected=[],
             )
 
         with self.subTest("Поиск по полю name ('Urgent')"):
-            self.assert_notifications(
+            self.assert_table(
                 params={"search[value]": "Urgent"},
                 records_filtered=1,
                 expected=[n_email],
             )
 
         with self.subTest("Поиск по тексту в поле text ('successfully')"):
-            self.assert_notifications(
+            self.assert_table(
                 params={"search[value]": "successfully"},
                 records_filtered=1,
                 expected=[n_tg],
             )
 
         with self.subTest("Поиск по типу уведомления в поле kind"):
-            self.assert_notifications(
+            self.assert_table(
                 params={"search[value]": NotificationKindEnum.TELEGRAM.value},
                 records_filtered=1,
                 expected=[n_tg],
             )
 
     def test_search_with_pagination(self) -> None:
-        """Проверка совместной работы фильтрации и пагинации."""
+        """Проверка совместной работы фильтрации и пагинации"""
 
         for start in [0, 10, 999]:
             with self.subTest("Пагинация в пустой таблице", start=start):
-                self.assert_notifications(
+                self.assert_table(
                     params={"start": start},
                     expected=[],
                 )
 
         with self.subTest("Пагинация в пустой таблице", length=0):
-            self.assert_notifications(
+            self.assert_table(
                 params={"length": 0},
                 expected=[],
             )
@@ -2335,14 +2158,14 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         }
 
         with self.subTest("Пагинация вернет пустой список", start=999):
-            self.assert_notifications(
+            self.assert_table(
                 params=params | {"start": 999},
                 records_filtered=10,
                 expected=[],
             )
 
         with self.subTest("Пагинация вернет пустой список", length=0):
-            self.assert_notifications(
+            self.assert_table(
                 params=params | {"length": 0},
                 records_filtered=10,
                 expected=[],
@@ -2350,7 +2173,7 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
 
         # Всего в базе 11 записей, фильтр отбирает 10, пагинация выводит первые 4
         with self.subTest("Пагинация вернет первую страницу с 4 элементами"):
-            self.assert_notifications(
+            self.assert_table(
                 params=params, records_filtered=10, expected=alert_items[:4]
             )
 
@@ -2402,7 +2225,7 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
             "draw": 777,
         }
 
-        self.assert_notifications(
+        self.assert_table(
             params=params,
             records_filtered=3,  # Должно быть 3, а не 2!
             expected=[n_crit_1, n_crit_2],  # Только первые два отсортированных элемента
@@ -2437,7 +2260,7 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
 
         for msg, field, direction, expected_list in sort_cases:
             with self.subTest(msg):
-                self.assert_notifications(
+                self.assert_table(
                     params={
                         "order[0][column]": 0,
                         "order[0][name]": field,
@@ -2484,4 +2307,4 @@ class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
         # 1. 'AnotherName' (первый по алфавиту имени)
         # 2. 'SameName' с текстом 'B' (имена одинаковые, сортировка по тексту DESC)
         # 3. 'SameName' с текстом 'A'
-        self.assert_notifications(params=params, expected=[n3, n2, n1])
+        self.assert_table(params=params, expected=[n3, n2, n1])
