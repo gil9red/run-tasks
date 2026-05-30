@@ -31,6 +31,22 @@ from tests.test_web_pages import TestBaseAppWeb
         password: str = USERS[login]
         cls.client.post("/login", data=dict(login=login, password=password))
         assert rs.status_code == 200
+def create_runs(
+    task: Task,
+    n: int,
+    status: TaskRunStatusEnum = TaskRunStatusEnum.FINISHED,
+) -> list[TaskRun]:
+    runs: list[TaskRun] = []
+    for _ in range(n):
+        run = task.add_or_get_run()
+        run.set_status(TaskRunStatusEnum.RUNNING)
+        run.set_status(status)
+
+        runs.append(run)
+
+    return runs
+
+
 class BaseAppApiDatatablesTestMixin:
     def test_empty(self) -> None:
         raise NotImplementedError()
@@ -707,12 +723,6 @@ class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
             base.update(overrides)
         return base
 
-    def _run_n_runs(self, task: Task, n_times: int) -> None:
-        for _ in range(n_times):
-            run = task.add_or_get_run()
-            run.set_status(TaskRunStatusEnum.RUNNING)
-            run.set_status(TaskRunStatusEnum.FINISHED)
-
     def assert_tasks(
         self,
         params: dict[str, Any] | None = None,
@@ -924,9 +934,9 @@ class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
         # task_bot_m -> 15 запусков (самый посещаемый bot)
         # task_bot_z -> 10 запусков
         # task_bot_a -> 5 запусков  (самый редкий bot)
-        self._run_n_runs(task_bot_m, n_times=15)
-        self._run_n_runs(task_bot_z, n_times=10)
-        self._run_n_runs(task_bot_a, n_times=5)
+        create_runs(task_bot_m, n=15)
+        create_runs(task_bot_z, n=10)
+        create_runs(task_bot_a, n=5)
 
         # Итого в базе: 8 задач (recordsTotal = 8)
         # Подходят под фильтр 'bot': 3 задачи (recordsFiltered = 3)
@@ -996,8 +1006,8 @@ class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
         task_2 = Task.add(name="Beta", command="2", cron="@hourly")
         task_3 = Task.add(name="Gamma", command="3", cron=None)
 
-        self._run_n_runs(task_2, n_times=10)
-        self._run_n_runs(task_1, n_times=5)
+        create_runs(task_2, n=10)
+        create_runs(task_1, n=5)
 
         with self.subTest("Сортировка по имени DESC"):
             self.assert_tasks(
@@ -1169,7 +1179,7 @@ class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
             self.assert_tasks(expected=[(task, overrides)])
 
 
-class TestBaseAppApiWebTask(TestBaseAppApiWeb):
+class TestBaseTask(TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1207,22 +1217,11 @@ class TestBaseAppApiWebTask(TestBaseAppApiWeb):
         )
 
 
-class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
+class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
         self.uri: str = f"/api/task/{self.task.id}/runs"
-
-    def _create_runs(self, n: int, status: TaskRunStatusEnum) -> list[TaskRun]:
-        runs = []
-        for _ in range(n):
-            run = self.task.add_or_get_run()
-            run.set_status(TaskRunStatusEnum.RUNNING)
-            run.set_status(status)
-
-            runs.append(run)
-
-        return runs
 
     def assert_task_runs(
         self,
@@ -1266,7 +1265,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
-        runs = self._create_runs(n=20, status=TaskRunStatusEnum.FINISHED)
+        runs = create_runs(self.task, n=20)
 
         with self.subTest("Пагинация по умолчанию"):
             self.assert_task_runs(expected=runs)
@@ -1280,7 +1279,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def test_pagination(self) -> None:
         """Проверка базовой пагинации"""
 
-        runs = self._create_runs(n=10, status=TaskRunStatusEnum.FINISHED)
+        runs = create_runs(self.task, n=10)
 
         with self.subTest("Первая страница (start=0, length=5)"):
             self.assert_task_runs(
@@ -1344,8 +1343,8 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
         """Проверка совместной работы фильтрации и пагинации."""
 
         # Создаем 5 'ошибочных' запусков и 5 'успешных'
-        error_runs = self._create_runs(n=5, status=TaskRunStatusEnum.ERROR)
-        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
+        error_runs = create_runs(self.task, n=5, status=TaskRunStatusEnum.ERROR)
+        create_runs(self.task, n=5, status=TaskRunStatusEnum.FINISHED)
 
         params = {
             "search[value]": TaskRunStatusEnum.ERROR.value,
@@ -1362,7 +1361,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
 
     def test_search_with_sorting_and_pagination(self) -> None:
         # Запуски со статусом ERROR, но с разным seq (через перезапись полей после создания)
-        error_runs = self._create_runs(n=3, status=TaskRunStatusEnum.ERROR)
+        error_runs = create_runs(self.task, n=3, status=TaskRunStatusEnum.ERROR)
 
         # Поля seq вручную, чтобы нарушить последовательность ID:
         # Индексы: error_runs[0] -> seq 30, error_runs[1] -> seq 10, error_runs[2] -> seq 20
@@ -1371,7 +1370,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
             run.save()
 
         # Фоновые успешные запуски, чтобы проверить recordsTotal
-        self._create_runs(n=5, status=TaskRunStatusEnum.FINISHED)
+        create_runs(self.task, n=5, status=TaskRunStatusEnum.FINISHED)
 
         # Итого в базе: 8 запусков (recordsTotal = 8)
         # Подходят под фильтр по статусу ERROR: 3 запуска (recordsFiltered = 3)
@@ -1437,7 +1436,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def test_sorting(self) -> None:
         """Проверка сортировки"""
 
-        runs = self._create_runs(n=10, status=TaskRunStatusEnum.FINISHED)
+        runs = create_runs(self.task, n=10)
 
         with self.subTest("Sort by seq ASC"):
             params = {
@@ -1458,7 +1457,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
     def test_multi_column_sorting(self) -> None:
         """Проверка сортировки по нескольким колонкам одновременно"""
 
-        r1, r2 = self._create_runs(n=2, status=TaskRunStatusEnum.FINISHED)
+        r1, r2 = create_runs(self.task, n=2)
 
         params = {
             "order[0][column]": 0,
@@ -1472,7 +1471,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
         self.assert_task_runs(params=params, expected=[r2, r1])
 
 
-class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
+class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1737,7 +1736,7 @@ class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
+class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1984,6 +1983,7 @@ class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseAppApiWebTask):
 
 class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
 class TestTaskRunLastLogs(TestBaseAppApiWebTask):
+class TestTaskRunLastLogs(TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -2417,14 +2417,7 @@ class TestNotifications(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
         """Проверка сортировки по разрешенным полям, включая поля связанной таблицы TaskRun"""
 
         task = Task.add(name="SortTask", command="*")
-
-        run_1 = task.add_or_get_run()
-        run_1.set_status(TaskRunStatusEnum.RUNNING)
-        run_1.set_status(TaskRunStatusEnum.FINISHED)
-
-        run_2 = task.add_or_get_run()
-        run_2.set_status(TaskRunStatusEnum.RUNNING)
-        run_2.set_status(TaskRunStatusEnum.FINISHED)
+        run_1, run_2 = create_runs(task, n=2)
 
         n1 = Notification.add(
             task_run=run_1, name="AAA", text="Z", kind=NotificationKindEnum.EMAIL
