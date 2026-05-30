@@ -27,10 +27,6 @@ from tests import DATETIME_DELAY_SECS
 from tests.test_web_pages import TestBaseAppWeb
 
 
-        login: str = list(USERS.keys())[0]
-        password: str = USERS[login]
-        cls.client.post("/login", data=dict(login=login, password=password))
-        assert rs.status_code == 200
 def create_runs(
     task: Task,
     n: int,
@@ -1981,8 +1977,7 @@ class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestAppApiWebTaskRunLastLogs(TestBaseAppApiWebTask):
-class TestTaskRunLastLogs(TestBaseAppApiWebTask):
+# TODO: class TestTaskRunLastLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
 class TestTaskRunLastLogs(TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
