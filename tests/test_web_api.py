@@ -44,6 +44,7 @@ def create_runs(
 
 
 class BaseAppApiDatatablesTestMixin:
+class BaseDatatablesTestMixin:
     def test_empty(self) -> None:
         raise NotImplementedError()
 
@@ -695,7 +696,7 @@ class TestBase(TestBaseAppWeb):
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
 
-class TestTasks(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
+class TestTasks(BaseDatatablesTestMixin, TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1213,7 +1214,7 @@ class TestBaseTask(TestBaseAppApiWeb):
         )
 
 
-class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseTask):
+class TestTaskRuns(BaseDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1467,7 +1468,7 @@ class TestTaskRuns(BaseAppApiDatatablesTestMixin, TestBaseTask):
         self.assert_task_runs(params=params, expected=[r2, r1])
 
 
-class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
+class TestTaskLogs(BaseDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -1732,7 +1733,7 @@ class TestTaskLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
         self.assert_task_logs(params=params, expected=[l3, l1, l2])
 
 
-class TestTaskRunLogs(BaseAppApiDatatablesTestMixin, TestBaseTask):
+class TestTaskRunLogs(BaseDatatablesTestMixin, TestBaseTask):
     def setUp(self) -> None:
         super().setUp()
 
@@ -2095,7 +2096,7 @@ class TestTaskRunLastLogs(TestBaseTask):
             self.assert_task_logs(expected=run2_logs)
 
 
-class TestNotifications(BaseAppApiDatatablesTestMixin, TestBaseAppApiWeb):
+class TestNotifications(BaseDatatablesTestMixin, TestBaseAppApiWeb):
     def setUp(self) -> None:
         super().setUp()
 
