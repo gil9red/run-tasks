@@ -91,9 +91,9 @@ class TestApp(TestBaseAppWeb):
         rs = self.client.get(uri)
         self.assertEqual(rs.status_code, 200)
 
-    def test_task_update(self) -> None:
+    def test_task_edit(self) -> None:
         with self.subTest("404 - Not Found"):
-            uri: str = "/task/99999/update"
+            uri: str = "/task/99999/edit"
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 404)
 
@@ -102,7 +102,7 @@ class TestApp(TestBaseAppWeb):
                 name="200",
                 command="ping 127.0.0.1",
             )
-            uri: str = f"/task/{task.id}/update"
+            uri: str = f"/task/{task.id}/edit"
 
             rs = self.client.get(uri)
             self.assertEqual(rs.status_code, 200)
