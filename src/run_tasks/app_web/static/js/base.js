@@ -123,7 +123,7 @@ LANG_DATATABLES = {
     "buttons": {
         "pdf": "PDF",
         "print": "Печать",
-        "collection": "Коллекция <span class=\"ui-button-icon-primary ui-icon ui-icon-triangle-1-s\"><\/span>",
+        "collection": "Коллекция <span class=\"ui-button-icon-primary ui-icon ui-icon-triangle-1-s\"></span>",
         "colvis": "Видимость столбцов",
         "colvisRestore": "Восстановить видимость",
         "copy": "Копировать",
@@ -146,13 +146,13 @@ LANG_DATATABLES = {
         "savedStates": "Сохраненные состояния",
         "stateRestore": "Состояние %d",
         "updateState": "Обновить",
-        "copyKeys": "Нажмите ctrl  или u2318 + C, чтобы скопировать данные таблицы в буфер обмена.  Для отмены, щелкните по сообщению или нажмите escape."
+        "copyKeys": "Нажмите Ctrl или ⌘ + C, чтобы скопировать данные таблицы в буфер обмена. Для отмены, щелкните по сообщению или нажмите Escape."
     },
     "decimal": ".",
     "infoThousands": ",",
     "autoFill": {
         "cancel": "Отменить",
-        "fill": "Заполнить все ячейки <i>%d<i><\/i><\/i>",
+        "fill": "Заполнить все ячейки <i>%d<i></i></i>",
         "fillHorizontal": "Заполнить ячейки по горизонтали",
         "fillVertical": "Заполнить ячейки по вертикали",
         "info": "Информация"
@@ -220,7 +220,7 @@ LANG_DATATABLES = {
             "noMulti": "Это поле должно редактироваться отдельно, а не как часть группы"
         },
         "error": {
-            "system": "Возникла системная ошибка (<a target=\"\\\" rel=\"nofollow\" href=\"\\\">Подробнее<\/a>)."
+            "system": "Возникла системная ошибка (<a target=\"_blank\" rel=\"nofollow\" href=\"\\\">Подробнее</a>)."
         }
     },
     "searchPlaceholder": "Что ищете?",
