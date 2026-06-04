@@ -745,6 +745,7 @@ class TestTasks(TestBaseDatatablesMixin, TestBaseAppWeb):
 
         base = {
             **model_to_dict(task, recurse=False),
+            "url_path": task.url_path,
             "number_of_runs": 0,
             "last_started_run_seq": None,
             "last_started_run_start_date": None,

@@ -45,6 +45,17 @@ class BaseTestCaseDb(TestCase):
 
 
 class TestTask(BaseTestCaseDb):
+    def test_url_path(self) -> None:
+        for expected, name in [
+            ("1-", " * "),
+            ("2-veb-pult", "Веб-пульт"),
+            ("3-price-of-games-parser", "price_of_games.parser"),
+            ("4-hello-world", "Hello World!"),
+        ]:
+            with self.subTest("Task.url_path", expected=expected, name=name):
+                task = Task.add(name=name, command="*")
+                self.assertEqual(expected, task.url_path)
+
     def test_get_by_name(self) -> None:
         self.assertIsNone(Task.get_by_name("task_1"))
 

@@ -29,6 +29,8 @@ from playhouse.hybrid import hybrid_property
 from playhouse.shortcuts import model_to_dict
 from playhouse.sqliteq import SqliteQueueDatabase
 
+from slugify import slugify
+
 from run_tasks.config import DB_FILE_NAME, CONFIG, CONFIG_NOTIFICATION
 from run_tasks.third_party.db_enum_field import EnumField
 from run_tasks.third_party.shorten import shorten
@@ -166,6 +168,11 @@ class Task(BaseModel):
     cron = TextField(null=True)
     is_infinite = BooleanField(default=False)
 
+    @property
+    def url_path(self) -> str:
+        clean_slug = slugify(self.name)
+        return f"{self.id}-{clean_slug}"
+
     @hybrid_property
     def number_of_runs(self) -> int:
         number: int | None = (
@@ -217,6 +224,7 @@ class Task(BaseModel):
             self,
             recurse=False,
             extra_attrs=[
+                "url_path",
                 "number_of_runs",
                 "last_started_run_seq",
                 "last_started_run_start_date",

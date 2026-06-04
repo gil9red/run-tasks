@@ -41,7 +41,7 @@ $(function() {
                     data,
                     null,
                     (css_selector_table, rs) => {
-                        window.location.href = `/task/${rs.result[0].id}`;
+                        window.location.href = `/task/${rs.result[0].url_path}`;
                     }
                 );
             },

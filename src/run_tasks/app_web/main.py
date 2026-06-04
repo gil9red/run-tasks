@@ -19,8 +19,13 @@ from flask import (
 
 from run_tasks.app_web import config
 from run_tasks.app_web.app import USERS, app, limiter
-from run_tasks.app_web.common import get_task, get_task_run, public_route
+from run_tasks.app_web.common import (
+    get_task_by_url_path,
+    get_task_run,
+    public_route,
+)
 from run_tasks.config import PROJECT_NAME
+from run_tasks.db import Task
 
 
 @app.route("/")
@@ -75,12 +80,12 @@ def notifications() -> str:
     )
 
 
-@app.route("/task/<int:task_id>")
-def task(task_id: int) -> str:
+@app.route("/task/<task_identifier>")
+def task(task_identifier: str) -> str:
     return render_template(
         "task.html",
         title=PROJECT_NAME,
-        task=get_task(task_id),
+        task=get_task_by_url_path(task_identifier),
     )
 
 
@@ -96,40 +101,44 @@ def task_create() -> str:
 
 @app.route("/task/<int:task_id>/update")
 def task_update(task_id: int) -> str:
+@app.route("/task/<task_identifier>/update")
+def task_update(task_identifier: str) -> str:
     return render_template(
         "task_create_or_update.html",
         title=PROJECT_NAME,
-        task=get_task(task_id),
+        task=get_task_by_url_path(task_identifier),
         is_mode_edit=True,
     )
 
 
-@app.route("/task/<int:task_id>/logs")
-def task_logs(task_id: int) -> str:
+@app.route("/task/<task_identifier>/logs")
+def task_logs(task_identifier: str) -> str:
     return render_template(
         "task_all_logs.html",
         title=PROJECT_NAME,
-        task=get_task(task_id),
+        task=get_task_by_url_path(task_identifier),
     )
 
 
-@app.route("/task/<int:task_id>/run/last")
-def task_run_last(task_id: int) -> str:
-    task_run_seq = get_task(task_id).last_started_run_seq
+@app.route("/task/<task_identifier>/run/last")
+def task_run_last(task_identifier: str) -> str:
+    task: Task = get_task_by_url_path(task_identifier)
+    task_run_seq: int = task.last_started_run_seq
     return render_template(
         "task_run.html",
         title=PROJECT_NAME,
-        task_run=get_task_run(task_id, task_run_seq),
+        task_run=get_task_run(task.id, task_run_seq),
         is_last=True,
     )
 
 
-@app.route("/task/<int:task_id>/run/<int:task_run_seq>")
-def task_run(task_id: int, task_run_seq: int) -> str:
+@app.route("/task/<task_identifier>/run/<int:task_run_seq>")
+def task_run(task_identifier: str, task_run_seq: int) -> str:
+    task: Task = get_task_by_url_path(task_identifier)
     return render_template(
         "task_run.html",
         title=PROJECT_NAME,
-        task_run=get_task_run(task_id, task_run_seq),
+        task_run=get_task_run(task.id, task_run_seq),
     )
 
 

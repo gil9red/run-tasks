@@ -32,14 +32,14 @@
             <span class="d-none" id="btn-stop"></span>
             <a
                     class="icon-link text-success-emphasis"
-                    href="/task/{{ task.id }}/update"
+                    href="/task/{{ task.url_path }}/update"
                     title="Редактировать"
             >
                 <i class="bi bi-pencil-square"></i>
             </a>
             <a
                     class="icon-link"
-                    href="/task/{{ task.id }}/logs"
+                    href="/task/{{ task.url_path }}/logs"
                     title="Страница всех логов"
             >
                 <i class="bi bi-journal-text"></i>
@@ -158,7 +158,7 @@
     <div class="mb-3">
         <label for="last_started_run_start_date" class="form-label">
             <a
-                    href="/task/{{ task.id }}/run/last"
+                    href="/task/{{ task.url_path }}/run/last"
                     title="Последний запуск"
             >
                 Последний запуск
@@ -185,6 +185,7 @@
 
 <script>
     const TASK_ID = {{ task.id }};
+    const TASK_URL_PATH = "{{ task.url_path }}";
     const TASK_LAST_WORK_STATUS = "{{ task.last_work_status }}";
 </script>
 

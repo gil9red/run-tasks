@@ -6,6 +6,7 @@ __author__ = "ipetrash"
 
 from unittest import TestCase
 
+from flask.testing import FlaskClient
 from playhouse.sqlite_ext import SqliteExtDatabase
 
 from run_tasks.app_web.app import limiter
@@ -19,11 +20,18 @@ from run_tasks.db import (
 )
 
 
+class AutoRedirectClient(FlaskClient):
+    def open(self, *args, **kwargs):
+        kwargs.setdefault("follow_redirects", True)
+        return super().open(*args, **kwargs)
+
+
 class TestBaseAppWeb(TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         limiter.enabled = False
         app.testing = True
+        app.test_client_class = AutoRedirectClient
         cls.client = app.test_client()
 
         rs = cls.client.get("/login")
@@ -176,3 +184,79 @@ class TestApp(TestBaseAppWeb):
         # NOTE: Полный путь не работает с тестовым клиентом
         rs = self.client.get(run.get_url(full=False))
         self.assertEqual(rs.status_code, 200)
+
+
+class TestIdSlugConverter(TestBaseAppWeb):
+    def setUp(self) -> None:
+        super().setUp()
+
+        # Создаем запись: id=47, slug="47-veb-pult"
+        self.task = Task.create(id=47, name="Веб-пульт", command="...")
+
+    def test_correct_url_returns_200(self) -> None:
+        run = self.task.add_or_get_run()
+
+        for uri in [
+            "/task/47-veb-pult",
+            "/task/47-veb-pult/logs",
+            f"/task/47-veb-pult/run/{run.seq}",
+            f"/task/47-veb-pult/run/{run.seq}?abc=123&foo=bar",
+        ]:
+            with self.subTest(uri=uri):
+                rs = self.client.get(uri, follow_redirects=False)
+
+                self.assertEqual(rs.status_code, 200)
+                self.assertIn(self.task.name, rs.text)
+
+    def test_empty_slug_triggers_308_redirect(self) -> None:
+        rs = self.client.get("/task/47-", follow_redirects=False)
+
+        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.location, "/task/47-veb-pult")
+
+    def test_incorrect_slug_triggers_308_redirect(self) -> None:
+        rs = self.client.get("/task/47-staroe-imya", follow_redirects=False)
+
+        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.location, "/task/47-veb-pult")
+
+    def test_only_id_triggers_308_redirect(self) -> None:
+        run = self.task.add_or_get_run()
+
+        for uri, expected_uri in [
+            ("/task/47", "/task/47-veb-pult"),
+            ("/task/47/logs", "/task/47-veb-pult/logs"),
+            (f"/task/47/run/{run.seq}", f"/task/47-veb-pult/run/{run.seq}"),
+            (
+                f"/task/47/run/{run.seq}?abc=123",
+                f"/task/47-veb-pult/run/{run.seq}?abc=123",
+            ),
+        ]:
+            with self.subTest(uri=uri, expected_uri=expected_uri):
+                rs = self.client.get(uri, follow_redirects=False)
+
+                self.assertEqual(rs.status_code, 308)
+                self.assertEqual(rs.location, expected_uri)
+
+    def test_redirect_keeps_query_params(self) -> None:
+        rs = self.client.get(
+            "/task/47?ref=dashboard&user=admin", follow_redirects=False
+        )
+
+        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.location, "/task/47-veb-pult?ref=dashboard&user=admin")
+
+    def test_redirect_after_rename_in_db(self) -> None:
+        self.task.name = "Новое Имя"
+        self.task.save()
+
+        # Стучимся по старому слагу
+        rs = self.client.get("/task/47-veb-pult", follow_redirects=False)
+
+        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.location, "/task/47-novoe-imia")
+
+    def test_non_existent_id_returns_404(self) -> None:
+        rs = self.client.get("/task/999-any-slug", follow_redirects=False)
+
+        self.assertEqual(rs.status_code, 404)

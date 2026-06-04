@@ -17,7 +17,7 @@
 {% block header %}
     <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
     {% if is_mode_edit %}
-        <li class="breadcrumb-item"><a href="/task/{{ task.id }}">{{ task.name }}</a></li>
+        <li class="breadcrumb-item"><a href="/task/{{ task.url_path }}">{{ task.name }}</a></li>
         <li class="breadcrumb-item active" aria-current="page">Редактирование</li>
     {% else %}
         <li class="breadcrumb-item active" aria-current="page">Создание задачи</li>
@@ -235,7 +235,7 @@
         <a
                 class="btn btn-secondary"
                 {% if is_mode_edit %}
-                href="/task/{{ task.id }}"
+                href="/task/{{ task.url_path }}"
                 {% else %}
                 href="/"
                 {% endif %}

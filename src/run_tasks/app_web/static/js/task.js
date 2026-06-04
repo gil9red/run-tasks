@@ -5,7 +5,7 @@ function actions_task_run_render(data, type, row, meta) {
 
     let tags = [
         `
-        <a class="icon-link" href="/task/${row.task}/run/${row.seq}">
+        <a class="icon-link" href="/task/${TASK_URL_PATH}/run/${row.seq}">
             <i class="bi bi-box-arrow-up-right"></i>
         </a>
         `,
@@ -13,7 +13,7 @@ function actions_task_run_render(data, type, row, meta) {
         <button
                 class="btn text-danger p-0"
                 title="Отправить уведомления запуска #${row.seq}"
-                data-url="/api/task/${row.task}/run/${row.seq}/do-send-notifications"
+                data-url="/api/task/${TASK_ID}/run/${row.seq}/do-send-notifications"
                 data-method="POST"
         >
             <i class="bi bi-send"></i>
@@ -25,7 +25,7 @@ function actions_task_run_render(data, type, row, meta) {
             <button
                     class="btn text-warning p-0"
                     title="Остановить запуск #${row.seq}"
-                    data-url="/api/task/${row.task}/run/${row.seq}/do-stop"
+                    data-url="/api/task/${TASK_ID}/run/${row.seq}/do-stop"
                     data-method="POST"
             >
                 <i class="bi bi-stop-circle"></i>

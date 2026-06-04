@@ -9,7 +9,7 @@ function actions_task_render(data, type, row, meta) {
         `
         <a
                 class="icon-link"
-                href="/task/${row.id}"
+                href="/task/${row.url_path}"
                 title="Страница задачи"
         >
             <i class="bi bi-box-arrow-up-right"></i>
@@ -18,7 +18,7 @@ function actions_task_render(data, type, row, meta) {
         `
         <a
                 class="icon-link text-success-emphasis"
-                href="/task/${row.id}/update"
+                href="/task/${row.url_path}/update"
                 title="Редактировать"
         >
             <i class="bi bi-pencil-square"></i>
@@ -58,7 +58,7 @@ function actions_task_render(data, type, row, meta) {
             `
             <a
                     class="icon-link"
-                    href="/task/${row.id}/run/last"
+                    href="/task/${row.url_path}/run/last"
                     title="Страница последнего запуска"
             >
                 <i class="bi bi-terminal"></i>
@@ -70,7 +70,7 @@ function actions_task_render(data, type, row, meta) {
         `
         <a
                 class="icon-link"
-                href="/task/${row.id}/logs"
+                href="/task/${row.url_path}/logs"
                 title="Страница всех логов"
         >
             <i class="bi bi-journal-text"></i>
@@ -99,7 +99,7 @@ function task_name_render(data, type, row, meta) {
     if (type === 'filter') {
         return data;
     }
-    return `<a href="/task/${row.id}">${data}</a>`;
+    return `<a href="/task/${row.url_path}">${data}</a>`;
 }
 
 

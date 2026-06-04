@@ -232,6 +232,7 @@ def tasks() -> Response:
         return {
             **model_to_dict(obj, recurse=False),
             **{
+                "url_path": obj.url_path,
                 "number_of_runs": obj.db_number_of_runs,
                 "last_started_run_seq": obj.db_last_started_run_seq,
                 "last_started_run_start_date": obj.db_last_started_run_start_date,

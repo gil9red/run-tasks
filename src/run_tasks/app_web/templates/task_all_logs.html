@@ -6,7 +6,7 @@
 
 {% block header %}
     <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
-    <li class="breadcrumb-item"><a href="/task/{{ task.id }}">{{ task.name }}</a></li>
+    <li class="breadcrumb-item"><a href="/task/{{ task.url_path }}">{{ task.name }}</a></li>
     <li class="breadcrumb-item active" aria-current="page">Все логи запусков</li>
 {% endblock %}
 

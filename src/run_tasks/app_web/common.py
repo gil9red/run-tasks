@@ -7,8 +7,9 @@ __author__ = "ipetrash"
 import enum
 from typing import Any
 
-from flask import abort
+from flask import abort, request, url_for
 from peewee import DoesNotExist
+from werkzeug.routing import RequestRedirect
 
 from run_tasks.db import Task, TaskRun, Notification
 
@@ -36,6 +37,26 @@ def get_task(task_id: int) -> Task:
         return Task.get_by_id(task_id)
     except DoesNotExist:
         abort(404)
+
+
+def get_task_by_url_path(url_path: str) -> Task:
+    try:
+        # Example: "123-foo-bar" -> 123
+        task_id: int = int(url_path.split("-", maxsplit=1)[0])
+    except (ValueError, IndexError):
+        abort(404)
+
+    task: Task = get_task(task_id)
+    if url_path != task.url_path:
+        url_params = request.view_args.copy()
+        url_params.update(request.args)
+
+        url_params["task_identifier"] = task.url_path
+
+        target_url = url_for(request.endpoint, **url_params)
+        raise RequestRedirect(target_url)
+
+    return task
 
 
 def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:

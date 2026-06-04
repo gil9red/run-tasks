@@ -4,11 +4,11 @@
 
 {% block header %}
 <li class="breadcrumb-item"><a href="/"><i class="bi bi-house"></i></a></li>
-<li class="breadcrumb-item"><a href="/task/{{ task_run.task.id }}">{{ task_run.task.name }}</a></li>
+<li class="breadcrumb-item"><a href="/task/{{ task_run.task.url_path }}">{{ task_run.task.name }}</a></li>
 <li class="breadcrumb-item active" aria-current="page">
     <a
             class="task-run-seq-url"
-            href="/task/{{ task_run.task.id }}/run/{{ task_run.seq }}"
+            href="/task/{{ task_run.task.url_path }}/run/{{ task_run.seq }}"
     >
         #<span class="task-run-seq">{{ task_run.seq }}</span>
     </a>
@@ -45,7 +45,7 @@
         <a
                 {% if task_run.prev_task_run %}
                 class="btn btn-secondary"
-                href="/task/{{ task_run.task.id }}/run/{{ task_run.prev_task_run.seq }}"
+                href="/task/{{ task_run.task.url_path }}/run/{{ task_run.prev_task_run.seq }}"
                 {% else %}
                 class="btn btn-secondary disabled"
                 {% endif %}
@@ -56,7 +56,7 @@
         <a
                 {% if task_run.next_task_run %}
                 class="btn btn-secondary"
-                href="/task/{{ task_run.task.id }}/run/{{ task_run.next_task_run.seq }}"
+                href="/task/{{ task_run.task.url_path }}/run/{{ task_run.next_task_run.seq }}"
                 {% else %}
                 class="btn btn-secondary disabled"
                 {% endif %}
@@ -84,7 +84,7 @@
         <label for="seq" class="form-label">
             <a
                     class="task-run-seq-url"
-                    href="/task/{{ task_run.task.id }}/run/{{ task_run.seq }}"
+                    href="/task/{{ task_run.task.url_path }}/run/{{ task_run.seq }}"
             >
                 Номер
             </a>
@@ -228,7 +228,7 @@
 <script>
     window.PATTERN = {
         title: 'Запуск #{0} задачи "{{ task_run.task.name }}"',
-        url: '/task/{{ task_run.task.id }}/run/{0}',
+        url: '/task/{{ task_run.task.url_path }}/run/{0}',
         button_send_notification: {
             title: "Отправить уведомления запуска #{0}",
             data_url: "/api/task/{{ task_run.task.id }}/run/{0}/do-send-notifications",
