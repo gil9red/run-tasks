@@ -150,6 +150,7 @@ class TestTask(BaseTestCaseDb):
             self.assertEqual(task.description, description)
             self.assertFalse(task.is_infinite)
 
+        with self.subTest(msg="Создание команды с существующим названием вернет уже созданную задачу"):
             self.assertEqual(
                 task,
                 Task.add(
