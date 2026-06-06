@@ -604,6 +604,16 @@ function on_ajax_success(rs, css_selector_table=null, callback=null) {
 
 
 function on_ajax_error(rs, reason) {
+    // Сервер недоступен
+    if (rs.status == 0) {
+        noty({
+            text: "Сервер недоступен",
+            type: "warning",
+            killer: true,
+        });
+        return;
+    }
+
     // Редирект на страницу логина
     if (rs.status == 401) {
         console.log("Статус ответа 401 unauthorized");
