@@ -206,6 +206,11 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
 
+        with self.subTest("400 - Bad Request - Duplicate"):
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, 400)
+            self.assertEqual(rs.json["status"], "error")
+
     def test_task_get(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "api/task/99999"
