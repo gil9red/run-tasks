@@ -194,6 +194,31 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
+        with self.subTest("400 - Bad Request - missing 'name'"):
+            rs = self.client.post(uri, json={})
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' is None"):
+            rs = self.client.post(uri, json=data | dict(name=None))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' is empty"):
+            rs = self.client.post(uri, json=data | dict(name=""))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' is spaces only"):
+            rs = self.client.post(uri, json=data | dict(name="   "))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' has tabs/whitespaces"):
+            rs = self.client.post(uri, json=data | dict(name="  \t "))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
         with self.subTest("200 - Ok"):
             rs = self.client.post(uri, json=data)
             self.assertEqual(rs.status_code, HTTPStatus.OK.value)

@@ -279,7 +279,19 @@ def tasks() -> Response:
 def task_create() -> Response | tuple[Response, int]:
     data: dict[str, Any] = request.json
 
-    task: Task = Task.get_by_name(data["name"])
+    name: str = data.get("name") or ""
+    if not name.strip():
+        return (
+            jsonify(
+                prepare_response(
+                    status=StatusEnum.ERROR,
+                    text="The 'name' parameter is required and cannot be empty or contain only whitespace.",
+                ),
+            ),
+            HTTPStatus.BAD_REQUEST,
+        )
+
+    task: Task = Task.get_by_name(name)
     if task:
         return (
             jsonify(
