@@ -41,10 +41,10 @@
                 name="name"
                 {% if is_mode_edit %}
                 value="{{ task.name | e }}"
-                disabled
-                {% else %}
-                required
                 {% endif %}
+                pattern=".*\S.*"
+                title="Поле не может состоять только из пробелов"
+                required
         />
     </div>
     <div class="mb-3 d-flex">
