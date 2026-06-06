@@ -81,10 +81,16 @@ class DataTableRequest:
 
             col_name = order_data.get("name")
             if not col_name:
-                abort(400, description=f"Missing name for column index {col_idx}")
+                abort(
+                    HTTPStatus.BAD_REQUEST,
+                    description=f"Missing name for column index {col_idx}",
+                )
 
             if col_name not in allowed_columns:
-                abort(403, description=f"Sorting by field '{col_name}' is forbidden")
+                abort(
+                    HTTPStatus.FORBIDDEN,
+                    description=f"Sorting by field '{col_name}' is forbidden",
+                )
 
             field_obj: ColumnBase | None = None
 
@@ -282,7 +288,7 @@ def task_create() -> Response | tuple[Response, int]:
                     text=f"Задача с {task.name!r} уже существует",
                 ),
             ),
-            HTTPStatus.BAD_REQUEST.value,
+            HTTPStatus.BAD_REQUEST,
         )
 
     task = Task.add(**data)
@@ -439,6 +445,7 @@ def task_run_get_last(task_id: int) -> Response:
     task_run_seq: int | None = task.last_started_run_seq
     if not task_run_seq:
         abort(404)
+        abort(HTTPStatus.NOT_FOUND)
     return task_run_get(task_id, task_run_seq)
 
 
