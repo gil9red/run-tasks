@@ -195,7 +195,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("400 - Bad Request - missing 'name'"):
-            rs = self.client.post(uri, json={})
+            rs = self.client.post(uri, json=dict())
             self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
             self.assertEqual(rs.json["status"], "error")
 
