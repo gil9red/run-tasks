@@ -278,9 +278,10 @@ def tasks() -> Response:
 @api_bp.route("/task/create", methods=["POST"])
 def task_create() -> Response | tuple[Response, int]:
     data: dict[str, Any] = request.json
+    data["name"] = str(data.get("name") or "").strip()
 
-    name: str = data.get("name") or ""
-    if not name.strip():
+    name: str = data["name"]
+    if not name:
         return (
             jsonify(
                 prepare_response(

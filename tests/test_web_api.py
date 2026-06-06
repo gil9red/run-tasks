@@ -241,6 +241,14 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
             self.assertEqual(rs.json["status"], "error")
 
+        with self.subTest("200 - Ok - Strip name"):
+            task_name: str = "Ping"
+            data["name"] = f" {task_name}\t "
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(rs.json["result"][0]["name"], task_name)
+
     def test_task_get(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "api/task/99999"
