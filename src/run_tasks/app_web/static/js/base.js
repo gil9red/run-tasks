@@ -613,6 +613,7 @@ function on_ajax_error(rs, reason) {
     }
 
     const isClientError = rs.status >= 400 && rs.status <= 499;
+
     let text = "";
     if (isClientError) {
         switch (rs.status) {
