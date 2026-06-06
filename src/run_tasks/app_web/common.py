@@ -37,7 +37,10 @@ def get_task(task_id: int) -> Task:
     try:
         return Task.get_by_id(task_id)
     except DoesNotExist:
-        abort(HTTPStatus.NOT_FOUND)
+        abort(
+            HTTPStatus.NOT_FOUND,
+            description=f"Task with Id {task_id} not found",
+        )
 
 
 def get_task_by_url_path(url_path: str) -> Task:
@@ -45,7 +48,10 @@ def get_task_by_url_path(url_path: str) -> Task:
         # Example: "123-foo-bar" -> 123
         task_id: int = int(url_path.split("-", maxsplit=1)[0])
     except (ValueError, IndexError):
-        abort(HTTPStatus.NOT_FOUND)
+        abort(
+            HTTPStatus.BAD_REQUEST,
+            description=f"Invalid URL path format: {url_path!r}. Expected format: 'Id-slug'",
+        )
 
     task: Task = get_task(task_id)
     if url_path != task.url_path:
@@ -64,14 +70,20 @@ def get_task_run(task_id: int, task_run_seq: int) -> TaskRun:
     try:
         return TaskRun.get_by_seq(task_id, task_run_seq)
     except DoesNotExist:
-        abort(HTTPStatus.NOT_FOUND)
+        abort(
+            HTTPStatus.NOT_FOUND,
+            description=f"Task run with sequence {task_run_seq} for task Id {task_id} not found",
+        )
 
 
 def get_notification(notification_id: int) -> Notification:
     try:
         return Notification.get_by_id(notification_id)
     except DoesNotExist:
-        abort(HTTPStatus.NOT_FOUND)
+        abort(
+            HTTPStatus.NOT_FOUND,
+            description=f"Notification with Id {notification_id} not found",
+        )
 
 
 def public_route(decorated_function: callable) -> callable:

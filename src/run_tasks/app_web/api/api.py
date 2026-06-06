@@ -444,8 +444,10 @@ def task_run_get_last(task_id: int) -> Response:
     task = get_task(task_id)
     task_run_seq: int | None = task.last_started_run_seq
     if not task_run_seq:
-        # TODO: Добавить описание ошибки? В других местах abort тоже нет описания?
-        abort(HTTPStatus.NOT_FOUND)
+        abort(
+            HTTPStatus.NOT_FOUND,
+            description=f"Task with Id {task_id} has no runs started yet",
+        )
     return task_run_get(task_id, task_run_seq)
 
 
