@@ -612,13 +612,33 @@ function on_ajax_error(rs, reason) {
         return;
     }
 
-    let text = "На сервере произошла неожиданная ошибка";
+    const isClientError = rs.status >= 400 && rs.status <= 499;
+    let text = "";
+    if (isClientError) {
+        switch (rs.status) {
+            case 400: // HTTPStatus.BAD_REQUEST
+                text = "Некорректный запрос. Проверьте правильность введенных данных";
+                break;
+            case 403: // HTTPStatus.FORBIDDEN
+                text = "Доступ ограничен. У вас недостаточно прав для этого действия";
+                break;
+            case 404: // HTTPStatus.NOT_FOUND
+                text = "Запрашиваемые данные или страница не найдены";
+                break;
+            default:
+                text = "Произошла ошибка при обработке данных на клиенте";
+        }
+    } else {
+        // HTTPStatus.INTERNAL_SERVER_ERROR (500) и другие ошибки 5xx
+        text = "На сервере произошла неожиданная ошибка";
+    }
+
     if (rs.responseJSON && rs.responseJSON.text) {
         text = `${text}: ${rs.responseJSON.text}`;
     }
     noty({
         text: reason ? `${text} ${reason}` : text,
-        type: 'error',
+        type: isClientError ? 'warning' :'error',
     });
 }
 
