@@ -325,10 +325,38 @@ def task_get(task_id: int) -> Response:
 
 
 @api_bp.route("/task/<int:task_id>/update", methods=["POST"])
-def task_update(task_id: int) -> Response:
+def task_update(task_id: int) -> Response | tuple[Response, int]:
     task: Task = get_task(task_id)
 
     data: dict[str, Any] = request.json
+
+    if "name" in data:
+        name: str = str(data["name"] or "").strip()
+        if not name:
+            return (
+                jsonify(
+                    prepare_response(
+                        status=StatusEnum.ERROR,
+                        text="The 'name' parameter is required and cannot be empty or contain only whitespace.",
+                    ),
+                ),
+                HTTPStatus.BAD_REQUEST,
+            )
+
+        # Если нашли другую задачу с таким же именем
+        other_task: Task | None = Task.get_by_name(name)
+        if other_task and other_task.id != task.id:
+            return (
+                jsonify(
+                    prepare_response(
+                        status=StatusEnum.ERROR,
+                        text=f"The 'name' parameter with value {name!r} already exists in another task #{other_task.id}.",
+                    ),
+                ),
+                HTTPStatus.BAD_REQUEST,
+            )
+
+        task.name = name
 
     if "command" in data:
         task.command = data["command"]

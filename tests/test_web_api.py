@@ -285,22 +285,22 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
+        data = {
+            "name": "Foo Bar",
+            "command": "Command",
+            "description": "Description",
+            "cron": "* * * * *",
+            "is_enabled": False,
+            "is_infinite": True,
+        }
+
+        task = Task.add(
+            name=data["name"],
+            command=data["command"],
+        )
+        uri: str = f"/api/task/{task.id}/update"
+
         with self.subTest("200 - Ok"):
-            data = {
-                "name": "Foo Bar",
-                "command": "Command",
-                "description": "Description",
-                "cron": "* * * * *",
-                "is_enabled": False,
-                "is_infinite": True,
-            }
-
-            task = Task.add(
-                name=data["name"],
-                command=data["command"],
-            )
-            uri: str = f"/api/task/{task.id}/update"
-
             rs = self.client.post(uri, json=data)
             self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
@@ -316,6 +316,52 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(task.cron, data["cron"])
             self.assertEqual(task.is_enabled, data["is_enabled"])
             self.assertEqual(task.is_infinite, data["is_infinite"])
+
+        with self.subTest("400 - Bad Request - 'name' is None"):
+            rs = self.client.post(uri, json=data | dict(name=None))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' is empty"):
+            rs = self.client.post(uri, json=data | dict(name=""))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' is spaces only"):
+            rs = self.client.post(uri, json=data | dict(name="   "))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' has tabs/whitespaces"):
+            rs = self.client.post(uri, json=data | dict(name="  \t "))
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("400 - Bad Request - 'name' unique restriction"):
+            new_data = data.copy()
+            new_data["name"] = "Foo Bar 2"
+            Task.add(
+                name=new_data["name"],
+                command=new_data["command"],
+            )
+
+            rs = self.client.post(uri, json=new_data)
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
+            self.assertEqual(rs.json["status"], "error")
+
+        with self.subTest("200 - Ok - Duplicate"):
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(rs.json["result"][0]["name"], data["name"])
+
+        with self.subTest("200 - Ok - Strip name"):
+            task_name: str = "Ping"
+            data["name"] = f" {task_name}\t "
+            rs = self.client.post(uri, json=data)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
+            self.assertEqual(rs.json["status"], "ok")
+            self.assertEqual(rs.json["result"][0]["name"], task_name)
 
     def test_task_delete(self) -> None:
         uri: str = f"/api/task/404/delete"
