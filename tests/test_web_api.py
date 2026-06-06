@@ -7,6 +7,7 @@ __author__ = "ipetrash"
 import time
 from datetime import datetime
 from enum import Enum
+from http import HTTPStatus
 from typing import Any, Callable
 
 from playhouse.shortcuts import model_to_dict
@@ -62,7 +63,7 @@ class TestBaseDatatablesMixin:
             params = dict()
 
         rs = self.client.get(uri, query_string=params)
-        self.assertEqual(200, rs.status_code)
+        self.assertEqual(HTTPStatus.OK.value, rs.status_code)
 
         rs_data = rs.json
         self.assertEqual(draw, rs_data["draw"])
@@ -137,16 +138,20 @@ class TestBaseDatatablesMixin:
         self.assert_table(params={"draw": "999"}, expected=[], draw=999)
 
     def test_errors(self) -> None:
-        with self.subTest("Missing name for column index", code=400):
+        with self.subTest(
+            "Missing name for column index", code=HTTPStatus.BAD_REQUEST.value
+        ):
             rs = self.client.get(self.uri, query_string={"order[0][column]": 0})
-            self.assertEqual(400, rs.status_code)
+            self.assertEqual(HTTPStatus.BAD_REQUEST.value, rs.status_code)
 
-        with self.subTest("Sorting by field '...' is forbidden", code=403):
+        with self.subTest(
+            "Sorting by field '...' is forbidden", code=HTTPStatus.FORBIDDEN.value
+        ):
             rs = self.client.get(
                 self.uri,
                 query_string={"order[0][column]": 0, "order[0][name]": "MEGA_ID"},
             )
-            self.assertEqual(403, rs.status_code)
+            self.assertEqual(HTTPStatus.FORBIDDEN.value, rs.status_code)
 
     def test_main(self) -> None:
         raise NotImplementedError()
@@ -186,12 +191,12 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri, json=data)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             rs = self.client.post(uri, json=data)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
             self.assertEqual(rs.json["result"][0]["name"], data["name"])
 
@@ -208,19 +213,19 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("400 - Bad Request - Duplicate"):
             rs = self.client.post(uri, json=data)
-            self.assertEqual(rs.status_code, 400)
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
             self.assertEqual(rs.json["status"], "error")
 
     def test_task_get(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "api/task/99999"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "api/task/99999"
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -231,20 +236,20 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"api/task/{task.id}"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["result"], [task.to_dict()])
 
     def test_task_update(self) -> None:
         with self.subTest("405 - Method Not Allowed"):
             uri: str = "/api/task/404/update"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/404/update"
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -264,7 +269,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task.id}/update"
 
             rs = self.client.post(uri, json=data)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
             self.assertEqual(rs.json["result"][0]["name"], data["name"])
 
@@ -284,16 +289,16 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             rs = self.client.delete(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -304,7 +309,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task.id}/delete"
 
             rs = self.client.delete(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertIsNone(task.get_by_name(task.name))
 
     def test_task_do_run(self) -> None:
@@ -312,14 +317,14 @@ class TestBase(TestBaseAppWeb):
             uri: str = "/api/task/99999/do-run"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/do-run"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -332,7 +337,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task_1.id}/do-run"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
 
             self.assertIsNotNone(task_1.get_last_run())
@@ -342,14 +347,14 @@ class TestBase(TestBaseAppWeb):
             uri: str = "/api/task/99999/run/99999"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/run/99999"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
             task_1 = Task.add(
@@ -359,7 +364,7 @@ class TestBase(TestBaseAppWeb):
 
             uri: str = f"/api/task/{task_1.id}/run/99999"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -372,7 +377,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task_2.id}/run/{run_1.id}"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
             def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
                 return dict(id=d["id"], task_run=d["task"], seq=d["seq"])
@@ -389,14 +394,14 @@ class TestBase(TestBaseAppWeb):
             uri: str = uri_template.format(task_id=99999)
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("[0 tasks, 0 runs] 404 - Not Found"):
             uri: str = uri_template.format(task_id=99999)
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("[1 tasks, 0 runs] 404 - Not Found"):
@@ -407,7 +412,7 @@ class TestBase(TestBaseAppWeb):
 
             uri: str = uri_template.format(task_id=task_1.id)
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("[1 tasks, 1 pending runs] 404 - Not Found"):
@@ -418,7 +423,7 @@ class TestBase(TestBaseAppWeb):
 
             uri: str = uri_template.format(task_id=task_1.id)
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -432,7 +437,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = uri_template.format(task_id=task_2.id)
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
             def get_common_view(d: dict[str, Any]) -> dict[str, Any]:
                 return dict(id=d["id"], task_run=d["task"], seq=d["seq"])
@@ -447,14 +452,14 @@ class TestBase(TestBaseAppWeb):
             uri: str = "/api/task/99999/run/99999/do-stop"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/run/99999/do-stop"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
             task_1 = Task.add(
@@ -464,7 +469,7 @@ class TestBase(TestBaseAppWeb):
 
             uri: str = f"/api/task/{task_1.id}/run/99999/do-stop"
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -477,7 +482,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/do-stop"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
 
             run_1 = run_1.get_new()
@@ -488,14 +493,14 @@ class TestBase(TestBaseAppWeb):
             uri: str = "/api/task/99999/run/99999/do-send-notifications"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("404 - Not Found"):
             uri: str = "/api/task/99999/run/99999/do-send-notifications"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
             task_1 = Task.add(
@@ -505,7 +510,7 @@ class TestBase(TestBaseAppWeb):
 
             uri: str = f"/api/task/{task_1.id}/run/99999/do-send-notifications"
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -519,7 +524,7 @@ class TestBase(TestBaseAppWeb):
             uri: str = f"/api/task/{task_2.id}/run/{run_1.id}/do-send-notifications"
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
 
             self.assertNotEqual(run_1.notifications.count(), 0)
@@ -529,7 +534,7 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -540,7 +545,7 @@ class TestBase(TestBaseAppWeb):
             )
 
             rs = self.client.post(uri, json=data)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
             rs_data = rs.json
             self.assertEqual(rs_data["status"], "ok")
@@ -553,7 +558,7 @@ class TestBase(TestBaseAppWeb):
         uri: str = "/api/notifications/get-number-of-unsent"
 
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 0)
 
@@ -564,7 +569,7 @@ class TestBase(TestBaseAppWeb):
             task_run=None,
         )
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 1)
 
@@ -575,19 +580,19 @@ class TestBase(TestBaseAppWeb):
             task_run=None,
         )
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 2)
 
         notification1.set_as_send()
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 1)
 
         notification2.set_as_send()
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
         self.assertEqual(rs.json["status"], "ok")
         self.assertEqual(rs.json["result"][0]["number"], 0)
 
@@ -598,12 +603,12 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
 
             self.assertEqual(0, len(Notification.get_unsent()))
@@ -631,7 +636,7 @@ class TestBase(TestBaseAppWeb):
             self.assertEqual(2, len(Notification.get_unsent()))
 
             rs = self.client.post(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
             self.assertEqual(0, len(Notification.get_unsent()))
 
@@ -648,11 +653,11 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest("404 - Not Found"):
             rs = self.client.post(uri_format.format(id=999_999))
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("405 - Method Not Allowed"):
             rs = self.client.get(uri_format.format(id=999_999))
-            self.assertEqual(rs.status_code, 405)
+            self.assertEqual(rs.status_code, HTTPStatus.METHOD_NOT_ALLOWED.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest("200 - Ok"):
@@ -671,13 +676,13 @@ class TestBase(TestBaseAppWeb):
 
             uri_1 = uri_format.format(id=notification_1.id)
             rs = self.client.post(uri_1)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
             self.assertEqual(0, len(Notification.get_unsent()))
 
             # Отмена отмененного не приведет к ошибке
             rs = self.client.post(uri_1)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "ok")
             self.assertEqual(0, len(Notification.get_unsent()))
 
@@ -698,7 +703,7 @@ class TestBase(TestBaseAppWeb):
             # Отмена отправленного приведет к ошибке
             uri_2 = uri_format.format(id=notification_2.id)
             rs = self.client.post(uri_2)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "error")
 
     def test_cron_get_next_dates(self) -> None:
@@ -706,11 +711,11 @@ class TestBase(TestBaseAppWeb):
 
         with self.subTest(msg="ERROR"):
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 400)
+            self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
             self.assertEqual(rs.json["status"], "error")
 
             rs = self.client.get(uri, query_string=dict(cron="FOO BAR"))
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
             self.assertEqual(rs.json["status"], "error")
 
         with self.subTest(msg="Default"):
@@ -718,7 +723,7 @@ class TestBase(TestBaseAppWeb):
 
             for cron in ["* * * * *", "0 * * * *"]:
                 rs = self.client.get(uri, query_string=dict(cron=cron))
-                self.assertEqual(rs.status_code, 200)
+                self.assertEqual(rs.status_code, HTTPStatus.OK.value)
                 for obj in rs.json["result"]:
                     self.assertGreater(datetime.fromisoformat(obj["date"]), now)
 
@@ -728,7 +733,7 @@ class TestBase(TestBaseAppWeb):
 
             for cron in ["* * * * *", "0 * * * *"]:
                 rs = self.client.get(uri, query_string=dict(cron=cron, number=number))
-                self.assertEqual(rs.status_code, 200)
+                self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
                 self.assertEqual(len(rs.json["result"]), number)
 
@@ -1213,9 +1218,9 @@ class TestTaskRuns(TestTaskMixin, TestBaseAppWeb):
     def test_errors(self) -> None:
         super().test_errors()
 
-        with self.subTest("404 Not Found", code=404):
+        with self.subTest("404 Not Found", code=HTTPStatus.NOT_FOUND.value):
             rs = self.client.get("/api/task/404/runs")
-            self.assertEqual(404, rs.status_code)
+            self.assertEqual(HTTPStatus.NOT_FOUND.value, rs.status_code)
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
@@ -1448,9 +1453,9 @@ class TestTaskLogs(TestTaskMixin, TestBaseAppWeb):
     def test_errors(self) -> None:
         super().test_errors()
 
-        with self.subTest("404 Not Found", code=404):
+        with self.subTest("404 Not Found", code=HTTPStatus.NOT_FOUND.value):
             rs = self.client.get("/api/task/404/logs")
-            self.assertEqual(404, rs.status_code)
+            self.assertEqual(HTTPStatus.NOT_FOUND.value, rs.status_code)
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
@@ -1668,14 +1673,14 @@ class TestTaskRunLogs(TestTaskMixin, TestBaseAppWeb):
     def test_errors(self) -> None:
         super().test_errors()
 
-        with self.subTest("Task: 404 Not Found", code=404):
+        with self.subTest("Task: 404 Not Found", code=HTTPStatus.NOT_FOUND.value):
             rs = self.client.get("/api/task/404/run/404/logs")
-            self.assertEqual(404, rs.status_code)
+            self.assertEqual(HTTPStatus.NOT_FOUND.value, rs.status_code)
             self.assertEqual("error", rs.json["status"])
 
-        with self.subTest("TaskRun: 404 Not Found", code=404):
+        with self.subTest("TaskRun: 404 Not Found", code=HTTPStatus.NOT_FOUND.value):
             rs = self.client.get(f"/api/task/{self.task.id}/run/404/logs")
-            self.assertEqual(404, rs.status_code)
+            self.assertEqual(HTTPStatus.NOT_FOUND.value, rs.status_code)
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:
@@ -1900,9 +1905,9 @@ class TestTaskRunLastLogs(TestTaskRunLogs):
         # Вызовы напрямую у TestBaseDatatablesMixin, минуя TestTaskRunLogs
         TestBaseDatatablesMixin.test_errors(self)
 
-        with self.subTest("Task: 404 Not Found", code=404):
+        with self.subTest("Task: 404 Not Found", code=HTTPStatus.NOT_FOUND.value):
             rs = self.client.get("/api/task/404/run/last/logs")
-            self.assertEqual(404, rs.status_code)
+            self.assertEqual(HTTPStatus.NOT_FOUND.value, rs.status_code)
             self.assertEqual("error", rs.json["status"])
 
     def test_main(self) -> None:

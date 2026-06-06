@@ -4,6 +4,7 @@
 __author__ = "ipetrash"
 
 
+from http import HTTPStatus
 from unittest import TestCase
 
 from flask.testing import FlaskClient
@@ -35,12 +36,12 @@ class TestBaseAppWeb(TestCase):
         cls.client = app.test_client()
 
         rs = cls.client.get("/login")
-        assert rs.status_code == 200
+        assert rs.status_code == HTTPStatus.OK.value
 
         login: str = list(USERS.keys())[0]
         password: str = USERS[login]
         cls.client.post("/login", data=dict(login=login, password=password))
-        assert rs.status_code == 200
+        assert rs.status_code == HTTPStatus.OK.value
 
     @classmethod
     def tearDownClass(cls) -> None:
@@ -68,12 +69,12 @@ class TestApp(TestBaseAppWeb):
         uri: str = "/"
 
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task(self) -> None:
         with self.subTest("404 - Not Found"):
             rs = self.client.get("/task/99999")
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -83,19 +84,19 @@ class TestApp(TestBaseAppWeb):
             uri: str = f"/task/{task.id}"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task_create(self) -> None:
         uri: str = "/task/create"
 
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task_edit(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/edit"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -105,13 +106,13 @@ class TestApp(TestBaseAppWeb):
             uri: str = f"/task/{task.id}/edit"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task_run_last(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/last"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
             task = Task.add(
                 name="404",
@@ -119,14 +120,14 @@ class TestApp(TestBaseAppWeb):
             )
             uri: str = f"/task/{task.id}/run/last"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
             run = task.add_or_get_run()
             self.assertEqual(run.status, TaskRunStatusEnum.PENDING)
 
             uri: str = f"/task/{task.id}/run/last"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -139,13 +140,13 @@ class TestApp(TestBaseAppWeb):
             uri: str = f"/task/{task.id}/run/last"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task_run(self) -> None:
         with self.subTest("404 - Not Found"):
             uri: str = "/task/99999/run/99999"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
             task = Task.add(
                 name="404",
@@ -153,7 +154,7 @@ class TestApp(TestBaseAppWeb):
             )
             uri: str = f"/task/{task.id}/run/99999"
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 404)
+            self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
 
         with self.subTest("200 - Ok"):
             task = Task.add(
@@ -164,26 +165,26 @@ class TestApp(TestBaseAppWeb):
             uri: str = f"/task/{task.id}/run/{run.seq}"
 
             rs = self.client.get(uri)
-            self.assertEqual(rs.status_code, 200)
+            self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_notifications(self) -> None:
         uri: str = "/notifications"
 
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_favicon(self) -> None:
         uri: str = "/favicon.ico"
 
         rs = self.client.get(uri)
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
     def test_task_run_get_url(self) -> None:
         run = Task.add(name="*", command="*").add_or_get_run()
 
         # NOTE: Полный путь не работает с тестовым клиентом
         rs = self.client.get(run.get_url(full=False))
-        self.assertEqual(rs.status_code, 200)
+        self.assertEqual(rs.status_code, HTTPStatus.OK.value)
 
 
 class TestIdSlugConverter(TestBaseAppWeb):
@@ -205,19 +206,19 @@ class TestIdSlugConverter(TestBaseAppWeb):
             with self.subTest(uri=uri):
                 rs = self.client.get(uri, follow_redirects=False)
 
-                self.assertEqual(rs.status_code, 200)
+                self.assertEqual(rs.status_code, HTTPStatus.OK.value)
                 self.assertIn(self.task.name, rs.text)
 
     def test_empty_slug_triggers_308_redirect(self) -> None:
         rs = self.client.get("/task/47-", follow_redirects=False)
 
-        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.status_code, HTTPStatus.PERMANENT_REDIRECT.value)
         self.assertEqual(rs.location, "/task/47-veb-pult")
 
     def test_incorrect_slug_triggers_308_redirect(self) -> None:
         rs = self.client.get("/task/47-staroe-imya", follow_redirects=False)
 
-        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.status_code, HTTPStatus.PERMANENT_REDIRECT.value)
         self.assertEqual(rs.location, "/task/47-veb-pult")
 
     def test_only_id_triggers_308_redirect(self) -> None:
@@ -235,7 +236,7 @@ class TestIdSlugConverter(TestBaseAppWeb):
             with self.subTest(uri=uri, expected_uri=expected_uri):
                 rs = self.client.get(uri, follow_redirects=False)
 
-                self.assertEqual(rs.status_code, 308)
+                self.assertEqual(rs.status_code, HTTPStatus.PERMANENT_REDIRECT.value)
                 self.assertEqual(rs.location, expected_uri)
 
     def test_redirect_keeps_query_params(self) -> None:
@@ -243,7 +244,7 @@ class TestIdSlugConverter(TestBaseAppWeb):
             "/task/47?ref=dashboard&user=admin", follow_redirects=False
         )
 
-        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.status_code, HTTPStatus.PERMANENT_REDIRECT.value)
         self.assertEqual(rs.location, "/task/47-veb-pult?ref=dashboard&user=admin")
 
     def test_redirect_after_rename_in_db(self) -> None:
@@ -253,10 +254,10 @@ class TestIdSlugConverter(TestBaseAppWeb):
         # Стучимся по старому слагу
         rs = self.client.get("/task/47-veb-pult", follow_redirects=False)
 
-        self.assertEqual(rs.status_code, 308)
+        self.assertEqual(rs.status_code, HTTPStatus.PERMANENT_REDIRECT.value)
         self.assertEqual(rs.location, "/task/47-novoe-imia")
 
     def test_non_existent_id_returns_404(self) -> None:
         rs = self.client.get("/task/999-any-slug", follow_redirects=False)
 
-        self.assertEqual(rs.status_code, 404)
+        self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
