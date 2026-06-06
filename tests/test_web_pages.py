@@ -261,3 +261,8 @@ class TestIdSlugConverter(TestBaseAppWeb):
         rs = self.client.get("/task/999-any-slug", follow_redirects=False)
 
         self.assertEqual(rs.status_code, HTTPStatus.NOT_FOUND.value)
+
+    def test_non_integer_id_returns_400(self) -> None:
+        rs = self.client.get("/task/a1b-any-slug", follow_redirects=False)
+
+        self.assertEqual(rs.status_code, HTTPStatus.BAD_REQUEST.value)
