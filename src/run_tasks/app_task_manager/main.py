@@ -97,6 +97,9 @@ def main(loop: bool = False) -> None:
             task_manager.start_all()
             task_manager.wait_all()
         except Exception as e:
+            # TODO: Ставить менеджеру состояние как "закрывается", чтобы
+            #       не выполнять новые задания
+            # TODO: "Грубое" завершение процессов тоже есть?
             if isinstance(e, KeyboardInterrupt):
                 return
 

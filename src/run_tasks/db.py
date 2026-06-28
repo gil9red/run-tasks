@@ -64,6 +64,8 @@ db = SqliteQueueDatabase(
 class TaskRunStatusEnum(enum.StrEnum):
     PENDING = enum.auto()
     RUNNING = enum.auto()
+    # TODO: Мб объединить с TaskRunWorkStatusEnum, так как они взаимосвязаны
+    #       Тот же SUCCESSFUL
     FINISHED = enum.auto()
     STOPPED = enum.auto()
     UNKNOWN = enum.auto()
@@ -528,6 +530,8 @@ class TaskRun(BaseModel):
     def get_actual_status(self) -> TaskRunStatusEnum:
         return TaskRun.get_by_id(self.id).status
 
+    # TODO: Зачем в логах в конце "\n"?
+    # TODO: Не добавлять текст, состоящий из подряд "\n"?
     def add_log(self, text: str, kind: LogKindEnum, end: str = "\n") -> "TaskRunLog":
         return TaskRunLog.create(
             task_run=self,

@@ -265,6 +265,7 @@ def tasks() -> Response:
         )
     )
 
+    # TODO: Не соответствует Task.to_dict
     def to_dict(obj: Model) -> dict[str, Any]:
         return {
             **model_to_dict(obj, recurse=False),
