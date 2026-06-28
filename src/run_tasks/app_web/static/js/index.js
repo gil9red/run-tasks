@@ -104,12 +104,38 @@ function task_name_render(data, type, row, meta) {
 
 
 $(function() {
-    let cb_visible_disabled_tasks = "cb_visible_disabled_tasks";
+    const cb_visible_enabled_tasks = "cb_visible_enabled_tasks";
+
+    function get_cb_visible_enabled_tasks_from_local_storage() {
+        let value_cb_visible_enabled_tasks = localStorage.getItem(cb_visible_enabled_tasks);
+        return value_cb_visible_enabled_tasks !== null ? JSON.parse(value_cb_visible_enabled_tasks) : false;
+    }
 
     let table = new DataTable(TABLE_ID, {
         ajax: {
             url: '/api/tasks',
-            data: prepare_data_for_server_side,
+            data: (d) => {
+                let request_data = prepare_data_for_server_side(d);
+
+                const is_checked = get_cb_visible_enabled_tasks_from_local_storage();
+                if (is_checked) {
+                    request_data.columns = request_data.columns || [];
+
+                    let existingColumn = request_data.columns.find(col => col.name === "is_enabled");
+                    if (existingColumn) {
+                        existingColumn.search = existingColumn.search || {};
+                        existingColumn.search.value = true;
+                    } else {
+                        request_data.columns.push({
+                            data: "is_enabled",
+                            name: "is_enabled",
+                            search: { value: true },
+                        });
+                    }
+                }
+
+                return request_data;
+            },
         },
         serverSide: true,
         rowId: 'id',
@@ -137,10 +163,10 @@ $(function() {
                             <input
                                     class="form-check-input column-visible"
                                     type="checkbox"
-                                    id="${cb_visible_disabled_tasks}"
+                                    id="${cb_visible_enabled_tasks}"
                             >
-                            <label class="form-check-label w-100" for="${cb_visible_disabled_tasks}">
-                                Показывать неактивные задачи
+                            <label class="form-check-label w-100" for="${cb_visible_enabled_tasks}">
+                                Показывать только активные задачи
                             </label>
                         </div>
                     </div>
@@ -175,27 +201,15 @@ $(function() {
         ...COMMON_PROPS_DATA_TABLE,
     });
 
-    let $cb_visible_disabled_tasks = $(`#${cb_visible_disabled_tasks}`);
-    let value_cb_visible_disabled_tasks = localStorage.getItem(cb_visible_disabled_tasks);
-    $cb_visible_disabled_tasks.prop(
+    let $cb_visible_enabled_tasks = $(`#${cb_visible_enabled_tasks}`);
+    $cb_visible_enabled_tasks.prop(
         'checked',
-        // Значение, по-умолчанию, true
-        value_cb_visible_disabled_tasks === null
-        || value_cb_visible_disabled_tasks == "true"
+        get_cb_visible_enabled_tasks_from_local_storage()
     );
+    $cb_visible_enabled_tasks.on('change', function (e) {
+        const value = $(this).prop('checked');
+        localStorage.setItem(cb_visible_enabled_tasks, JSON.stringify(value));
 
-    table.search.fixed(cb_visible_disabled_tasks, function (searchStr, data, index) {
-        let checked = $cb_visible_disabled_tasks.prop("checked");
-        localStorage.setItem(cb_visible_disabled_tasks, checked);
-
-        // Если задача не активная и флаг не убран
-        if (!data.is_enabled && !checked) {
-            return false;
-        }
-        return true;
-    });
-
-    $cb_visible_disabled_tasks.on('change', function (e) {
-        table.draw();
+        table.ajax.reload();
     });
 });
