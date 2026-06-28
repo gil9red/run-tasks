@@ -914,6 +914,151 @@ class TestTasks(TestBaseDatatablesMixin, TestBaseAppWeb):
                 expected=[],
             )
 
+    def test_is_enabled(self) -> None:
+        # Создаем тестовые данные с четким разделением флагов
+        t_tg = Task.add(
+            name="tg_bot",
+            command="python bot.py",
+            description="ping",
+            is_infinite=True,
+            is_enabled=True,
+        )
+        t_tg_old = Task.add(
+            name="tg_bot_old",
+            command="python bot.py",
+            description="ping",
+            is_infinite=True,
+            is_enabled=False,
+        )
+        t_web = Task.add(
+            name="web_parser",
+            command="uvicorn main:app",
+            description="https://127.0.0.1",
+            cron="@hourly",
+            is_enabled=False,
+        )
+        t_win = Task.add(
+            name="ping_srv",
+            command=r"C:\Users\admin",
+            description="bot",
+            cron="0 */8 * * *",
+            is_enabled=True,
+        )
+        t_token = Task.add(
+            name="vk_tool",
+            command="set TOKEN=123",
+            description="t.me/link",
+            cron="*/5 * * * *",
+            is_enabled=False,
+        )
+
+        with self.subTest("is_enabled=true"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                },
+                records_filtered=2,
+                expected=[t_tg, t_win],
+            )
+
+        with self.subTest("is_enabled=false"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "false",
+                },
+                records_filtered=3,
+                expected=[t_tg_old, t_web, t_token],
+            )
+
+        with self.subTest("is_enabled=true + поиск 'bot' (в имени и описании)"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                    "search[value]": "bot",
+                },
+                records_filtered=2,
+                expected=[t_tg, t_win],
+            )
+
+        with self.subTest("is_enabled=false + поиск 'bot'"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "false",
+                    "search[value]": "bot",
+                },
+                records_filtered=1,
+                expected=[t_tg_old],
+            )
+
+        with self.subTest("is_enabled=true + сортировка ASC"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                    "order[0][name]": "name",
+                    "order[0][dir]": "asc",
+                },
+                records_filtered=2,
+                # Сортировка по имени: 'ping_srv' (t_win) идет перед 'tg_bot' (t_tg)
+                expected=[t_win, t_tg],
+            )
+
+        with self.subTest("is_enabled=true + сортировка DESC"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                    "order[0][name]": "name",
+                    "order[0][dir]": "desc",
+                },
+                records_filtered=2,
+                expected=[t_tg, t_win],
+            )
+
+        # Добавляем еще несколько однотипных задач для проверки пагинации внутри фильтра
+        extra_enabled_tasks = [
+            Task.add(name=f"active_task_{i}", command="ping", is_enabled=True)
+            for i in range(5)
+        ]
+        # Итого активных: t_tg, t_win + 5 новых = 7 задач.
+        # Алфавитный порядок active_task_0..4, ping_srv, tg_bot
+
+        all_enabled_sorted = sorted(
+            extra_enabled_tasks + [t_win, t_tg], key=lambda x: x.name
+        )
+
+        with self.subTest("is_enabled=true + пагинация (первая страница)"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                    "order[0][name]": "name",
+                    "order[0][dir]": "asc",
+                    "start": 0,
+                    "length": 4,
+                },
+                records_filtered=7,
+                expected=all_enabled_sorted[:4],
+            )
+
+        with self.subTest("is_enabled=true + пагинация (вторая страница)"):
+            self.assert_table(
+                params={
+                    "columns[0][name]": "is_enabled",
+                    "columns[0][search][value]": "true",
+                    "order[0][name]": "name",
+                    "order[0][dir]": "asc",
+                    "start": 4,
+                    "length": 4,
+                },
+                records_filtered=7,
+                expected=all_enabled_sorted[4:],
+            )
+
     def test_search(self) -> None:
         """Проверка поиска по полям: name, command, description, cron"""
 

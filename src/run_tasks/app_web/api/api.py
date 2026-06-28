@@ -4,6 +4,8 @@
 __author__ = "ipetrash"
 
 
+import json
+
 from functools import reduce
 from dataclasses import dataclass, field
 from http import HTTPStatus
@@ -45,6 +47,7 @@ class DataTableRequest:
     start: int
     length: int
     search_value: str
+    where_filters: list[Expression] = field(default_factory=list)
     order_by: list[Expression] = field(default_factory=list)
 
     @classmethod
@@ -53,8 +56,42 @@ class DataTableRequest:
         request: Request,
         models: list[type[Model]],
         allowed_columns: list[str | Field],
+        search_fields: list[Field],
         default_order: Expression,
     ) -> Self:
+        def validate_column(
+            col_name: str | None,
+            col_idx: int,
+            action_type: str,
+        ) -> None:
+            if not col_name:
+                abort(
+                    HTTPStatus.BAD_REQUEST,
+                    description=f"Missing name for column index {col_idx}",
+                )
+            if col_name not in allowed_columns:
+                abort(
+                    HTTPStatus.FORBIDDEN,
+                    description=f"{action_type.capitalize()} by field '{col_name}' is forbidden",
+                )
+            return None
+
+        def get_column(col_name: str) -> ColumnBase | None:
+            field_obj: ColumnBase | None = None
+            if "." in col_name:
+                model_part, field_part = col_name.split(".", 1)
+                model_part = model_part.upper()
+                for m in models:
+                    if m._meta.name.upper() == model_part:
+                        return m._meta.fields.get(field_part)
+
+            if not field_obj:
+                for m in models:
+                    if col_name in m._meta.fields:
+                        return m._meta.fields[col_name]
+
+            return None
+
         allowed_columns: list[str] = [
             field if isinstance(field, str) else field.name for field in allowed_columns
         ]
@@ -64,34 +101,40 @@ class DataTableRequest:
             normalized=True,
         )
 
-        draw = int(nested_args.get("draw", 1))
-        start = int(nested_args.get("start", 0))
-        length = int(nested_args.get("length", API_PAGE_LENGTH_DEFAULT))
+        draw: int = int(nested_args.get("draw", 1))
+        start: int = int(nested_args.get("start", 0))
+        length: int = int(nested_args.get("length", API_PAGE_LENGTH_DEFAULT))
 
-        search_dict = nested_args.get("search", dict())
-        search_value = search_dict.get("value", "").strip()
+        search_dict: dict[str, Any] = nested_args.get("search", {})
+        search_value: str = search_dict.get("value", "").strip()
+
+        where_filters: list[Expression] = []
+        for col_idx, column in enumerate(nested_args.get("columns", [])):
+            col_name: str | None = column.get("name")
+            validate_column(col_name, col_idx, action_type="filtering")
+
+            value_str: str | None = column.get("search", {}).get("value")
+            if not value_str:
+                continue
+
+            field_obj: ColumnBase | None = get_column(col_name)
+            if not field_obj:
+                continue
+
+            value = json.loads(value_str)
+
+            where_filters.append(field_obj == value)
+
+        if search_value and search_fields:
+            conditions = [field.contains(search_value) for field in search_fields]
+            where_filters.append(reduce(or_, conditions))
 
         order_list: list[Expression] = []
 
-        orders = nested_args.get("order", dict())
+        orders = nested_args.get("order", [])
 
         for order_data in orders:
-            col_idx = order_data.get("column")  # Индекс колонки
-
-            col_name = order_data.get("name")
-            if not col_name:
-                abort(
-                    HTTPStatus.BAD_REQUEST,
-                    description=f"Missing name for column index {col_idx}",
-                )
-
-            if col_name not in allowed_columns:
-                abort(
-                    HTTPStatus.FORBIDDEN,
-                    description=f"Sorting by field '{col_name}' is forbidden",
-                )
-
-            field_obj: ColumnBase | None = None
+            col_idx: int = order_data.get("column")  # Индекс колонки
 
             if "." in col_name:
                 model_part, field_part = col_name.split(".", 1)
@@ -100,13 +143,10 @@ class DataTableRequest:
                     if m._meta.name.upper() == model_part:
                         field_obj = m._meta.fields.get(field_part)
                         break
+            col_name: str | None = order_data.get("name")
+            validate_column(col_name, col_idx, action_type="sorting")
 
-            if not field_obj:
-                for m in models:
-                    if col_name in m._meta.fields:
-                        field_obj = m._meta.fields[col_name]
-                        break
-
+            field_obj: ColumnBase | None = get_column(col_name)
             if not field_obj:
                 field_obj = SQL(col_name)
 
@@ -122,7 +162,7 @@ class DataTableRequest:
             draw=draw,
             start=start,
             length=length,
-            search_value=search_value,
+            where_filters=where_filters,
             order_by=order_list,
         )
 
@@ -140,6 +180,7 @@ def prepare_datatables_response(
         request,
         models=models,
         allowed_columns=allowed_columns,
+        search_fields=search_fields,
         default_order=default_order,
     )
 
@@ -149,11 +190,8 @@ def prepare_datatables_response(
 
     # Фильтрация, пагинация, сортировки имеют смысл только, если есть записи
     if total_records > 0:
-        if data_table_rq.search_value and search_fields:
-            conditions = [
-                field.contains(data_table_rq.search_value) for field in search_fields
-            ]
-            query = query.where(reduce(or_, conditions))
+        if data_table_rq.where_filters:
+            query = query.where(*data_table_rq.where_filters)
 
         records_filtered = query.count()
 
