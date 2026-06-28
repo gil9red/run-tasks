@@ -77,7 +77,6 @@ class DataTableRequest:
 
         for order_data in orders:
             col_idx = order_data.get("column")  # Индекс колонки
-            direction = order_data.get("dir", "asc")
 
             col_name = order_data.get("name")
             if not col_name:
@@ -111,6 +110,7 @@ class DataTableRequest:
             if not field_obj:
                 field_obj = SQL(col_name)
 
+            direction: str = order_data.get("dir", "asc")
             order_list.append(
                 field_obj.desc() if direction == "desc" else field_obj.asc()
             )
