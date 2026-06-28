@@ -594,6 +594,10 @@ def task_run_logs_last(task_id: int) -> Response:
                 TaskRunLog.kind,
                 TaskRunLog.date,
             ],
+            search_fields=[
+                TaskRunLog.text,
+                TaskRunLog.kind,
+            ],
             default_order=TaskRunLog.id.asc(),
         )
         return jsonify(
