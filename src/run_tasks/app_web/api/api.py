@@ -46,7 +46,7 @@ class DataTableRequest:
     draw: int
     start: int
     length: int
-    search_value: str
+    # TODO: search_value: str. Разделить логику отделив peewee
     where_filters: list[Expression] = field(default_factory=list)
     order_by: list[Expression] = field(default_factory=list)
 
@@ -136,13 +136,6 @@ class DataTableRequest:
         for order_data in orders:
             col_idx: int = order_data.get("column")  # Индекс колонки
 
-            if "." in col_name:
-                model_part, field_part = col_name.split(".", 1)
-                model_part = model_part.upper()
-                for m in models:
-                    if m._meta.name.upper() == model_part:
-                        field_obj = m._meta.fields.get(field_part)
-                        break
             col_name: str | None = order_data.get("name")
             validate_column(col_name, col_idx, action_type="sorting")
 
